@@ -200,6 +200,23 @@ export default function App() {
   const [newBolaoNome, setNewBolaoNome] = useState("");
   const [newBolaoDesc, setNewBolaoDesc] = useState("");
 
+  // States das telas de login/cadastro (movidos para cá para não violar regras do React)
+  const [loginInput,   setLoginInput]   = useState("");
+  const [loginError,   setLoginError]   = useState("");
+  const [loginBolao,   setLoginBolao]   = useState("");
+  const [cadBolao,     setCadBolao]     = useState("");
+  const [cadNome,      setCadNome]      = useState("");
+  const [cadApelido,   setCadApelido]   = useState("");
+  const [cadEmail,     setCadEmail]     = useState("");
+  const [cadWa,        setCadWa]        = useState("");
+  const [cadError,     setCadError]     = useState("");
+  const [purchaseInput,setPurchaseInput]= useState("");
+  const [purchaseOk,   setPurchaseOk]   = useState(false);
+  const [purchaseError,setPurchaseError]= useState("");
+  const [showSenha,    setShowSenha]    = useState(false);
+  const [subScreen,    setSubScreen]    = useState("menu");
+  const [fontSize,     setFontSize]     = useState(() => parseInt(localStorage.getItem("bg26_fontsize")||"18"));
+
   const notify = (msg, type="ok") => { setNotification({msg,type}); setTimeout(()=>setNotification(null),3500); };
 
   // ── Init Firebase ───────────────────────────────────────────────────────────
@@ -526,12 +543,9 @@ export default function App() {
   }
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TELA ENTRAR — escolhe o bolão e faz login por nome/email/whatsapp
+  // TELA ENTRAR
   if (screen==="entrar") {
     const bList = Object.entries(boloes).filter(([,b])=>b.ativo);
-    const [loginInput, setLoginInput]   = useState("");
-    const [loginError, setLoginError]   = useState("");
-    const [loginBolao, setLoginBolao]   = useState(bList[0]?.[0]||"");
 
     async function handleLogin() {
       setLoginError("");
@@ -630,15 +644,9 @@ export default function App() {
   }
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TELA CADASTRO — novo participante
+  // TELA CADASTRO
   if (screen==="cadastro") {
     const bList = Object.entries(boloes).filter(([,b])=>b.ativo);
-    const [cadBolao,  setCadBolao]  = useState(bList[0]?.[0]||"");
-    const [cadNome,   setCadNome]   = useState("");
-    const [cadApelido,setCadApelido]= useState("");
-    const [cadEmail,  setCadEmail]  = useState("");
-    const [cadWa,     setCadWa]     = useState("");
-    const [cadError,  setCadError]  = useState("");
 
     async function handleCadastro() {
       setCadError("");
@@ -732,14 +740,9 @@ export default function App() {
   }
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TELA ADMIN GLOBAL — código de compra → senha → painel
+  // TELA ADMIN GLOBAL
   if (screen==="admin_global") {
-    // Código de compra que o admin precisa saber (você pode mudar aqui)
     const PURCHASE_CODE = "GESTOR2026";
-    const [purchaseInput, setPurchaseInput] = useState("");
-    const [purchaseOk, setPurchaseOk]       = useState(false);
-    const [purchaseError, setPurchaseError] = useState("");
-    const [showSenha, setShowSenha]         = useState(false);
 
     function checkPurchaseCode() {
       if (purchaseInput.trim().toUpperCase() === PURCHASE_CODE) {
@@ -1108,17 +1111,12 @@ export default function App() {
       );
     };
 
-    // Controle de tamanho de fonte (salvo por usuário)
-    const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem("bg26_fontsize")||"16"));
     const changeFontSize = (delta) => {
-      const nf = Math.min(22, Math.max(13, fontSize+delta));
+      const nf = Math.min(24, Math.max(13, fontSize+delta));
       setFontSize(nf);
       localStorage.setItem("bg26_fontsize", String(nf));
     };
     const fs = (base) => Math.round(base * fontSize / 16);
-
-    // Se tab === -1, mostra o menu de botões
-    const [subScreen, setSubScreen] = useState("menu"); // menu | hoje | agenda | meus | todos | ranking | admin_bolao
 
     return (
       <div style={BASE}>
