@@ -417,81 +417,432 @@ export default function App() {
   );
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TELA HOME — lista de bolões
+  // TELA HOME — 3 botões principais
   if (screen==="home") {
-    const bList = Object.entries(boloes).filter(([,b])=>b.ativo);
     return (
-      <div style={BASE}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-thumb{background:linear-gradient(#009c3b,#002776);border-radius:3px;}@keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.hv:hover{border-color:#ffdf00!important;transform:translateY(-2px);}`}</style>
-        <Header/>
-        {notification&&<div style={{position:"fixed",top:80,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":notification.type==="warn"?"#7a5000":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.7)"}}>{notification.msg}</div>}
+      <div style={{...BASE, display:"flex", flexDirection:"column", minHeight:"100vh"}}>
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+          *{box-sizing:border-box;} input,select,button{font-family:inherit;}
+          ::-webkit-scrollbar{width:5px;} ::-webkit-scrollbar-thumb{background:linear-gradient(#009c3b,#002776);border-radius:3px;}
+          @keyframes pop{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+          @keyframes glow{0%,100%{text-shadow:0 0 20px rgba(255,223,0,.4)}50%{text-shadow:0 0 40px rgba(255,223,0,.8)}}
+          @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+          .btn-main:hover{transform:translateY(-3px)!important;box-shadow:0 8px 30px rgba(0,0,0,.5)!important;}
+          .btn-main{transition:all .25s ease!important;}
+        `}</style>
 
-        <div style={{maxWidth:700,margin:"0 auto",padding:"32px 16px"}}>
-          <div style={{textAlign:"center",marginBottom:32}}>
-            <div style={{fontSize:32,letterSpacing:5,color:"#ffdf00",marginBottom:8}}>ESCOLHA SEU BOLÃO</div>
-            <div style={{fontFamily:"sans-serif",fontSize:14,color:"#888"}}>Clique no bolão que você está participando</div>
+        {notification&&<div style={{position:"fixed",top:20,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":notification.type==="warn"?"#7a5000":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.7)"}}>{notification.msg}</div>}
+
+        {/* Faixa verde-amarela-azul no topo */}
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+
+        {/* Conteúdo central */}
+        <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px"}}>
+
+          {/* Logo */}
+          <div style={{textAlign:"center",marginBottom:48}}>
+            <div style={{fontSize:72,animation:"float 3s ease-in-out infinite",marginBottom:8}}>⚽</div>
+            <div style={{fontSize:52,letterSpacing:8,lineHeight:1,animation:"glow 3s ease-in-out infinite",
+              background:"linear-gradient(135deg,#fff 30%,#ffdf00 70%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+              BOLÃO DOS
+            </div>
+            <div style={{fontSize:52,letterSpacing:8,lineHeight:1,marginBottom:8,
+              background:"linear-gradient(135deg,#ffdf00 30%,#fff 70%)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+              AMIGOS E FAMÍLIA
+            </div>
+            <div style={{fontSize:13,letterSpacing:4,color:"#ffdf00",fontFamily:"sans-serif",fontWeight:300,marginTop:6}}>
+              By Prof. Isaac Martins · 🇧🇷 Brasil Rumo ao Hexa 🏆
+            </div>
+            <div style={{fontSize:12,letterSpacing:3,color:"#555",fontFamily:"sans-serif",marginTop:4}}>
+              🇺🇸 EUA · 🇨🇦 CANADÁ · 🇲🇽 MÉXICO · Copa do Mundo 2026
+            </div>
           </div>
 
-          {bList.length===0?(
-            <div style={{textAlign:"center",padding:"40px",fontFamily:"sans-serif",color:"#555"}}>
-              <div style={{fontSize:40,marginBottom:12}}>🏆</div>
-              <div style={{fontSize:16,color:"#777"}}>Nenhum bolão disponível ainda</div>
-              <div style={{fontSize:13,marginTop:6}}>O administrador ainda não criou nenhum bolão</div>
-            </div>
-          ):(
-            <div style={{display:"grid",gap:14}}>
-              {bList.map(([id,b])=>{
-                const approved = getApprovedMembers(id).length;
-                const pending  = getPendingMembers(id).length;
-                return (
-                  <div key={id} className="hv" onClick={()=>{setSelectedBolao({id,...b});setScreen("login_"+id);}}
-                    style={{background:"rgba(255,255,255,.04)",border:"1px solid #1a3a1a",borderRadius:14,padding:"20px 24px",cursor:"pointer",transition:".2s",display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
-                    <div style={{width:52,height:52,borderRadius:"50%",background:"linear-gradient(135deg,#009c3b,#002776)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:26,flexShrink:0}}>⚽</div>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:24,letterSpacing:3,color:"#ffdf00"}}>{b.nome}</div>
-                      <div style={{fontFamily:"sans-serif",fontSize:13,color:"#aaa",marginTop:2}}>{b.descricao}</div>
-                      <div style={{fontFamily:"sans-serif",fontSize:11,color:"#555",marginTop:4}}>👥 {approved} participante{approved!==1?"s":""} {pending>0&&<span style={{color:"#ffdf00"}}>· {pending} aguardando aprovação</span>}</div>
-                    </div>
-                    <div style={{color:"#009c3b",fontSize:22}}>▶</div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          {/* 3 BOTÕES PRINCIPAIS */}
+          <div style={{width:"100%",maxWidth:420,display:"flex",flexDirection:"column",gap:16}}>
 
-          {/* Acesso admin discreto */}
-          <div style={{marginTop:40,textAlign:"center"}}>
-            <button onClick={()=>setScreen("admin_global")}
-              style={{background:"transparent",border:"1px solid #1a1a1a",color:"#333",borderRadius:6,padding:"6px 16px",cursor:"pointer",fontSize:11,fontFamily:"sans-serif"}}>
-              ⚙️ Administrador
+            {/* ENTRAR NO BOLÃO */}
+            <button className="btn-main" onClick={()=>setScreen("entrar")}
+              style={{background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",
+                borderRadius:14,padding:"22px 24px",cursor:"pointer",textAlign:"left",
+                display:"flex",alignItems:"center",gap:18,
+                boxShadow:"0 4px 20px rgba(0,156,59,.35)"}}>
+              <div style={{width:56,height:56,borderRadius:"50%",background:"rgba(255,255,255,.15)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>🏟️</div>
+              <div>
+                <div style={{fontSize:24,letterSpacing:3}}>ENTRAR NO BOLÃO</div>
+                <div style={{fontFamily:"sans-serif",fontSize:13,color:"rgba(255,255,255,.7)",marginTop:2}}>
+                  Já sou cadastrado — quero jogar!
+                </div>
+              </div>
+              <div style={{marginLeft:"auto",fontSize:22,color:"rgba(255,255,255,.5)"}}>▶</div>
             </button>
+
+            {/* NOVO CADASTRO */}
+            <button className="btn-main" onClick={()=>setScreen("cadastro")}
+              style={{background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",border:"none",
+                borderRadius:14,padding:"22px 24px",cursor:"pointer",textAlign:"left",
+                display:"flex",alignItems:"center",gap:18,
+                boxShadow:"0 4px 20px rgba(200,162,0,.3)"}}>
+              <div style={{width:56,height:56,borderRadius:"50%",background:"rgba(255,255,255,.15)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>📝</div>
+              <div>
+                <div style={{fontSize:24,letterSpacing:3}}>NOVO CADASTRO</div>
+                <div style={{fontFamily:"sans-serif",fontSize:13,color:"rgba(255,255,255,.7)",marginTop:2}}>
+                  Ainda não participo — quero me cadastrar!
+                </div>
+              </div>
+              <div style={{marginLeft:"auto",fontSize:22,color:"rgba(255,255,255,.5)"}}>▶</div>
+            </button>
+
+            {/* ADMINISTRADOR */}
+            <button className="btn-main" onClick={()=>setScreen("admin_global")}
+              style={{background:"linear-gradient(135deg,#1a3a6a,#0d1f3a)",color:"#fff",border:"1px solid rgba(255,255,255,.1)",
+                borderRadius:14,padding:"22px 24px",cursor:"pointer",textAlign:"left",
+                display:"flex",alignItems:"center",gap:18,
+                boxShadow:"0 4px 20px rgba(0,0,0,.3)"}}>
+              <div style={{width:56,height:56,borderRadius:"50%",background:"rgba(255,255,255,.1)",
+                display:"flex",alignItems:"center",justifyContent:"center",fontSize:28,flexShrink:0}}>🔐</div>
+              <div>
+                <div style={{fontSize:24,letterSpacing:3}}>ADMINISTRADOR</div>
+                <div style={{fontFamily:"sans-serif",fontSize:13,color:"rgba(255,255,255,.5)",marginTop:2}}>
+                  Gerenciar bolões e participantes
+                </div>
+              </div>
+              <div style={{marginLeft:"auto",fontSize:22,color:"rgba(255,255,255,.3)"}}>▶</div>
+            </button>
+
           </div>
+        </div>
+
+        {/* Faixa verde-amarela-azul no rodapé */}
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+        <div style={{textAlign:"center",padding:"12px",fontFamily:"sans-serif",fontSize:11,color:"#222"}}>
+          bolao-do-gestor.vercel.app
         </div>
       </div>
     );
   }
 
   // ────────────────────────────────────────────────────────────────────────────
-  // TELA ADMIN GLOBAL — criar bolões, aprovar membros
+  // TELA ENTRAR — escolhe o bolão e faz login por nome/email/whatsapp
+  if (screen==="entrar") {
+    const bList = Object.entries(boloes).filter(([,b])=>b.ativo);
+    const [loginInput, setLoginInput]   = useState("");
+    const [loginError, setLoginError]   = useState("");
+    const [loginBolao, setLoginBolao]   = useState(bList[0]?.[0]||"");
+
+    async function handleLogin() {
+      setLoginError("");
+      const bid = loginBolao;
+      if (!bid) { setLoginError("Selecione um bolão."); return; }
+      const mList = getMembersOfBolao(bid);
+      const termo = loginInput.trim().toLowerCase();
+      if (!termo) { setLoginError("Digite seu nome, email ou WhatsApp."); return; }
+      const found = mList.find(m =>
+        m.apelido?.toLowerCase()===termo ||
+        m.nome?.toLowerCase().includes(termo) ||
+        m.email?.toLowerCase()===termo ||
+        m.whatsapp?.replace(/\D/g,"").endsWith(termo.replace(/\D/g,""))
+      );
+      if (!found) { setLoginError("Não encontrado. Verifique os dados ou cadastre-se."); return; }
+      if (found.status==="pendente") { setScreen("pending"); return; }
+      if (found.status==="rejeitado") { setLoginError("Seu cadastro foi recusado. Fale com o administrador."); return; }
+      const bolao = boloes[bid];
+      setSelectedBolao({id:bid,...bolao});
+      setCurrentUser({uid:found.uid, apelido:found.apelido, bolaoId:bid});
+      setScreen("bolao");
+      notify(`⚽ Bem-vindo(a), ${found.apelido}!`);
+    }
+
+    return (
+      <div style={{...BASE,display:"flex",flexDirection:"column",minHeight:"100vh"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}@keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}`}</style>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+        {notification&&<div style={{position:"fixed",top:20,right:16,zIndex:999,animation:"pop .3s ease",background:"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13}}>{notification.msg}</div>}
+
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
+          <div style={{width:"100%",maxWidth:440}}>
+            <button onClick={()=>setScreen("home")} style={{background:"transparent",color:"#777",border:"none",cursor:"pointer",fontSize:13,fontFamily:"sans-serif",marginBottom:20,display:"flex",alignItems:"center",gap:6}}>
+              ← Voltar
+            </button>
+
+            <div style={{textAlign:"center",marginBottom:28}}>
+              <div style={{fontSize:40,marginBottom:8}}>🏟️</div>
+              <div style={{fontSize:32,letterSpacing:5,color:"#ffdf00"}}>ENTRAR NO BOLÃO</div>
+              <div style={{fontFamily:"sans-serif",fontSize:13,color:"#777",marginTop:4}}>
+                Identifique-se para acessar seus palpites
+              </div>
+            </div>
+
+            <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"28px"}}>
+
+              {/* Seleção do bolão */}
+              {bList.length > 1 && (
+                <div style={{marginBottom:18}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:6}}>QUAL É O SEU BOLÃO?</div>
+                  <select value={loginBolao} onChange={e=>setLoginBolao(e.target.value)}
+                    style={{width:"100%",background:"#050d0a",color:"#ffdf00",border:"2px solid #009c3b",borderRadius:8,padding:"10px 14px",fontSize:14,cursor:"pointer"}}>
+                    {bList.map(([id,b])=><option key={id} value={id}>{b.nome}</option>)}
+                  </select>
+                </div>
+              )}
+              {bList.length === 1 && (
+                <div style={{background:"rgba(0,156,59,.1)",border:"1px solid rgba(0,156,59,.3)",borderRadius:8,padding:"10px 14px",marginBottom:18,fontFamily:"sans-serif",fontSize:13,color:"#009c3b"}}>
+                  ⚽ {bList[0][1].nome}
+                </div>
+              )}
+
+              {/* Input de identificação */}
+              <div style={{marginBottom:8}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:6}}>
+                  SEU NOME, EMAIL OU WHATSAPP
+                </div>
+                <input type="text" placeholder="Ex: Isaac, isaac@email.com ou 11987654321"
+                  value={loginInput} onChange={e=>{setLoginInput(e.target.value);setLoginError("");}}
+                  onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",
+                    borderRadius:8,padding:"12px 14px",fontSize:15,outline:"none",fontFamily:"sans-serif"}}/>
+              </div>
+
+              {loginError&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:12}}>{loginError}</div>}
+
+              <button onClick={handleLogin}
+                style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                  border:"none",borderRadius:10,padding:"14px",fontSize:18,letterSpacing:3,
+                  cursor:"pointer",marginTop:8,boxShadow:"0 4px 16px rgba(0,156,59,.3)"}}>
+                ENTRAR ⚽
+              </button>
+
+              <div style={{textAlign:"center",marginTop:16,fontFamily:"sans-serif",fontSize:12,color:"#555"}}>
+                Não está cadastrado?{" "}
+                <button onClick={()=>setScreen("cadastro")} style={{background:"none",border:"none",color:"#ffdf00",cursor:"pointer",fontSize:12,textDecoration:"underline"}}>
+                  Cadastre-se aqui
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+      </div>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // TELA CADASTRO — novo participante
+  if (screen==="cadastro") {
+    const bList = Object.entries(boloes).filter(([,b])=>b.ativo);
+    const [cadBolao,  setCadBolao]  = useState(bList[0]?.[0]||"");
+    const [cadNome,   setCadNome]   = useState("");
+    const [cadApelido,setCadApelido]= useState("");
+    const [cadEmail,  setCadEmail]  = useState("");
+    const [cadWa,     setCadWa]     = useState("");
+    const [cadError,  setCadError]  = useState("");
+
+    async function handleCadastro() {
+      setCadError("");
+      if (!cadBolao)           { setCadError("Selecione um bolão."); return; }
+      if (!cadNome.trim())     { setCadError("Digite seu nome completo."); return; }
+      if (!cadApelido.trim())  { setCadError("Escolha um apelido."); return; }
+      if (!cadEmail.trim() && !cadWa.trim()) { setCadError("Preencha email ou WhatsApp."); return; }
+      const uid = safeKey(cadApelido.trim());
+      if (members[cadBolao]?.[uid]) { setCadError("Este apelido já está em uso. Escolha outro."); return; }
+      try {
+        await set(dbRef(db, `members/${cadBolao}/${uid}`), {
+          nome: cadNome.trim(),
+          apelido: cadApelido.trim(),
+          email: cadEmail.trim().toLowerCase(),
+          whatsapp: cadWa.trim(),
+          status: "pendente",
+          createdAt: new Date().toISOString(),
+        });
+        setScreen("pending");
+      } catch { setCadError("Erro ao enviar. Tente novamente."); }
+    }
+
+    return (
+      <div style={{...BASE,display:"flex",flexDirection:"column",minHeight:"100vh"}}>
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}input:focus{outline:none;}`}</style>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+
+        <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
+          <div style={{width:"100%",maxWidth:440}}>
+            <button onClick={()=>setScreen("home")} style={{background:"transparent",color:"#777",border:"none",cursor:"pointer",fontSize:13,fontFamily:"sans-serif",marginBottom:20}}>
+              ← Voltar
+            </button>
+
+            <div style={{textAlign:"center",marginBottom:24}}>
+              <div style={{fontSize:40,marginBottom:8}}>📝</div>
+              <div style={{fontSize:30,letterSpacing:5,color:"#ffdf00"}}>NOVO CADASTRO</div>
+              <div style={{fontFamily:"sans-serif",fontSize:13,color:"#777",marginTop:4}}>
+                Preencha os dados — o admin irá aprovar seu acesso
+              </div>
+            </div>
+
+            <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"28px"}}>
+
+              {/* Seleção do bolão */}
+              {bList.length > 0 && (
+                <div style={{marginBottom:16}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>QUAL BOLÃO QUER PARTICIPAR? *</div>
+                  <select value={cadBolao} onChange={e=>setCadBolao(e.target.value)}
+                    style={{width:"100%",background:"#050d0a",color:"#ffdf00",border:"2px solid #009c3b",borderRadius:8,padding:"10px 14px",fontSize:14,cursor:"pointer"}}>
+                    {bList.map(([id,b])=><option key={id} value={id}>{b.nome}</option>)}
+                  </select>
+                </div>
+              )}
+
+              {[
+                {label:"Nome completo *",      val:cadNome,    set:setCadNome,    ph:"Ex: Maria da Silva",          type:"text"},
+                {label:"Apelido no bolão *",   val:cadApelido, set:setCadApelido, ph:"Ex: Maria, Maju, Silva...",   type:"text"},
+                {label:"Email",                val:cadEmail,   set:setCadEmail,   ph:"Ex: maria@email.com",         type:"email"},
+                {label:"WhatsApp com DDD",     val:cadWa,      set:setCadWa,      ph:"Ex: 11987654321",             type:"tel"},
+              ].map(f=>(
+                <div key={f.label} style={{marginBottom:14}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>{f.label.toUpperCase()}</div>
+                  <input type={f.type} placeholder={f.ph} value={f.val}
+                    onChange={e=>{f.set(e.target.value);setCadError("");}}
+                    style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                      borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                </div>
+              ))}
+
+              {cadError&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{cadError}</div>}
+
+              <button onClick={handleCadastro}
+                style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                  border:"none",borderRadius:10,padding:"14px",fontSize:18,letterSpacing:3,
+                  cursor:"pointer",marginTop:4,boxShadow:"0 4px 16px rgba(200,162,0,.3)"}}>
+                SOLICITAR PARTICIPAÇÃO 📝
+              </button>
+
+              <div style={{textAlign:"center",marginTop:14,fontFamily:"sans-serif",fontSize:12,color:"#555"}}>
+                Já tem cadastro?{" "}
+                <button onClick={()=>setScreen("entrar")} style={{background:"none",border:"none",color:"#009c3b",cursor:"pointer",fontSize:12,textDecoration:"underline"}}>
+                  Entrar aqui
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+      </div>
+    );
+  }
+
+  // ────────────────────────────────────────────────────────────────────────────
+  // TELA ADMIN GLOBAL — código de compra → senha → painel
   if (screen==="admin_global") {
+    // Código de compra que o admin precisa saber (você pode mudar aqui)
+    const PURCHASE_CODE = "GESTOR2026";
+    const [purchaseInput, setPurchaseInput] = useState("");
+    const [purchaseOk, setPurchaseOk]       = useState(false);
+    const [purchaseError, setPurchaseError] = useState("");
+    const [showSenha, setShowSenha]         = useState(false);
+
+    function checkPurchaseCode() {
+      if (purchaseInput.trim().toUpperCase() === PURCHASE_CODE) {
+        setPurchaseOk(true);
+        setPurchaseError("");
+      } else {
+        setPurchaseError("Código incorreto. Verifique e tente novamente.");
+      }
+    }
+
     return (
       <div style={BASE}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:#009c3b;border-radius:3px;}@keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}`}</style>
-        <Header sub="PAINEL DO ADMINISTRADOR"/>
-        {notification&&<div style={{position:"fixed",top:80,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13}}>{notification.msg}</div>}
+        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}::-webkit-scrollbar{width:5px;}::-webkit-scrollbar-thumb{background:#009c3b;border-radius:3px;}@keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}@keyframes reveal{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}`}</style>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+        {notification&&<div style={{position:"fixed",top:20,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13}}>{notification.msg}</div>}
 
         <div style={{maxWidth:800,margin:"0 auto",padding:"24px 16px"}}>
-          {!adminUnlocked?(
-            <div style={{background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.3)",borderRadius:12,padding:"24px",maxWidth:400,margin:"60px auto",textAlign:"center"}}>
-              <div style={{fontSize:22,letterSpacing:3,color:"#ffdf00",marginBottom:16}}>🔐 ACESSO RESTRITO</div>
-              <input type="password" placeholder="Senha do administrador" value={adminInput} onChange={e=>setAdminInput(e.target.value)}
-                onKeyDown={e=>e.key==="Enter"&&(adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err"))}
-                style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",borderRadius:8,padding:"10px 14px",fontSize:14,fontFamily:"sans-serif",marginBottom:10}}/>
-              <button onClick={()=>adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err")}
-                style={{width:"100%",background:"#009c3b",color:"#fff",border:"none",borderRadius:8,padding:"10px",fontSize:16,cursor:"pointer",letterSpacing:2}}>ENTRAR</button>
-              <button onClick={()=>setScreen("home")} style={{marginTop:10,background:"transparent",color:"#666",border:"none",cursor:"pointer",fontSize:12,fontFamily:"sans-serif"}}>← Voltar</button>
+          <button onClick={()=>setScreen("home")} style={{background:"transparent",color:"#777",border:"none",cursor:"pointer",fontSize:13,fontFamily:"sans-serif",marginBottom:20}}>
+            ← Voltar
+          </button>
+
+          {/* ETAPA 1 — Código de compra */}
+          {!purchaseOk && (
+            <div style={{maxWidth:420,margin:"40px auto",textAlign:"center"}}>
+              <div style={{fontSize:52,marginBottom:12}}>🔑</div>
+              <div style={{fontSize:26,letterSpacing:4,color:"#ffdf00",marginBottom:6}}>ÁREA DO ADMINISTRADOR</div>
+              <div style={{fontFamily:"sans-serif",fontSize:13,color:"#888",marginBottom:28,lineHeight:1.7}}>
+                Para acessar o painel, insira o <strong style={{color:"#fff"}}>código de compra</strong> do Bolão do Gestor.
+              </div>
+
+              <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.25)",borderRadius:14,padding:"28px",textAlign:"left"}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>
+                  CÓDIGO DE COMPRA
+                </div>
+                <input type="text" placeholder="Ex: GESTOR2026"
+                  value={purchaseInput}
+                  onChange={e=>{setPurchaseInput(e.target.value.toUpperCase());setPurchaseError("");}}
+                  onKeyDown={e=>e.key==="Enter"&&checkPurchaseCode()}
+                  style={{width:"100%",background:"#050d0a",color:"#ffdf00",border:"2px solid #c8a200",
+                    borderRadius:8,padding:"12px 14px",fontSize:18,letterSpacing:4,
+                    fontFamily:"monospace",marginBottom:10,outline:"none",textAlign:"center"}}/>
+                {purchaseError&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10,textAlign:"center"}}>{purchaseError}</div>}
+                <button onClick={checkPurchaseCode}
+                  style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                    border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:3,cursor:"pointer"}}>
+                  VALIDAR CÓDIGO 🔑
+                </button>
+              </div>
+
+              <div style={{marginTop:16,fontFamily:"sans-serif",fontSize:11,color:"#444"}}>
+                Não tem o código? Entre em contato com o Prof. Isaac Martins.
+              </div>
             </div>
-          ):(
+          )}
+
+          {/* ETAPA 2 — Código validado, mostra senha e pede confirmação */}
+          {purchaseOk && !adminUnlocked && (
+            <div style={{maxWidth:420,margin:"40px auto",textAlign:"center"}}>
+              <div style={{fontSize:52,marginBottom:12,animation:"reveal .4s ease"}}>✅</div>
+              <div style={{fontSize:24,letterSpacing:4,color:"#009c3b",marginBottom:6}}>CÓDIGO VALIDADO!</div>
+              <div style={{fontFamily:"sans-serif",fontSize:13,color:"#888",marginBottom:24}}>
+                Sua senha de administrador foi gerada. Guarde-a com segurança.
+              </div>
+
+              <div style={{background:"rgba(0,156,59,.08)",border:"1px solid rgba(0,156,59,.4)",borderRadius:14,padding:"24px",marginBottom:20,animation:"reveal .5s ease"}}>
+                <div style={{fontFamily:"sans-serif",fontSize:12,color:"#777",marginBottom:10,letterSpacing:1}}>SUA SENHA DE ADMINISTRADOR</div>
+                <div style={{position:"relative",display:"flex",alignItems:"center",justifyContent:"center",gap:12}}>
+                  <div style={{fontSize:32,letterSpacing:8,color:"#ffdf00",fontFamily:"monospace",
+                    filter:showSenha?"none":"blur(8px)",transition:"filter .3s",userSelect:showSenha?"text":"none"}}>
+                    {ADMIN_PASS}
+                  </div>
+                  <button onClick={()=>setShowSenha(s=>!s)}
+                    style={{background:"rgba(255,255,255,.1)",border:"1px solid #444",color:"#aaa",
+                      borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif"}}>
+                    {showSenha?"🙈 Ocultar":"👁️ Ver"}
+                  </button>
+                </div>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#555",marginTop:10}}>
+                  Use esta senha sempre que acessar o painel de administrador
+                </div>
+              </div>
+
+              <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"24px",textAlign:"left"}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>
+                  CONFIRME SUA SENHA PARA ENTRAR
+                </div>
+                <input type="password" placeholder="Digite a senha acima"
+                  value={adminInput} onChange={e=>setAdminInput(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&(adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err"))}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",
+                    borderRadius:8,padding:"12px 14px",fontSize:16,fontFamily:"sans-serif",
+                    marginBottom:10,outline:"none",textAlign:"center",letterSpacing:4}}/>
+                <button onClick={()=>adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err")}
+                  style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                    border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:3,cursor:"pointer"}}>
+                  ACESSAR PAINEL 🔐
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* ETAPA 3 — Painel admin desbloqueado */}
+          {purchaseOk && adminUnlocked && (
             <>
               <button onClick={()=>setScreen("home")} style={{background:"transparent",color:"#888",border:"1px solid #333",borderRadius:6,padding:"5px 14px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",marginBottom:20}}>← Voltar para os bolões</button>
 
@@ -581,103 +932,7 @@ export default function App() {
             </>
           )}
         </div>
-      </div>
-    );
-  }
-
-  // ────────────────────────────────────────────────────────────────────────────
-  // TELA LOGIN / CADASTRO de um bolão específico
-  if (screen.startsWith("login_") && selectedBolao) {
-    const approved = getApprovedMembers(selectedBolao.id);
-    const [loginApelido, setLoginApelido] = useState("");
-    const [loginError, setLoginError]     = useState("");
-    const [showReg, setShowReg]           = useState(false);
-
-    return (
-      <div style={BASE}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}@keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.hv2:hover{background:rgba(0,156,59,.15)!important;border-color:#009c3b!important;}`}</style>
-        <Header sub={selectedBolao.nome.toUpperCase()}/>
-        {notification&&<div style={{position:"fixed",top:80,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13}}>{notification.msg}</div>}
-
-        <div style={{maxWidth:440,margin:"0 auto",padding:"32px 16px"}}>
-          <button onClick={()=>{setScreen("home");setSelectedBolao(null);}} style={{background:"transparent",color:"#777",border:"none",cursor:"pointer",fontSize:13,fontFamily:"sans-serif",marginBottom:20}}>← Voltar</button>
-
-          <div style={{textAlign:"center",marginBottom:24}}>
-            <div style={{fontSize:28,letterSpacing:4,color:"#ffdf00"}}>{selectedBolao.nome}</div>
-            <div style={{fontFamily:"sans-serif",fontSize:13,color:"#777"}}>{selectedBolao.descricao}</div>
-          </div>
-
-          {!showReg ? (
-            <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"24px"}}>
-              <div style={{fontSize:18,letterSpacing:3,color:"#ffdf00",marginBottom:14}}>QUEM É VOCÊ?</div>
-
-              {approved.length>0 && (
-                <div style={{marginBottom:16}}>
-                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#666",letterSpacing:1,marginBottom:8}}>PARTICIPANTES DESTE BOLÃO:</div>
-                  <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                    {approved.map(m=>(
-                      <button key={m.uid} className="hv2" onClick={()=>setLoginApelido(m.apelido)}
-                        style={{background:loginApelido===m.apelido?"rgba(0,156,59,.2)":"rgba(255,255,255,.05)",
-                          border:`1px solid ${loginApelido===m.apelido?"#009c3b":"#2a2a2a"}`,
-                          color:loginApelido===m.apelido?"#fff":"#ccc",borderRadius:20,
-                          padding:"6px 14px",cursor:"pointer",fontSize:13,transition:".2s",
-                          display:"flex",alignItems:"center",gap:6}}>
-                        <span style={{width:22,height:22,borderRadius:"50%",background:avatarColor(m.apelido),display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:11,fontWeight:700,color:"#fff"}}>{m.apelido[0].toUpperCase()}</span>
-                        {m.apelido}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <input type="text" placeholder="Digite seu apelido" value={loginApelido}
-                onChange={e=>{setLoginApelido(e.target.value);setLoginError("");}}
-                onKeyDown={e=>{ if(e.key==="Enter"){ const m=approved.find(x=>x.apelido.toLowerCase()===loginApelido.toLowerCase()); if(m)handleLogin(m.uid,m.apelido); else setLoginError("Apelido não encontrado."); }}}
-                style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",borderRadius:8,padding:"10px 14px",fontSize:15,marginBottom:8,outline:"none",fontFamily:"sans-serif"}}/>
-              {loginError&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:8}}>{loginError}</div>}
-
-              <button onClick={()=>{
-                const m=approved.find(x=>x.apelido.toLowerCase()===loginApelido.toLowerCase());
-                if(m) handleLogin(m.uid,m.apelido);
-                else setLoginError("Apelido não encontrado neste bolão.");
-              }} style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"12px",fontSize:16,letterSpacing:2,cursor:"pointer",marginBottom:10}}>
-                ENTRAR ⚽
-              </button>
-
-              <button onClick={()=>setShowReg(true)}
-                style={{width:"100%",background:"transparent",color:"#ffdf00",border:"1px solid rgba(255,223,0,.3)",borderRadius:8,padding:"10px",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
-                ➕ Ainda não estou cadastrado — quero participar!
-              </button>
-            </div>
-          ) : (
-            <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,223,0,.3)",borderRadius:14,padding:"24px"}}>
-              <div style={{fontSize:18,letterSpacing:3,color:"#ffdf00",marginBottom:6}}>SOLICITAR PARTICIPAÇÃO</div>
-              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:16}}>Preencha os dados abaixo. O administrador irá aprovar seu acesso.</div>
-
-              {[
-                {label:"Seu nome completo *",val:regNome,set:setRegNome,ph:"Ex: Maria Silva"},
-                {label:"Apelido no bolão *",val:regApelido,set:setRegApelido,ph:"Ex: Mari, Maju, Silva..."},
-                {label:"WhatsApp com DDD *",val:regWa,set:setRegWa,ph:"Ex: 11987654321"},
-              ].map(f=>(
-                <div key={f.label} style={{marginBottom:12}}>
-                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",marginBottom:4,letterSpacing:1}}>{f.label}</div>
-                  <input type="text" placeholder={f.ph} value={f.val} onChange={e=>{f.set(e.target.value);setRegError("");}}
-                    style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",borderRadius:8,padding:"10px 14px",fontSize:14,outline:"none",fontFamily:"sans-serif"}}/>
-                </div>
-              ))}
-              {regError&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{regError}</div>}
-
-              <button onClick={handleRegister}
-                style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",border:"none",borderRadius:8,padding:"12px",fontSize:16,letterSpacing:2,cursor:"pointer",marginBottom:10}}>
-                SOLICITAR PARTICIPAÇÃO 📝
-              </button>
-              <button onClick={()=>{setShowReg(false);setRegError("");}}
-                style={{width:"100%",background:"transparent",color:"#666",border:"1px solid #333",borderRadius:8,padding:"9px",fontSize:13,cursor:"pointer",fontFamily:"sans-serif"}}>
-                ← Voltar
-              </button>
-            </div>
-          )}
-        </div>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
       </div>
     );
   }
@@ -714,84 +969,250 @@ export default function App() {
     const GameRow = ({g, mode="agenda"}) => {
       const r=getResult(g.id), gu=myGuesses[g.id];
       const pts=r&&gu?calcPoints(gu,r):null;
-      const past=isPast(g.date), today=isToday(g.date), hasR=r&&r.home!==undefined&&r.home!=="";
+      const past=isPast(g.date), today=isToday(g.date);
+      const hasR=r&&r.home!==""&&r.home!==undefined&&r.away!==undefined;
       const locked=past&&!adminUnlocked;
-      const border=hasR?"#009c3b":today?"#ffdf00":"#1a2e1a";
-      const bg=hasR?"rgba(0,156,59,.07)":today?"rgba(255,223,0,.05)":"rgba(255,255,255,.02)";
+
+      // Cores do card
+      const border = pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#5a1010":today?"#ffdf00":hasR?"#009c3b":"#1a2e1a";
+      const bg     = pts===3?"rgba(0,156,59,.1)":pts===1?"rgba(200,162,0,.08)":pts===0&&hasR?"rgba(90,16,16,.1)":today?"rgba(255,223,0,.06)":hasR?"rgba(0,156,59,.05)":"rgba(255,255,255,.02)";
+
       return (
-        <div style={{background:bg,border:`1px solid ${border}`,borderRadius:12,overflow:"hidden",marginBottom:8}}>
-          <div style={{background:today?"rgba(255,223,0,.12)":"rgba(255,255,255,.04)",borderBottom:`1px solid ${border}`,padding:"6px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
-            <div style={{display:"flex",alignItems:"center",gap:10}}>
-              {today&&<span style={{background:"#cc0000",color:"#fff",fontSize:9,fontWeight:700,padding:"2px 7px",borderRadius:20,letterSpacing:1}}>🔴 HOJE</span>}
-              <span style={{fontSize:13,color:"#ffdf00",fontWeight:700,letterSpacing:1}}>{fmtDate(g.date)}</span>
-              <span style={{fontSize:20,color:"#fff",fontWeight:900,letterSpacing:2}}>{fmtTime(g.date)}</span>
-              <span style={{fontSize:10,color:"#666"}}>BRT · 📍{g.city}</span>
+        <div style={{background:bg,border:`2px solid ${border}`,borderRadius:16,overflow:"hidden",marginBottom:12,boxShadow:today?"0 0 16px rgba(255,223,0,.12)":"none"}}>
+
+          {/* Cabeçalho — data, hora, cidade */}
+          <div style={{background:today?"rgba(255,223,0,.15)":"rgba(255,255,255,.05)",borderBottom:`1px solid ${border}`,padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+            <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+              {today&&<span style={{background:"#cc0000",color:"#fff",fontSize:11,fontWeight:700,padding:"3px 10px",borderRadius:20,letterSpacing:1,animation:"pulse 1.5s infinite"}}>🔴 HOJE</span>}
+              <span style={{fontSize:fs(15),color:"#ffdf00",fontWeight:700,letterSpacing:1,fontFamily:"sans-serif"}}>{fmtDate(g.date)}</span>
+              <span style={{fontSize:fs(22),color:"#fff",fontWeight:900,letterSpacing:2}}>{fmtTime(g.date)}</span>
+              <span style={{fontSize:fs(12),color:"#777",fontFamily:"sans-serif"}}>📍 {g.city}</span>
             </div>
-            <span style={{background:g.knockout?"#3a0050":"#002776",color:g.knockout?"#ddaaff":"#aaa",fontSize:9,padding:"2px 7px",borderRadius:20}}>
-              {g.knockout?(PHASE_LABEL[g.group]||g.group):`GR.${g.group}`}
+            <span style={{
+              background:g.knockout?"#3a0050":today?"rgba(255,223,0,.2)":"#002776",
+              color:g.knockout?"#ddaaff":today?"#ffdf00":"#aaa",
+              fontSize:fs(11),padding:"3px 10px",borderRadius:20,fontFamily:"sans-serif",fontWeight:700
+            }}>
+              {g.knockout?(PHASE_LABEL[g.group]||g.group):`GRUPO ${g.group}`}
             </span>
           </div>
-          <div style={{padding:"10px 14px",display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
-            <div style={{flex:1,display:"flex",alignItems:"center",gap:8,justifyContent:"center",flexWrap:"wrap",minWidth:200}}>
-              <span style={{fontSize:20}}>{flag(g.home)}</span><span style={{fontSize:13}}>{g.home}</span>
-              {mode==="meus"?(<>
-                <input type="number" min="0" max="20" value={gu?.home??""} disabled={locked} onChange={e=>saveGuess(g.id,"home",e.target.value)} placeholder="–"
-                  style={{width:44,textAlign:"center",background:"#060f06",color:"#fff",border:`2px solid ${locked?"#2a2a2a":"#009c3b"}`,borderRadius:6,padding:"5px 2px",fontSize:20,fontFamily:"monospace",opacity:locked?.55:1}}/>
-                <span style={{color:"#ffdf00",fontSize:20,fontWeight:900}}>×</span>
-                <input type="number" min="0" max="20" value={gu?.away??""} disabled={locked} onChange={e=>saveGuess(g.id,"away",e.target.value)} placeholder="–"
-                  style={{width:44,textAlign:"center",background:"#060f06",color:"#fff",border:`2px solid ${locked?"#2a2a2a":"#009c3b"}`,borderRadius:6,padding:"5px 2px",fontSize:20,fontFamily:"monospace",opacity:locked?.55:1}}/>
-              </>):mode==="admin"?(<>
-                <input type="number" min="0" max="20" value={r?.home??""} onChange={e=>saveResult(g.id,"home",e.target.value)} placeholder="–"
-                  style={{width:44,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:6,padding:"5px 2px",fontSize:20,fontFamily:"monospace"}}/>
-                <span style={{color:"#fff",fontSize:20,fontWeight:900}}>×</span>
-                <input type="number" min="0" max="20" value={r?.away??""} onChange={e=>saveResult(g.id,"away",e.target.value)} placeholder="–"
-                  style={{width:44,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:6,padding:"5px 2px",fontSize:20,fontFamily:"monospace"}}/>
-              </>):(
-                hasR?<span style={{fontSize:26,letterSpacing:4,color:"#ffdf00",fontWeight:900,minWidth:80,textAlign:"center"}}>{r.home}×{r.away}</span>
-                    :<span style={{fontSize:22,color:"#2a2a2a",minWidth:60,textAlign:"center"}}>×</span>
-              )}
-              <span style={{fontSize:13}}>{g.away}</span><span style={{fontSize:20}}>{flag(g.away)}</span>
+
+          {/* Corpo — times e placar/palpite */}
+          <div style={{padding:"16px"}}>
+
+            {/* Times e placar — layout 3 colunas */}
+            <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8,marginBottom: mode==="meus"&&hasR&&gu ? 12 : 0}}>
+
+              {/* Time da casa */}
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <span style={{fontSize:fs(36)}}>{flag(g.home)}</span>
+                <span style={{fontSize:fs(14),letterSpacing:1,textAlign:"center",lineHeight:1.2,fontFamily:"sans-serif",fontWeight:700,color:"#fff"}}>{g.home}</span>
+              </div>
+
+              {/* Placar / inputs no centro */}
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                {mode==="meus" ? (
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <input type="number" min="0" max="20"
+                      value={gu?.home??""} disabled={locked}
+                      onChange={e=>saveGuess(g.id,"home",e.target.value)}
+                      placeholder="–"
+                      style={{
+                        width:56,height:56,textAlign:"center",
+                        background:locked?"#111":"#060f06",
+                        color:"#fff",
+                        border:`3px solid ${locked?"#2a2a2a":"#009c3b"}`,
+                        borderRadius:10,fontSize:fs(26),
+                        fontFamily:"monospace",
+                        opacity:locked?.5:1,
+                        touchAction:"manipulation"
+                      }}/>
+                    <span style={{fontSize:fs(24),color:"#ffdf00",fontWeight:900}}>×</span>
+                    <input type="number" min="0" max="20"
+                      value={gu?.away??""} disabled={locked}
+                      onChange={e=>saveGuess(g.id,"away",e.target.value)}
+                      placeholder="–"
+                      style={{
+                        width:56,height:56,textAlign:"center",
+                        background:locked?"#111":"#060f06",
+                        color:"#fff",
+                        border:`3px solid ${locked?"#2a2a2a":"#009c3b"}`,
+                        borderRadius:10,fontSize:fs(26),
+                        fontFamily:"monospace",
+                        opacity:locked?.5:1,
+                        touchAction:"manipulation"
+                      }}/>
+                  </div>
+                ) : mode==="admin" ? (
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <input type="number" min="0" max="20"
+                      value={r?.home??""} onChange={e=>saveResult(g.id,"home",e.target.value)}
+                      placeholder="–"
+                      style={{width:56,height:56,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"3px solid #ffdf00",borderRadius:10,fontSize:fs(26),fontFamily:"monospace",touchAction:"manipulation"}}/>
+                    <span style={{fontSize:fs(24),color:"#fff",fontWeight:900}}>×</span>
+                    <input type="number" min="0" max="20"
+                      value={r?.away??""} onChange={e=>saveResult(g.id,"away",e.target.value)}
+                      placeholder="–"
+                      style={{width:56,height:56,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"3px solid #ffdf00",borderRadius:10,fontSize:fs(26),fontFamily:"monospace",touchAction:"manipulation"}}/>
+                  </div>
+                ) : hasR ? (
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:fs(38),letterSpacing:6,color:"#ffdf00",fontWeight:900,fontFamily:"monospace",lineHeight:1}}>
+                      {r.home}<span style={{color:"#555",fontSize:fs(24)}}>×</span>{r.away}
+                    </div>
+                    <div style={{fontSize:fs(11),color:"#009c3b",fontFamily:"sans-serif",marginTop:2}}>✅ Finalizado</div>
+                  </div>
+                ) : (
+                  <div style={{textAlign:"center"}}>
+                    <div style={{fontSize:fs(32),color:"#2a2a2a",fontFamily:"monospace",letterSpacing:4}}>–×–</div>
+                    <div style={{fontSize:fs(11),color:today?"#ffdf00":"#555",fontFamily:"sans-serif",marginTop:2}}>
+                      {today?"🕐 Em breve":past?"⏳ Aguardando":"📅 "+fmtDate(g.date)}
+                    </div>
+                  </div>
+                )}
+
+                {/* Palpite do usuário vs resultado real */}
+                {mode==="meus"&&hasR&&gu&&(
+                  <div style={{
+                    background:pts===3?"#009c3b":pts===1?"#c8a200":pts===0?"#5a1010":"#333",
+                    color:pts===1?"#fff":"#fff",
+                    padding:"4px 14px",borderRadius:20,
+                    fontFamily:"sans-serif",fontSize:fs(13),fontWeight:700,
+                    display:"flex",alignItems:"center",gap:6
+                  }}>
+                    {pts===3?"🎯 3 pontos!":pts===1?"✅ 1 ponto":"❌ 0 ponto"}
+                  </div>
+                )}
+
+                {/* Bloqueado */}
+                {mode==="meus"&&locked&&!hasR&&(
+                  <div style={{fontSize:fs(12),color:"#444",fontFamily:"sans-serif"}}>🔒 Bloqueado</div>
+                )}
+              </div>
+
+              {/* Time visitante */}
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
+                <span style={{fontSize:fs(36)}}>{flag(g.away)}</span>
+                <span style={{fontSize:fs(14),letterSpacing:1,textAlign:"center",lineHeight:1.2,fontFamily:"sans-serif",fontWeight:700,color:"#fff"}}>{g.away}</span>
+              </div>
             </div>
+
+            {/* Linha de resultado real (quando tem palpite) */}
             {mode==="meus"&&hasR&&gu&&(
-              <div style={{minWidth:64,textAlign:"center"}}>
-                {pts===3&&<span style={{background:"#009c3b",color:"#fff",padding:"4px 10px",borderRadius:6,fontFamily:"sans-serif",fontSize:12,fontWeight:700,display:"block"}}>✓ 3 pts</span>}
-                {pts===1&&<span style={{background:"#c8a200",color:"#fff",padding:"4px 10px",borderRadius:6,fontFamily:"sans-serif",fontSize:12,fontWeight:700,display:"block"}}>〜 1 pt</span>}
-                {pts===0&&<span style={{background:"#5a1010",color:"#ffaaaa",padding:"4px 10px",borderRadius:6,fontFamily:"sans-serif",fontSize:11,fontWeight:700,display:"block"}}>✗ 0 pt</span>}
-                <div style={{fontSize:10,color:"#555",fontFamily:"sans-serif",marginTop:2}}>[{r.home}×{r.away}]</div>
+              <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:fs(12),color:"#666",marginTop:4}}>
+                Resultado: {r.home}×{r.away} · Seu palpite: {gu.home}×{gu.away}
               </div>
             )}
-            {mode==="agenda"&&<div style={{fontSize:11,fontFamily:"sans-serif",color:hasR?"#009c3b":past?"#555":"#ffdf00",minWidth:70,textAlign:"right"}}>{hasR?"✅ Final":past?"⏳ Aguardando":"🕐 Em breve"}</div>}
           </div>
         </div>
       );
     };
 
+    // Controle de tamanho de fonte (salvo por usuário)
+    const [fontSize, setFontSize] = useState(() => parseInt(localStorage.getItem("bg26_fontsize")||"16"));
+    const changeFontSize = (delta) => {
+      const nf = Math.min(22, Math.max(13, fontSize+delta));
+      setFontSize(nf);
+      localStorage.setItem("bg26_fontsize", String(nf));
+    };
+    const fs = (base) => Math.round(base * fontSize / 16);
+
+    // Se tab === -1, mostra o menu de botões
+    const [subScreen, setSubScreen] = useState("menu"); // menu | hoje | agenda | meus | todos | ranking | admin_bolao
+
     return (
       <div style={BASE}>
-        <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}input,select,button{font-family:inherit;}::-webkit-scrollbar{width:5px;height:5px;}::-webkit-scrollbar-thumb{background:linear-gradient(#009c3b,#002776);border-radius:3px;}@keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}.tb:hover{background:rgba(255,223,0,.1)!important;color:#ffdf00!important;}input[type=number]::-webkit-inner-spin-button{opacity:.5;}input:focus{outline:none;}`}</style>
-        <Header sub={selectedBolao.nome.toUpperCase()}/>
-        {notification&&<div style={{position:"fixed",top:80,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":notification.type==="warn"?"#7a5000":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:13,boxShadow:"0 4px 20px rgba(0,0,0,.7)"}}>{notification.msg}</div>}
+        <style>{`
+          @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+          *{box-sizing:border-box;} input,select,button{font-family:inherit;}
+          ::-webkit-scrollbar{width:5px;height:5px;}
+          ::-webkit-scrollbar-thumb{background:linear-gradient(#009c3b,#002776);border-radius:3px;}
+          @keyframes pop{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+          @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+          .mbtn:hover{transform:translateY(-2px)!important;filter:brightness(1.1)!important;}
+          .mbtn{transition:all .2s ease!important;}
+          input[type=number]::-webkit-inner-spin-button{opacity:.5;}
+          input:focus{outline:none;}
+        `}</style>
 
-        {/* Barra status */}
-        <div style={{background:"rgba(0,0,0,.8)",borderBottom:"1px solid #0a200a",padding:"6px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
-          <button onClick={fetchLive} disabled={liveFetching} style={{background:liveFetching?"#1a1a1a":"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:6,padding:"5px 14px",cursor:"pointer",fontSize:12,fontWeight:700}}>
+        {notification&&<div style={{position:"fixed",top:16,right:16,zIndex:999,animation:"pop .3s ease",background:notification.type==="err"?"#7a1010":notification.type==="warn"?"#7a5000":"#005a22",color:"#fff",padding:"10px 18px",borderRadius:8,fontFamily:"sans-serif",fontSize:fs(13),boxShadow:"0 4px 20px rgba(0,0,0,.7)"}}>{notification.msg}</div>}
+
+        {/* HEADER com nome do usuário + controles de fonte */}
+        <header>
+          <div style={{background:"linear-gradient(135deg,#004d22,#009c3b 25%,#002776 60%,#001240)"}}>
+            <div style={{background:"rgba(0,0,0,.55)",padding:"12px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+              <div style={{cursor:"pointer"}} onClick={()=>setSubScreen("menu")}>
+                <div style={{fontSize:fs(28),letterSpacing:5,lineHeight:1,textShadow:"0 0 20px rgba(255,223,0,.3)"}}>⚽ BOLÃO DOS AMIGOS E FAMÍLIA</div>
+                <div style={{fontSize:fs(11),letterSpacing:3,color:"#ffdf00",fontFamily:"sans-serif",fontWeight:300}}>{selectedBolao.nome} · By Prof. Isaac Martins · 🇧🇷 Rumo ao Hexa</div>
+              </div>
+              <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                {/* Controle de fonte */}
+                <div style={{display:"flex",alignItems:"center",gap:4,background:"rgba(255,255,255,.08)",borderRadius:20,padding:"4px 10px"}}>
+                  <span style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#888"}}>A</span>
+                  <button onClick={()=>changeFontSize(-1)} style={{background:"rgba(255,255,255,.1)",border:"none",color:"#fff",borderRadius:4,width:22,height:22,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>−</button>
+                  <button onClick={()=>changeFontSize(1)}  style={{background:"rgba(255,255,255,.1)",border:"none",color:"#fff",borderRadius:4,width:22,height:22,cursor:"pointer",fontSize:14,display:"flex",alignItems:"center",justifyContent:"center"}}>+</button>
+                  <span style={{fontFamily:"sans-serif",fontSize:fs(14),color:"#fff",fontWeight:700}}>A</span>
+                </div>
+                {/* Info usuário */}
+                <div style={{textAlign:"right"}}>
+                  <div style={{display:"flex",alignItems:"center",gap:7}}>
+                    <div style={{width:28,height:28,borderRadius:"50%",background:avatarColor(currentUser.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(13),fontWeight:700,color:"#fff"}}>{currentUser.apelido[0].toUpperCase()}</div>
+                    <div>
+                      <div style={{fontSize:fs(15),color:"#ffdf00"}}>{currentUser.apelido}</div>
+                      <div style={{fontSize:fs(10),color:"#aaa",fontFamily:"sans-serif"}}>{myRank>0?`${myRank}º · ${myPts} pts`:"0 pts"}</div>
+                    </div>
+                  </div>
+                </div>
+                <button onClick={()=>{setCurrentUser(null);setScreen("home");setSelectedBolao(null);localStorage.removeItem("bg26_session");}}
+                  style={{background:"transparent",border:"1px solid #333",color:"#666",borderRadius:5,padding:"4px 10px",cursor:"pointer",fontSize:fs(11),fontFamily:"sans-serif"}}>Sair</button>
+              </div>
+            </div>
+          </div>
+          <div style={{height:4,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
+        </header>
+
+        {/* Barra de atualização */}
+        <div style={{background:"rgba(0,0,0,.8)",borderBottom:"1px solid #0a200a",padding:"6px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+          <button onClick={fetchLive} disabled={liveFetching} style={{background:liveFetching?"#1a1a1a":"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:6,padding:"5px 14px",cursor:"pointer",fontSize:fs(12),fontWeight:700}}>
             {liveFetching?"⏳":"🔄"} Atualizar Placares
           </button>
-          {lastUpdate&&<span style={{fontFamily:"sans-serif",fontSize:11,color:"#555"}}>🕐 {lastUpdate}</span>}
-          <span style={{marginLeft:"auto",fontFamily:"sans-serif",fontSize:11,color:"#333"}}>{approvedMembers.length} participantes · ⚡ Auto 5min</span>
+          {lastUpdate&&<span style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#555"}}>🕐 {lastUpdate}</span>}
+          {subScreen!=="menu"&&<button onClick={()=>setSubScreen("menu")} style={{marginLeft:"auto",background:"transparent",border:"1px solid #2a2a2a",color:"#888",borderRadius:6,padding:"4px 12px",cursor:"pointer",fontSize:fs(11),fontFamily:"sans-serif"}}>← Menu</button>}
+          <span style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#333",marginLeft:subScreen==="menu"?"auto":"0"}}>{approvedMembers.length} participantes</span>
         </div>
 
-        {/* Tabs */}
-        <nav style={{background:"rgba(0,0,0,.8)",borderBottom:"2px solid rgba(255,223,0,.3)",display:"flex",overflowX:"auto"}}>
-          {TABS_BOLAO.map((t,i)=>(
-            <button key={i} className="tb" onClick={()=>setTab(i)} style={{background:tab===i?"rgba(255,223,0,.14)":"transparent",color:tab===i?"#ffdf00":"#888",border:"none",cursor:"pointer",padding:"12px 14px",fontSize:12,fontWeight:700,letterSpacing:1,whiteSpace:"nowrap",transition:".2s",borderBottom:tab===i?"3px solid #ffdf00":"3px solid transparent"}}>{t}</button>
-          ))}
-        </nav>
+        {/* ═══ MENU PRINCIPAL — 6 botões ═══ */}
+        {subScreen==="menu" && (
+          <div style={{maxWidth:600,margin:"0 auto",padding:"20px 14px",animation:"fadeIn .3s ease"}}>
+            <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#666",textAlign:"center",marginBottom:20,letterSpacing:2}}>
+              OLÁ, {currentUser.apelido.toUpperCase()}! O QUE DESEJA VER?
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
+              {[
+                {icon:"📊",label:"Palpites\ndo Bolão",    color:"linear-gradient(135deg,#005580,#003355)", sub:"menu_todos",  border:"#005580"},
+                {icon:"🏆",label:"Classificação\ndo Bolão",color:"linear-gradient(135deg,#7a5000,#c8a200)", sub:"menu_ranking", border:"#c8a200"},
+                {icon:"⚽",label:"Meus\nPalpites",         color:"linear-gradient(135deg,#006622,#009c3b)", sub:"menu_meus",    border:"#009c3b"},
+                {icon:"📅",label:"Jogos\nde Hoje",         color:"linear-gradient(135deg,#6a0000,#cc0000)", sub:"menu_hoje",    border:"#cc0000"},
+                {icon:"🗓️",label:"Tabela\ndos Jogos",      color:"linear-gradient(135deg,#1a1a6a,#2a2aaa)", sub:"menu_agenda",  border:"#2a2aaa"},
+                {icon:"🔐",label:"Adminis-\ntrador",        color:"linear-gradient(135deg,#2a0040,#6a00aa)", sub:"menu_admin",   border:"#6a00aa"},
+              ].map(b=>(
+                <button key={b.sub} className="mbtn" onClick={()=>setSubScreen(b.sub)}
+                  style={{background:b.color,border:`1px solid ${b.border}`,borderRadius:16,
+                    padding:"24px 14px",cursor:"pointer",color:"#fff",textAlign:"center",
+                    boxShadow:`0 4px 20px rgba(0,0,0,.4)`,minHeight:130,
+                    display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10}}>
+                  <div style={{fontSize:fs(42)}}>{b.icon}</div>
+                  <div style={{fontSize:fs(18),letterSpacing:2,lineHeight:1.2,whiteSpace:"pre-line"}}>{b.label}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        <main style={{maxWidth:1040,margin:"0 auto",padding:"18px 12px"}}>
+        <main style={{maxWidth:1040,margin:"0 auto",padding:"18px 12px",display:subScreen==="menu"?"none":"block"}}>
 
-          {/* TAB 0 - HOJE */}
-          {tab===0&&(
+          {/* HOJE */}
+          {subScreen==="menu_hoje"&&(
             <div>
               <div style={{fontSize:24,letterSpacing:4,color:"#ffdf00",marginBottom:4}}>📅 JOGOS DE HOJE</div>
               <div style={{fontFamily:"sans-serif",fontSize:13,color:"#777",marginBottom:20}}>{new Date().toLocaleDateString("pt-BR",{weekday:"long",day:"2-digit",month:"long",year:"numeric"})}</div>
@@ -832,8 +1253,8 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 1 - AGENDA */}
-          {tab===1&&(
+          {/* AGENDA */}
+          {subScreen==="menu_agenda"&&(
             <div>
               <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
                 <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{background:"#050d0a",color:"#fff",border:"1px solid #1a3a1a",padding:"8px 12px",borderRadius:6,fontSize:13,fontFamily:"sans-serif",cursor:"pointer"}}>
@@ -845,8 +1266,8 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 2 - MEUS PALPITES */}
-          {tab===2&&(
+          {/* MEUS PALPITES */}
+          {subScreen==="menu_meus"&&(
             <div>
               <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
@@ -862,8 +1283,8 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 3 - PALPITES DE TODOS */}
-          {tab===3&&(
+          {/* PALPITES DO BOLÃO */}
+          {subScreen==="menu_todos"&&(
             <div>
               <div style={{fontSize:20,letterSpacing:4,color:"#ffdf00",marginBottom:6}}>👀 PALPITES DE TODOS</div>
               <p style={{fontFamily:"sans-serif",fontSize:13,color:"#777",marginBottom:16}}>Palpites revelados após o início de cada jogo.</p>
@@ -912,26 +1333,37 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 4 - RANKING */}
-          {tab===4&&(
+          {/* CLASSIFICAÇÃO */}
+          {subScreen==="menu_ranking"&&(
             <div>
-              <h2 style={{letterSpacing:5,color:"#ffdf00",marginBottom:14,fontSize:24}}>🏆 RANKING — {selectedBolao.nome}</h2>
-              <div style={{display:"grid",gap:8}}>
+              <h2 style={{letterSpacing:5,color:"#ffdf00",marginBottom:14,fontSize:fs(24)}}>🏆 CLASSIFICAÇÃO — {selectedBolao.nome}</h2>
+              <div style={{display:"grid",gap:10}}>
                 {ranking.map((p,i)=>{
                   const isMe=p.uid===currentUser.uid;
                   return(
-                    <div key={p.uid} style={{background:i===0?"linear-gradient(90deg,rgba(255,215,0,.16),transparent)":i===1?"linear-gradient(90deg,rgba(192,192,192,.08),transparent)":i===2?"linear-gradient(90deg,rgba(205,127,50,.08),transparent)":"rgba(255,255,255,.03)",border:`2px solid ${isMe?"#ffdf00":i===0?"rgba(255,215,0,.4)":"#1a1a1a"}`,borderRadius:10,padding:"13px 16px",display:"flex",alignItems:"center",gap:14}}>
-                      <div style={{width:38,height:38,borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",background:avatarColor(p.apelido),color:"#fff",fontSize:15,fontWeight:700}}>{p.apelido[0].toUpperCase()}</div>
-                      <div style={{flex:1}}>
-                        <div style={{fontSize:18,letterSpacing:2,color:isMe?"#ffdf00":"#fff"}}>{p.apelido}{isMe&&<span style={{fontSize:11,color:"#ffdf00",marginLeft:8,fontFamily:"sans-serif"}}>← você</span>}</div>
-                        <div style={{fontSize:11,color:"#666",fontFamily:"sans-serif"}}>🎯 {p.exact} exatos · ✅ {p.win} acertos</div>
+                    <div key={p.uid} style={{
+                      background:i===0?"linear-gradient(90deg,rgba(255,215,0,.18),transparent)":i===1?"linear-gradient(90deg,rgba(192,192,192,.1),transparent)":i===2?"linear-gradient(90deg,rgba(205,127,50,.1),transparent)":"rgba(255,255,255,.03)",
+                      border:`2px solid ${isMe?"#ffdf00":i===0?"rgba(255,215,0,.5)":i===1?"rgba(192,192,192,.3)":i===2?"rgba(205,127,50,.3)":"#1a1a1a"}`,
+                      borderRadius:14,padding:"16px",display:"flex",alignItems:"center",gap:14
+                    }}>
+                      {/* Posição */}
+                      <div style={{fontSize:fs(32),width:44,textAlign:"center",flexShrink:0}}>
+                        {i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{fontFamily:"sans-serif",fontWeight:900,color:"#666",fontSize:fs(20)}}>{i+1}°</span>}
                       </div>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <div style={{width:30,height:30,borderRadius:"50%",background:i===0?"#ffdf00":i===1?"#aaa":i===2?"#cd7f32":"#1a2a1a",display:"flex",alignItems:"center",justifyContent:"center",color:i<3?"#000":"#777",fontSize:13,fontWeight:900}}>{i===0?"🥇":i===1?"🥈":i===2?"🥉":i+1}</div>
-                        <div style={{textAlign:"right"}}>
-                          <div style={{fontSize:28,color:isMe?"#ffdf00":"#fff",lineHeight:1}}>{p.pts}</div>
-                          <div style={{fontSize:10,color:"#555",fontFamily:"sans-serif"}}>PTS</div>
+                      {/* Avatar + nome */}
+                      <div style={{flex:1}}>
+                        <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:4}}>
+                          <div style={{width:fs(36),height:fs(36),borderRadius:"50%",background:avatarColor(p.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(16),fontWeight:700,color:"#fff",flexShrink:0}}>{p.apelido[0].toUpperCase()}</div>
+                          <div style={{fontSize:fs(20),letterSpacing:2,color:isMe?"#ffdf00":"#fff"}}>{p.apelido}{isMe&&<span style={{fontSize:fs(12),color:"#ffdf00",marginLeft:6,fontFamily:"sans-serif"}}>← você</span>}</div>
                         </div>
+                        <div style={{fontSize:fs(13),color:"#666",fontFamily:"sans-serif"}}>
+                          🎯 {p.exact} placar exato · ✅ {p.win} acerto
+                        </div>
+                      </div>
+                      {/* Pontos */}
+                      <div style={{textAlign:"right",flexShrink:0}}>
+                        <div style={{fontSize:fs(38),color:isMe?"#ffdf00":i===0?"#ffdf00":"#fff",lineHeight:1,fontWeight:900}}>{p.pts}</div>
+                        <div style={{fontSize:fs(12),color:"#555",fontFamily:"sans-serif"}}>PTS</div>
                       </div>
                     </div>
                   );
@@ -940,8 +1372,8 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB 5 - ADMIN */}
-          {tab===5&&(
+          {/* ADMIN DO BOLÃO */}
+          {subScreen==="menu_admin"&&(
             <div>
               <div style={{background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.3)",borderRadius:12,padding:"16px 20px",marginBottom:20}}>
                 <div style={{fontSize:17,letterSpacing:3,color:"#ffdf00",marginBottom:10}}>🔐 MODO ADMIN</div>
