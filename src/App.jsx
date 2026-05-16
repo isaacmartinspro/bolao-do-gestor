@@ -161,6 +161,47 @@ const fmtTime = iso => new Date(iso+":00-03:00").toLocaleTimeString("pt-BR",{hou
 const isPast  = iso => new Date(iso+":00-03:00") < new Date();
 const isToday = iso => { const d=new Date(iso+":00-03:00"),n=new Date(); return d.toDateString()===n.toDateString(); };
 
+// ─── AVATARES DISPONÍVEIS ─────────────────────────────────────────────────────
+const AVATARES = [
+  // Futebol
+  "⚽","🏆","🥇","🎯","🔥","⚡","💪","🦁","🐯","🦊",
+  // Pessoas
+  "👨","👩","👦","👧","🧔","👴","👵","🧑","👮","🕵️",
+  // Diversão
+  "😎","🤩","😜","🤠","🥳","😏","🤪","😈","👑","🎭",
+  // Animais
+  "🦅","🐺","🦈","🐻","🦋","🐲","🦊","🐸","🦁","🐯",
+  // Objetos
+  "🌟","💫","🎖️","🏅","🎪","🎨","🎸","🎺","🎻","🥁",
+];
+
+const AVATAR_BG_COLORS = [
+  "#009c3b","#002776","#c8a200","#8b1010","#005580",
+  "#4a0080","#803000","#008080","#006060","#505000",
+  "#1a5a1a","#5a1a5a","#1a1a5a","#5a3a00","#003a3a",
+];
+
+// Renderiza avatar do membro — usa emoji se tiver, senão inicial com cor
+const MemberAvatar = ({member, size=40}) => {
+  const hasEmoji = member?.avatar && AVATARES.includes(member.avatar);
+  const bgColor = AVATAR_BG_COLORS[(member?.apelido?.charCodeAt(0)||0) % AVATAR_BG_COLORS.length];
+  const colorIndex = member?.avatarColor !== undefined ? member.avatarColor : (member?.apelido?.charCodeAt(0)||0) % AVATAR_BG_COLORS.length;
+  const bg = AVATAR_BG_COLORS[colorIndex % AVATAR_BG_COLORS.length] || bgColor;
+
+  return (
+    <div style={{
+      width:size, height:size, borderRadius:"50%",
+      background: hasEmoji ? bg : bg,
+      display:"flex", alignItems:"center", justifyContent:"center",
+      fontSize: hasEmoji ? size*0.55 : size*0.45,
+      fontWeight:700, color:"#fff", flexShrink:0,
+      border:"2px solid rgba(255,255,255,.2)"
+    }}>
+      {hasEmoji ? member.avatar : (member?.apelido?.[0]?.toUpperCase() || "?")}
+    </div>
+  );
+};
+
 function calcPoints(guess, result) {
   if (!guess||!result) return null;
   const gh=parseInt(guess.home),ga=parseInt(guess.away);
@@ -568,20 +609,27 @@ export default function App() {
 
     async function handleLogin() {
       setLoginError("");
-      const bid = loginBolao;
+      const bid = loginBolao || (bList[0]?.[0]||"");
       if (!bid) { setLoginError("Selecione um bolão."); return; }
       const mList = getMembersOfBolao(bid);
       const termo = loginInput.trim().toLowerCase();
       if (!termo) { setLoginError("Digite seu nome, email ou WhatsApp."); return; }
+
+      // Busca EXATA — não usa includes para evitar falsos positivos
       const found = mList.find(m =>
-        m.apelido?.toLowerCase()===termo ||
-        m.nome?.toLowerCase().includes(termo) ||
-        m.email?.toLowerCase()===termo ||
-        m.whatsapp?.replace(/\D/g,"").endsWith(termo.replace(/\D/g,""))
+        m.apelido?.toLowerCase() === termo ||
+        m.nome?.toLowerCase() === termo ||
+        m.email?.toLowerCase() === termo ||
+        m.whatsapp?.replace(/\D/g,"") === termo.replace(/\D/g,"")
       );
-      if (!found) { setLoginError("Não encontrado. Verifique os dados ou cadastre-se."); return; }
+
+      if (!found) {
+        setLoginError(`"${loginInput.trim()}" não encontrado neste bolão. Digite exatamente como foi cadastrado.`);
+        return;
+      }
       if (found.status==="pendente") { setScreen("pending"); return; }
-      if (found.status==="rejeitado") { setLoginError("Seu cadastro foi recusado. Fale com o administrador."); return; }
+      if (found.status==="rejeitado") { setLoginError("Cadastro recusado. Fale com o administrador."); return; }
+
       const bolao = boloes[bid];
       setSelectedBolao({id:bid,...bolao});
       setCurrentUser({uid:found.uid, apelido:found.apelido, bolaoId:bid});
@@ -609,7 +657,7 @@ export default function App() {
               </div>
             </div>
 
-            <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"28px"}}>
+            <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"24px"}}>
 
               {/* Seleção do bolão */}
               {bList.length > 1 && (
@@ -622,35 +670,62 @@ export default function App() {
                 </div>
               )}
               {bList.length === 1 && (
-                <div style={{background:"rgba(0,156,59,.1)",border:"1px solid rgba(0,156,59,.3)",borderRadius:8,padding:"10px 14px",marginBottom:18,fontFamily:"sans-serif",fontSize:13,color:"#009c3b"}}>
+                <div style={{background:"rgba(0,156,59,.1)",border:"1px solid rgba(0,156,59,.3)",borderRadius:8,padding:"10px 14px",marginBottom:18,fontFamily:"sans-serif",fontSize:14,color:"#009c3b",fontWeight:700}}>
                   ⚽ {bList[0][1].nome}
                 </div>
               )}
 
-              {/* Input de identificação */}
-              <div style={{marginBottom:8}}>
-                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:6}}>
-                  SEU NOME, EMAIL OU WHATSAPP
-                </div>
-                <input type="text" placeholder="Ex: Isaac, isaac@email.com ou 11987654321"
-                  value={loginInput} onChange={e=>{setLoginInput(e.target.value);setLoginError("");}}
-                  onKeyDown={e=>e.key==="Enter"&&handleLogin()}
-                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",
-                    borderRadius:8,padding:"12px 14px",fontSize:15,outline:"none",fontFamily:"sans-serif"}}/>
-              </div>
+              {/* Lista de participantes como botões — clique direto no seu nome */}
+              {(()=>{
+                const bid = loginBolao || bList[0]?.[0] || "";
+                const aprovados = getMembersOfBolao(bid).filter(m=>m.status==="aprovado");
+                if (aprovados.length === 0) return (
+                  <div style={{fontFamily:"sans-serif",fontSize:13,color:"#555",textAlign:"center",padding:"16px"}}>
+                    Nenhum participante aprovado ainda.
+                  </div>
+                );
+                return (
+                  <div style={{marginBottom:16}}>
+                    <div style={{fontFamily:"sans-serif",fontSize:12,color:"#ffdf00",letterSpacing:1,marginBottom:10,fontWeight:700}}>
+                      👇 CLIQUE NO SEU NOME:
+                    </div>
+                    <div style={{display:"grid",gap:10}}>
+                      {aprovados.map(m=>(
+                        <button key={m.uid} onClick={()=>{
+                          const bolao = boloes[bid];
+                          setSelectedBolao({id:bid,...bolao});
+                          setCurrentUser({uid:m.uid, apelido:m.apelido, bolaoId:bid});
+                          setScreen("bolao");
+                          notify(`⚽ Bem-vindo(a), ${m.apelido}!`);
+                        }} style={{
+                          background:"rgba(255,255,255,.06)",
+                          border:"2px solid #1a3a1a",
+                          borderRadius:12,padding:"14px 18px",
+                          cursor:"pointer",color:"#fff",
+                          display:"flex",alignItems:"center",gap:14,
+                          textAlign:"left",transition:".15s",width:"100%"
+                        }}
+                        onMouseOver={e=>e.currentTarget.style.borderColor="#009c3b"}
+                        onMouseOut={e=>e.currentTarget.style.borderColor="#1a3a1a"}
+                        >
+                          <MemberAvatar member={m} size={50}/>
+                          <div>
+                            <div style={{fontSize:20,letterSpacing:2,fontFamily:"'Bebas Neue',sans-serif"}}>{m.apelido}</div>
+                            <div style={{fontSize:12,color:"#888",fontFamily:"sans-serif"}}>{m.nome}</div>
+                          </div>
+                          <div style={{marginLeft:"auto",fontSize:20,color:"#009c3b"}}>▶</div>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
 
-              {loginError&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:12}}>{loginError}</div>}
+              {loginError&&<div style={{color:"#ff6b6b",fontSize:13,fontFamily:"sans-serif",marginBottom:10,textAlign:"center",background:"rgba(255,0,0,.1)",padding:"8px",borderRadius:8}}>{loginError}</div>}
 
-              <button onClick={handleLogin}
-                style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
-                  border:"none",borderRadius:10,padding:"14px",fontSize:18,letterSpacing:3,
-                  cursor:"pointer",marginTop:8,boxShadow:"0 4px 16px rgba(0,156,59,.3)"}}>
-                ENTRAR ⚽
-              </button>
-
-              <div style={{textAlign:"center",marginTop:16,fontFamily:"sans-serif",fontSize:12,color:"#555"}}>
-                Não está cadastrado?{" "}
-                <button onClick={()=>setScreen("cadastro")} style={{background:"none",border:"none",color:"#ffdf00",cursor:"pointer",fontSize:12,textDecoration:"underline"}}>
+              <div style={{textAlign:"center",marginTop:16,fontFamily:"sans-serif",fontSize:13,color:"#555"}}>
+                Não está na lista?{" "}
+                <button onClick={()=>setScreen("cadastro")} style={{background:"none",border:"none",color:"#ffdf00",cursor:"pointer",fontSize:13,textDecoration:"underline"}}>
                   Cadastre-se aqui
                 </button>
               </div>
@@ -1696,7 +1771,8 @@ function AdminGlobalPanel({
             {aprovados.map(m=>(
               <div key={m.uid} style={{background:"rgba(0,156,59,.06)",border:"1px solid rgba(0,156,59,.2)",borderRadius:10,padding:"10px 14px",marginBottom:8}}>
                 {editMember?.uid===m.uid?(
-                  <div style={{display:"grid",gap:8}}>
+                  <div style={{display:"grid",gap:10}}>
+                    {/* Campos de texto */}
                     {[
                       {label:"Nome",val:"nome"},{label:"Apelido",val:"apelido"},
                       {label:"WhatsApp",val:"whatsapp"},{label:"Email",val:"email"}
@@ -1707,16 +1783,52 @@ function AdminGlobalPanel({
                           style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #009c3b",borderRadius:6,padding:"7px 10px",fontSize:13,fontFamily:"sans-serif"}}/>
                       </div>
                     ))}
+
+                    {/* Seletor de Avatar */}
+                    <div>
+                      <div style={{fontFamily:"sans-serif",fontSize:10,color:"#888",marginBottom:6}}>AVATAR (EMOJI)</div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap",background:"#050d0a",borderRadius:8,padding:"10px",border:"1px solid #009c3b"}}>
+                        {AVATARES.map(av=>(
+                          <button key={av} onClick={()=>setEditMember(p=>({...p,avatar:av}))}
+                            style={{
+                              background:editMember.avatar===av?"rgba(0,156,59,.4)":"transparent",
+                              border:`2px solid ${editMember.avatar===av?"#009c3b":"transparent"}`,
+                              borderRadius:8,padding:"4px",cursor:"pointer",
+                              fontSize:24,lineHeight:1,transition:".1s"
+                            }}>{av}</button>
+                        ))}
+                      </div>
+                      {/* Cor de fundo do avatar */}
+                      <div style={{fontFamily:"sans-serif",fontSize:10,color:"#888",marginTop:8,marginBottom:6}}>COR DO FUNDO</div>
+                      <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                        {AVATAR_BG_COLORS.map((c,i)=>(
+                          <button key={c} onClick={()=>setEditMember(p=>({...p,avatarColor:i}))}
+                            style={{
+                              width:28,height:28,borderRadius:"50%",background:c,
+                              border:`3px solid ${editMember.avatarColor===i?"#fff":"transparent"}`,
+                              cursor:"pointer",transition:".1s"
+                            }}/>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Preview */}
+                    <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,.04)",borderRadius:8,padding:"10px"}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888"}}>PREVIEW:</div>
+                      <MemberAvatar member={editMember} size={44}/>
+                      <div style={{fontSize:16,letterSpacing:1}}>{editMember.apelido}</div>
+                    </div>
+
                     <div style={{display:"flex",gap:8}}>
-                      <button onClick={()=>saveMemberEdit(m.uid)} style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:6,padding:"7px 16px",cursor:"pointer",fontSize:13,fontWeight:700}}>💾 Salvar</button>
-                      <button onClick={()=>setEditMember(null)} style={{background:"#333",color:"#aaa",border:"none",borderRadius:6,padding:"7px 16px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>Cancelar</button>
+                      <button onClick={()=>saveMemberEdit(m.uid)} style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:6,padding:"9px 18px",cursor:"pointer",fontSize:14,fontWeight:700}}>💾 Salvar</button>
+                      <button onClick={()=>setEditMember(null)} style={{background:"#333",color:"#aaa",border:"none",borderRadius:6,padding:"9px 16px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>Cancelar</button>
                     </div>
                   </div>
                 ):(
                   <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-                    <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(m.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700,color:"#fff",flexShrink:0}}>{m.apelido[0].toUpperCase()}</div>
+                    <MemberAvatar member={m} size={40}/>
                     <div style={{flex:1}}>
-                      <div style={{fontSize:15,letterSpacing:1}}>{m.apelido}</div>
+                      <div style={{fontSize:16,letterSpacing:1}}>{m.apelido}</div>
                       <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777"}}>
                         👤 {m.nome}
                         {m.whatsapp&&<> · 📱 <a href={`https://wa.me/55${m.whatsapp?.replace(/\D/g,"")}`} target="_blank" style={{color:"#25d366",textDecoration:"none"}}>{m.whatsapp}</a></>}
