@@ -186,9 +186,7 @@ export default function App() {
   // Navegação global
   const [screen, setScreen] = useState("home"); // home | register | pending | bolao
   const [selectedBolao, setSelectedBolao] = useState(null); // { id, nome, descricao }
-  const [currentUser, setCurrentUser] = useState(() => {
-    try { return JSON.parse(localStorage.getItem("bg26_session")||"null"); } catch { return null; }
-  }); // { uid, apelido, bolaoId }
+  const [currentUser, setCurrentUser] = useState(null); // sempre começa sem sessão
 
   // Dados Firebase
   const [boloes, setBoloes]         = useState({});
@@ -253,18 +251,16 @@ export default function App() {
     return () => { off(rBoloes); off(rResults); off(rGuesses); off(rMembers); };
   }, [db]);
 
-  // ── Persist session ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    localStorage.setItem("bg26_session", JSON.stringify(currentUser));
-  }, [currentUser]);
+  // Sem persistência de sessão - cada pessoa faz login toda vez
+  // useEffect(()=>{ localStorage.setItem("bg26_session", JSON.stringify(currentUser)); },[currentUser]);
 
-  // ── Retomar sessão ──────────────────────────────────────────────────────────
+  // ── Sem restauração automática de sessão ────────────────────────────────────
+  // Cada pessoa deve fazer login manualmente para garantir identidade correta
   useEffect(() => {
-    if (currentUser && boloes[currentUser.bolaoId]) {
-      setSelectedBolao({ id: currentUser.bolaoId, ...boloes[currentUser.bolaoId] });
-      setScreen("bolao");
-    }
-  }, [db, boloes]);
+    // Limpa qualquer sessão antiga ao carregar
+    localStorage.removeItem("bg26_session");
+    setCurrentUser(null);
+  }, []);
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const getResult = id => results[id];
@@ -1110,8 +1106,14 @@ export default function App() {
                     </div>
                   </div>
                 </div>
-                <button onClick={()=>{setCurrentUser(null);setScreen("home");setSelectedBolao(null);localStorage.removeItem("bg26_session");}}
-                  style={{background:"transparent",border:"1px solid #333",color:"#666",borderRadius:5,padding:"4px 10px",cursor:"pointer",fontSize:fs(11),fontFamily:"sans-serif"}}>Sair</button>
+                <button onClick={()=>{
+                  localStorage.removeItem("bg26_session");
+                  setCurrentUser(null);
+                  setScreen("entrar");
+                  setSelectedBolao(null);
+                }} style={{background:"#cc0000",border:"none",color:"#fff",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:fs(12),fontFamily:"sans-serif",fontWeight:700}}>
+                  🔄 Trocar Usuário
+                </button>
               </div>
             </div>
           </div>
