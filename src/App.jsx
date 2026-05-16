@@ -946,17 +946,18 @@ export default function App() {
     return (
       <div style={BASE}>
         <style>{`@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');*{box-sizing:border-box;}`}</style>
-        <Header/>
+        <div style={{height:5,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
         <div style={{maxWidth:440,margin:"60px auto",padding:"0 16px",textAlign:"center"}}>
-          <div style={{fontSize:52,marginBottom:16}}>⏳</div>
-          <div style={{fontSize:26,letterSpacing:4,color:"#ffdf00",marginBottom:10}}>CADASTRO ENVIADO!</div>
-          <div style={{fontFamily:"sans-serif",fontSize:14,color:"#aaa",lineHeight:1.8,marginBottom:20}}>
-            Seu cadastro foi enviado para o administrador.<br/>
-            Assim que for aprovado, você já pode entrar no bolão.<br/><br/>
-            <strong style={{color:"#fff"}}>Dica:</strong> Avise o Prof. Isaac pelo WhatsApp que você se cadastrou!
+          <div style={{fontSize:64,marginBottom:16}}>⏳</div>
+          <div style={{fontSize:26,letterSpacing:4,color:"#ffdf00",marginBottom:12}}>CADASTRO ENVIADO!</div>
+          <div style={{fontFamily:"sans-serif",fontSize:15,color:"#aaa",lineHeight:2,marginBottom:24,background:"rgba(255,255,255,.04)",border:"1px solid #1a2a1a",borderRadius:12,padding:"20px"}}>
+            Seu cadastro foi enviado para o <strong style={{color:"#fff"}}>Administrador</strong>.<br/>
+            Assim que for aprovado, você já poderá entrar no bolão.<br/><br/>
+            <span style={{fontSize:22}}>📲</span><br/>
+            <strong style={{color:"#ffdf00"}}>Dica:</strong> Avise o <strong style={{color:"#fff"}}>Administrador</strong> pelo WhatsApp que você se cadastrou para agilizar a aprovação!
           </div>
           <button onClick={()=>{setScreen("home");setSelectedBolao(null);}}
-            style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:8,padding:"12px 24px",fontSize:16,letterSpacing:2,cursor:"pointer"}}>
+            style={{background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:10,padding:"14px 28px",fontSize:16,letterSpacing:2,cursor:"pointer",boxShadow:"0 4px 16px rgba(0,156,59,.3)"}}>
             ← VOLTAR AO INÍCIO
           </button>
         </div>
@@ -1169,37 +1170,80 @@ export default function App() {
           <div style={{height:4,background:"linear-gradient(90deg,#009c3b 33%,#ffdf00 33% 66%,#002776 66%)"}}/>
         </header>
 
-        {/* Barra de atualização */}
-        <div style={{background:"rgba(0,0,0,.8)",borderBottom:"1px solid #0a200a",padding:"6px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
-          <button onClick={fetchLive} disabled={liveFetching} style={{background:liveFetching?"#1a1a1a":"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:6,padding:"5px 14px",cursor:"pointer",fontSize:fs(12),fontWeight:700}}>
-            {liveFetching?"⏳":"🔄"} Atualizar Placares
-          </button>
-          {lastUpdate&&<span style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#555"}}>🕐 {lastUpdate}</span>}
-          {subScreen!=="menu"&&<button onClick={()=>setSubScreen("menu")} style={{marginLeft:"auto",background:"transparent",border:"1px solid #2a2a2a",color:"#888",borderRadius:6,padding:"4px 12px",cursor:"pointer",fontSize:fs(11),fontFamily:"sans-serif"}}>← Menu</button>}
-          <span style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#333",marginLeft:subScreen==="menu"?"auto":"0"}}>{approvedMembers.length} participantes</span>
+        {/* ═══ BARRA DE NAVEGAÇÃO FIXA ═══ */}
+        <div style={{background:"rgba(0,0,0,.92)",borderBottom:"2px solid #1a2a1a",position:"sticky",top:0,zIndex:100}}>
+
+          {/* Linha 1: Atualizar + botões de seção */}
+          <div style={{padding:"6px 10px",display:"flex",alignItems:"center",gap:6,overflowX:"auto",flexWrap:"nowrap"}}>
+            <button onClick={fetchLive} disabled={liveFetching} style={{
+              background:liveFetching?"#1a1a1a":"linear-gradient(135deg,#009c3b,#006622)",
+              color:"#fff",border:"none",borderRadius:7,padding:"7px 12px",
+              cursor:"pointer",fontSize:fs(12),fontWeight:700,flexShrink:0,whiteSpace:"nowrap"
+            }}>{liveFetching?"⏳":"🔄"} Atualizar</button>
+
+            <div style={{width:1,height:24,background:"#2a2a2a",flexShrink:0}}/>
+
+            {[
+              {icon:"⚽",label:"Meus Palpites",   sub:"menu_meus",    bg:"#006622",active:"#009c3b"},
+              {icon:"👀",label:"Palpites Bolão",  sub:"menu_todos",   bg:"#003355",active:"#005580"},
+              {icon:"🏆",label:"Classificação",   sub:"menu_ranking", bg:"#7a5000",active:"#c8a200"},
+              {icon:"📅",label:"Hoje",             sub:"menu_hoje",    bg:"#6a0000",active:"#cc0000"},
+              {icon:"🗓️",label:"Agenda",           sub:"menu_agenda",  bg:"#1a1a6a",active:"#2a2aaa"},
+              {icon:"🔐",label:"Admin",            sub:"menu_admin",   bg:"#2a0040",active:"#6a00aa"},
+            ].map(b=>(
+              <button key={b.sub} onClick={()=>setSubScreen(b.sub)} style={{
+                background:subScreen===b.sub?b.active:b.bg,
+                color:"#fff",border:`1px solid ${subScreen===b.sub?b.active:"#333"}`,
+                borderRadius:7,padding:"7px 12px",cursor:"pointer",
+                fontSize:fs(12),fontWeight:700,flexShrink:0,whiteSpace:"nowrap",
+                transition:".15s",opacity:subScreen===b.sub?1:.75
+              }}>{b.icon} {b.label}</button>
+            ))}
+          </div>
+
+          {/* Linha 2: Filtros rápidos de grupo (só nas seções de jogos) */}
+          {(subScreen==="menu_meus"||subScreen==="menu_todos"||subScreen==="menu_agenda"||subScreen==="menu_hoje")&&(
+            <div style={{padding:"0 10px 7px",display:"flex",alignItems:"center",gap:5,overflowX:"auto",flexWrap:"nowrap"}}>
+              <span style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#555",flexShrink:0,letterSpacing:1}}>FILTRO:</span>
+              {["Todos","Hoje",...GROUPS.map(g=>g),"32 Avos","Oitavas","Quartas","Semifinal","Final"].map(g=>{
+                const label = g.length===1 ? "G"+g : g==="Todos"?"Todos":g==="Hoje"?"Hoje":g==="32 Avos"?"32A":g==="Oitavas"?"OIT":g==="Quartas"?"QUA":g==="Semifinal"?"SEMI":g==="Final"?"FINAL":g;
+                const active = filterGroup===g || (filterGroup==="Grupo "+g && !["Todos","Hoje","32 Avos","Oitavas","Quartas","Semifinal","Final"].includes(g));
+                const fgVal = GROUPS.includes(g) ? "Grupo "+g : g;
+                return(
+                  <button key={g} onClick={()=>setFilterGroup(fgVal)} style={{
+                    background:active?"#ffdf00":"rgba(255,255,255,.07)",
+                    color:active?"#000":"#aaa",border:`1px solid ${active?"#ffdf00":"#2a2a2a"}`,
+                    borderRadius:6,padding:"4px 10px",cursor:"pointer",
+                    fontSize:fs(11),fontWeight:active?700:400,flexShrink:0,
+                    fontFamily:"sans-serif",transition:".15s"
+                  }}>{label}</button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
-        {/* ═══ MENU PRINCIPAL — 6 botões ═══ */}
+        {/* ═══ MENU PRINCIPAL — 6 botões (tela inicial) ═══ */}
         {subScreen==="menu" && (
-          <div style={{maxWidth:600,margin:"0 auto",padding:"20px 14px",animation:"fadeIn .3s ease"}}>
-            <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#666",textAlign:"center",marginBottom:20,letterSpacing:2}}>
+          <div style={{maxWidth:600,margin:"0 auto",padding:"24px 14px",animation:"fadeIn .3s ease"}}>
+            <div style={{fontFamily:"sans-serif",fontSize:fs(13),color:"#777",textAlign:"center",marginBottom:20,letterSpacing:2}}>
               OLÁ, {currentUser.apelido.toUpperCase()}! O QUE DESEJA VER?
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14}}>
               {[
-                {icon:"📊",label:"Palpites\ndo Bolão",    color:"linear-gradient(135deg,#005580,#003355)", sub:"menu_todos",  border:"#005580"},
-                {icon:"🏆",label:"Classificação\ndo Bolão",color:"linear-gradient(135deg,#7a5000,#c8a200)", sub:"menu_ranking", border:"#c8a200"},
-                {icon:"⚽",label:"Meus\nPalpites",         color:"linear-gradient(135deg,#006622,#009c3b)", sub:"menu_meus",    border:"#009c3b"},
-                {icon:"📅",label:"Jogos\nde Hoje",         color:"linear-gradient(135deg,#6a0000,#cc0000)", sub:"menu_hoje",    border:"#cc0000"},
-                {icon:"🗓️",label:"Tabela\ndos Jogos",      color:"linear-gradient(135deg,#1a1a6a,#2a2aaa)", sub:"menu_agenda",  border:"#2a2aaa"},
-                {icon:"🔐",label:"Adminis-\ntrador",        color:"linear-gradient(135deg,#2a0040,#6a00aa)", sub:"menu_admin",   border:"#6a00aa"},
+                {icon:"⚽",label:"Meus\nPalpites",          color:"linear-gradient(135deg,#006622,#009c3b)", sub:"menu_meus",    border:"#009c3b"},
+                {icon:"👀",label:"Palpites\ndo Bolão",       color:"linear-gradient(135deg,#003355,#005580)", sub:"menu_todos",   border:"#005580"},
+                {icon:"🏆",label:"Classificação\ndo Bolão",  color:"linear-gradient(135deg,#7a5000,#c8a200)", sub:"menu_ranking", border:"#c8a200"},
+                {icon:"📅",label:"Jogos\nde Hoje",           color:"linear-gradient(135deg,#6a0000,#cc0000)", sub:"menu_hoje",    border:"#cc0000"},
+                {icon:"🗓️",label:"Tabela\ndos Jogos",        color:"linear-gradient(135deg,#1a1a6a,#2a2aaa)", sub:"menu_agenda",  border:"#2a2aaa"},
+                {icon:"🔐",label:"Adminis-\ntrador",          color:"linear-gradient(135deg,#2a0040,#6a00aa)", sub:"menu_admin",   border:"#6a00aa"},
               ].map(b=>(
                 <button key={b.sub} className="mbtn" onClick={()=>setSubScreen(b.sub)}
-                  style={{background:b.color,border:`1px solid ${b.border}`,borderRadius:16,
+                  style={{background:b.color,border:`2px solid ${b.border}`,borderRadius:16,
                     padding:"24px 14px",cursor:"pointer",color:"#fff",textAlign:"center",
                     boxShadow:`0 4px 20px rgba(0,0,0,.4)`,minHeight:130,
                     display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:10}}>
-                  <div style={{fontSize:fs(42)}}>{b.icon}</div>
+                  <div style={{fontSize:fs(44)}}>{b.icon}</div>
                   <div style={{fontSize:fs(18),letterSpacing:2,lineHeight:1.2,whiteSpace:"pre-line"}}>{b.label}</div>
                 </button>
               ))}
@@ -1254,12 +1298,6 @@ export default function App() {
           {/* AGENDA */}
           {subScreen==="menu_agenda"&&(
             <div>
-              <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-                <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{background:"#050d0a",color:"#fff",border:"1px solid #1a3a1a",padding:"8px 12px",borderRadius:6,fontSize:13,fontFamily:"sans-serif",cursor:"pointer"}}>
-                  {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
-                </select>
-                <span style={{fontFamily:"sans-serif",fontSize:12,color:"#555"}}>{filteredGames().length} jogos</span>
-              </div>
               {filteredGames().map(g=><GameRow key={g.id} g={g}/>)}
             </div>
           )}
@@ -1267,30 +1305,23 @@ export default function App() {
           {/* MEUS PALPITES */}
           {subScreen==="menu_meus"&&(
             <div>
-              <div style={{display:"flex",gap:10,marginBottom:16,flexWrap:"wrap",alignItems:"center"}}>
-                <div style={{display:"flex",alignItems:"center",gap:8}}>
-                  <div style={{width:30,height:30,borderRadius:"50%",background:avatarColor(currentUser.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:14,fontWeight:700}}>{currentUser.apelido[0].toUpperCase()}</div>
-                  <span style={{fontSize:18,letterSpacing:2,color:"#ffdf00"}}>{currentUser.apelido}</span>
-                </div>
-                <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{background:"#050d0a",color:"#fff",border:"1px solid #1a3a1a",padding:"7px 10px",borderRadius:6,fontSize:12,fontFamily:"sans-serif",cursor:"pointer"}}>
-                  {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
-                </select>
+              <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14,flexWrap:"wrap"}}>
+                <div style={{width:fs(32),height:fs(32),borderRadius:"50%",background:avatarColor(currentUser.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(15),fontWeight:700,color:"#fff"}}>{currentUser.apelido[0].toUpperCase()}</div>
+                <span style={{fontSize:fs(20),letterSpacing:2,color:"#ffdf00"}}>{currentUser.apelido}</span>
+                <span style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#555"}}>
+                  {filteredGames().filter(g=>myGuesses[g.id]?.home!==undefined).length}/{filteredGames().length} preenchidos
+                </span>
               </div>
               {filteredGames().map(g=><GameRow key={g.id} g={g} mode="meus"/>)}
-              <p style={{textAlign:"center",marginTop:14,fontFamily:"sans-serif",fontSize:11,color:"#444"}}>💾 Sincronizado em tempo real · 🔒 Bloqueados após início</p>
+              <p style={{textAlign:"center",marginTop:14,fontFamily:"sans-serif",fontSize:fs(11),color:"#444"}}>💾 Salvo em tempo real · 🔒 Bloqueado após início</p>
             </div>
           )}
 
           {/* PALPITES DO BOLÃO */}
           {subScreen==="menu_todos"&&(
             <div>
-              <div style={{fontSize:20,letterSpacing:4,color:"#ffdf00",marginBottom:6}}>👀 PALPITES DE TODOS</div>
-              <p style={{fontFamily:"sans-serif",fontSize:13,color:"#777",marginBottom:16}}>Palpites revelados após o início de cada jogo.</p>
-              <div style={{display:"flex",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-                <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{background:"#050d0a",color:"#fff",border:"1px solid #1a3a1a",padding:"7px 10px",borderRadius:6,fontSize:12,fontFamily:"sans-serif",cursor:"pointer"}}>
-                  {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
-                </select>
-              </div>
+              <div style={{fontSize:fs(20),letterSpacing:4,color:"#ffdf00",marginBottom:6}}>👀 PALPITES DE TODOS</div>
+              <p style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#777",marginBottom:14}}>Palpites revelados após o início de cada jogo.</p>
               {filteredGames().map(g=>{
                 const r=getResult(g.id), past=isPast(g.date), hasR=r&&r.home!==undefined;
                 return(
@@ -1370,70 +1401,156 @@ export default function App() {
             </div>
           )}
 
-          {/* ADMIN DO BOLÃO */}
+          {/* ADMIN DO BOLÃO — COMPLETO */}
           {subScreen==="menu_admin"&&(
             <div>
-              <div style={{background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.3)",borderRadius:12,padding:"16px 20px",marginBottom:20}}>
-                <div style={{fontSize:17,letterSpacing:3,color:"#ffdf00",marginBottom:10}}>🔐 MODO ADMIN</div>
-                {!adminUnlocked?(
-                  <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
-                    <input type="password" placeholder="Senha do admin" value={adminInput} onChange={e=>setAdminInput(e.target.value)}
-                      style={{background:"#050d0a",color:"#fff",border:"1px solid #444",borderRadius:5,padding:"7px 12px",fontSize:13,fontFamily:"sans-serif"}}/>
-                    <button onClick={()=>adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err")}
-                      style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:5,padding:"7px 16px",cursor:"pointer",fontSize:13,fontWeight:700}}>Desbloquear</button>
+              {/* Desbloqueio */}
+              {!adminUnlocked?(
+                <div style={{maxWidth:400,margin:"20px auto",background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.3)",borderRadius:14,padding:"28px",textAlign:"center"}}>
+                  <div style={{fontSize:fs(44),marginBottom:8}}>🔐</div>
+                  <div style={{fontSize:fs(22),letterSpacing:3,color:"#ffdf00",marginBottom:14}}>ACESSO DO ADMINISTRADOR</div>
+                  <input type="password" placeholder="Digite a senha do admin" value={adminInput}
+                    onChange={e=>setAdminInput(e.target.value)}
+                    onKeyDown={e=>e.key==="Enter"&&(adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err"))}
+                    style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",borderRadius:8,padding:"12px",fontSize:fs(16),fontFamily:"sans-serif",marginBottom:10,textAlign:"center",letterSpacing:4}}/>
+                  <button onClick={()=>adminInput===ADMIN_PASS?setAdminUnlocked(true):notify("Senha incorreta","err")}
+                    style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"13px",fontSize:fs(17),letterSpacing:3,cursor:"pointer"}}>
+                    ENTRAR
+                  </button>
+                </div>
+              ):(
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:20,flexWrap:"wrap"}}>
+                    <div style={{fontSize:fs(22),letterSpacing:4,color:"#ffdf00"}}>🔐 PAINEL DO ADMINISTRADOR</div>
+                    <span style={{background:"#009c3b",color:"#fff",fontFamily:"sans-serif",fontSize:fs(12),padding:"3px 10px",borderRadius:20}}>✅ Ativo</span>
                   </div>
-                ):<span style={{color:"#009c3b",fontFamily:"sans-serif",fontSize:13,fontWeight:700}}>✅ Admin ativo</span>}
-              </div>
 
-              {adminUnlocked&&(
-                <>
-                  <h3 style={{letterSpacing:4,color:"#ffdf00",marginBottom:12,fontSize:16}}>📝 INSERIR RESULTADOS REAIS</h3>
-                  <div style={{display:"flex",gap:10,marginBottom:12}}>
-                    <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)} style={{background:"#050d0a",color:"#fff",border:"1px solid #1a3a1a",padding:"7px 10px",borderRadius:6,fontSize:12,fontFamily:"sans-serif",cursor:"pointer"}}>
-                      {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
-                    </select>
-                  </div>
-                  {filteredGames().map(g=><GameRow key={g.id} g={g} mode="admin"/>)}
+                  {/* ── SEÇÃO 1: PARTICIPANTES ── */}
+                  <div style={{background:"rgba(255,255,255,.03)",border:"1px solid #1a3a1a",borderRadius:14,padding:"18px",marginBottom:16}}>
+                    <div style={{fontSize:fs(18),letterSpacing:3,color:"#ffdf00",marginBottom:14}}>👥 PARTICIPANTES</div>
 
-                  {/* Pendentes deste bolão */}
-                  {getPendingMembers(selectedBolao.id).length>0&&(
-                    <div style={{marginTop:24}}>
-                      <h3 style={{letterSpacing:4,color:"#ffdf00",marginBottom:12,fontSize:16}}>⏳ APROVAR PARTICIPANTES</h3>
-                      {getPendingMembers(selectedBolao.id).map(m=>(
-                        <div key={m.uid} style={{background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.2)",borderRadius:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap",marginBottom:8}}>
-                          <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(m.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:15,fontWeight:700,color:"#fff"}}>{m.apelido[0].toUpperCase()}</div>
+                    {/* Pendentes */}
+                    {getPendingMembers(selectedBolao.id).length>0&&(
+                      <div style={{marginBottom:16}}>
+                        <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#ffdf00",letterSpacing:1,marginBottom:8}}>⏳ AGUARDANDO APROVAÇÃO ({getPendingMembers(selectedBolao.id).length})</div>
+                        {getPendingMembers(selectedBolao.id).map(m=>(
+                          <div key={m.uid} style={{background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.2)",borderRadius:10,padding:"12px 14px",marginBottom:8}}>
+                            <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                              <div style={{width:38,height:38,borderRadius:"50%",background:avatarColor(m.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(16),fontWeight:700,color:"#fff",flexShrink:0}}>{m.apelido[0].toUpperCase()}</div>
+                              <div style={{flex:1}}>
+                                <div style={{fontSize:fs(16),letterSpacing:1}}>{m.apelido}</div>
+                                <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#aaa"}}>👤 {m.nome}</div>
+                                {m.whatsapp&&<div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#aaa"}}>📱 <a href={`https://wa.me/55${m.whatsapp?.replace(/\D/g,"")}`} target="_blank" style={{color:"#25d366",textDecoration:"none"}}>{m.whatsapp}</a></div>}
+                                {m.email&&<div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#777"}}>✉️ {m.email}</div>}
+                              </div>
+                              <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                                <button onClick={()=>approveMember(selectedBolao.id,m.uid)} style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:fs(14),fontWeight:700}}>✅ Aprovar</button>
+                                <button onClick={()=>rejectMember(selectedBolao.id,m.uid)} style={{background:"#7a1010",color:"#fff",border:"none",borderRadius:8,padding:"8px 16px",cursor:"pointer",fontSize:fs(14),fontWeight:700}}>❌ Rejeitar</button>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Aprovados */}
+                    <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#009c3b",letterSpacing:1,marginBottom:8}}>✅ APROVADOS ({getApprovedMembers(selectedBolao.id).length})</div>
+                    <div style={{display:"grid",gap:8}}>
+                      {getApprovedMembers(selectedBolao.id).map(m=>(
+                        <div key={m.uid} style={{background:"rgba(0,156,59,.06)",border:"1px solid rgba(0,156,59,.2)",borderRadius:10,padding:"10px 14px",display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                          <div style={{width:34,height:34,borderRadius:"50%",background:avatarColor(m.apelido),display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(15),fontWeight:700,color:"#fff",flexShrink:0}}>{m.apelido[0].toUpperCase()}</div>
                           <div style={{flex:1}}>
-                            <div style={{fontSize:16,letterSpacing:1}}>{m.apelido}</div>
-                            <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888"}}>👤 {m.nome} · 📱 <a href={`https://wa.me/55${m.whatsapp?.replace(/\D/g,"")}`} target="_blank" style={{color:"#25d366",textDecoration:"none"}}>{m.whatsapp}</a></div>
+                            <div style={{fontSize:fs(15),letterSpacing:1}}>{m.apelido}</div>
+                            <div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#777"}}>
+                              👤 {m.nome}
+                              {m.whatsapp&&<> · 📱 <a href={`https://wa.me/55${m.whatsapp?.replace(/\D/g,"")}`} target="_blank" style={{color:"#25d366",textDecoration:"none"}}>{m.whatsapp}</a></>}
+                            </div>
                           </div>
-                          <div style={{display:"flex",gap:8}}>
-                            <button onClick={()=>approveMember(selectedBolao.id,m.uid)} style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:13,fontWeight:700}}>✅ Aprovar</button>
-                            <button onClick={()=>rejectMember(selectedBolao.id,m.uid)} style={{background:"#7a1010",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:13,fontWeight:700}}>❌ Rejeitar</button>
-                          </div>
+                          <button onClick={()=>removeMember(selectedBolao.id,m.uid)}
+                            style={{background:"rgba(120,16,16,.6)",color:"#ffaaaa",border:"1px solid #5a1010",borderRadius:6,padding:"5px 12px",cursor:"pointer",fontSize:fs(12),fontFamily:"sans-serif"}}>
+                            🗑️ Remover
+                          </button>
                         </div>
                       ))}
                     </div>
-                  )}
-                </>
-              )}
 
-              <div style={{marginTop:20,background:"rgba(0,156,59,.07)",border:"1px solid rgba(0,156,59,.3)",borderRadius:12,padding:"14px 18px"}}>
-                <div style={{fontSize:14,letterSpacing:3,color:"#009c3b",marginBottom:8}}>🌐 API DE RESULTADOS</div>
-                <div style={{display:"flex",gap:10,flexWrap:"wrap"}}>
-                  <input type="text" placeholder="Chave football-data.org" value={apiKey} onChange={e=>{setApiKey(e.target.value);localStorage.setItem("bg26_apikey",e.target.value);}}
-                    style={{flex:1,minWidth:180,background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:6,padding:"7px 12px",fontSize:12,fontFamily:"monospace"}}/>
-                  <button onClick={fetchLive} style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:6,padding:"7px 16px",cursor:"pointer",fontSize:12,fontWeight:700}}>🔄 Atualizar</button>
-                </div>
-              </div>
-
-              <div style={{marginTop:16,background:"rgba(255,255,255,.03)",border:"1px solid #1a1a1a",borderRadius:12,padding:"14px 18px"}}>
-                <div style={{fontSize:14,letterSpacing:3,color:"#888",marginBottom:10}}>📖 REGRAS</div>
-                {[["🎯","3 pts","Placar exato"],["✅","1 pt","Acertou vencedor/empate"],["❌","0 pts","Errou"]].map(([i,p,t])=>(
-                  <div key={p} style={{display:"flex",gap:10,alignItems:"center",marginBottom:8,fontFamily:"sans-serif",fontSize:13}}>
-                    <span style={{fontSize:18}}>{i}</span><span style={{color:"#ffdf00",fontWeight:700,minWidth:40}}>{p}</span><span style={{color:"#aaa"}}>{t}</span>
+                    {/* Adicionar participante manualmente */}
+                    <div style={{marginTop:16,borderTop:"1px solid #1a1a1a",paddingTop:14}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#888",letterSpacing:1,marginBottom:8}}>➕ ADICIONAR PARTICIPANTE MANUALMENTE</div>
+                      <AddMemberForm bolaoId={selectedBolao.id} db={db} members={members} notify={notify} approveMember={approveMember}/>
+                    </div>
                   </div>
-                ))}
-              </div>
+
+                  {/* ── SEÇÃO 2: RESULTADOS ── */}
+                  <div style={{background:"rgba(255,255,255,.03)",border:"1px solid #1a3a1a",borderRadius:14,padding:"18px",marginBottom:16}}>
+                    <div style={{fontSize:fs(18),letterSpacing:3,color:"#ffdf00",marginBottom:6}}>⚽ RESULTADOS DOS JOGOS</div>
+                    <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#888",marginBottom:14}}>
+                      Insira manualmente ou use a API automática abaixo.
+                    </div>
+                    <div style={{display:"flex",gap:10,marginBottom:12,flexWrap:"wrap"}}>
+                      <select value={filterGroup} onChange={e=>setFilterGroup(e.target.value)}
+                        style={{background:"#050d0a",color:"#fff",border:"1px solid #1a3a1a",padding:"8px 12px",borderRadius:6,fontSize:fs(13),fontFamily:"sans-serif",cursor:"pointer"}}>
+                        {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
+                      </select>
+                    </div>
+                    {filteredGames().map(g=><GameRow key={g.id} g={g} mode="admin"/>)}
+                  </div>
+
+                  {/* ── SEÇÃO 3: API AUTOMÁTICA ── */}
+                  <div style={{background:"rgba(0,156,59,.07)",border:"1px solid rgba(0,156,59,.3)",borderRadius:14,padding:"18px",marginBottom:16}}>
+                    <div style={{fontSize:fs(18),letterSpacing:3,color:"#009c3b",marginBottom:6}}>🌐 ATUALIZAÇÃO AUTOMÁTICA DE RESULTADOS</div>
+                    <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#aaa",lineHeight:1.7,marginBottom:12}}>
+                      Cadastre-se gratuitamente em <strong style={{color:"#fff"}}>football-data.org</strong>, copie sua chave e cole abaixo. O sistema buscará os resultados automaticamente a cada 5 min nos dias de jogo.
+                    </div>
+                    <div style={{display:"flex",gap:10,flexWrap:"wrap",marginBottom:8}}>
+                      <input type="text" placeholder="Cole sua chave de API aqui" value={apiKey}
+                        onChange={e=>{setApiKey(e.target.value);localStorage.setItem("bg26_apikey",e.target.value);}}
+                        style={{flex:1,minWidth:180,background:"#050d0a",color:"#fff",border:"2px solid #009c3b",borderRadius:8,padding:"10px 12px",fontSize:fs(13),fontFamily:"monospace"}}/>
+                      <button onClick={fetchLive} disabled={liveFetching}
+                        style={{background:liveFetching?"#1a1a1a":"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"10px 18px",cursor:"pointer",fontSize:fs(14),fontWeight:700}}>
+                        {liveFetching?"⏳ Buscando...":"🔄 Atualizar Agora"}
+                      </button>
+                    </div>
+                    {lastUpdate&&<div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#666"}}>🕐 Última atualização: {lastUpdate}</div>}
+                  </div>
+
+                  {/* ── SEÇÃO 4: AVISOS ── */}
+                  <AvisoForm bolaoId={selectedBolao.id} db={db} notify={notify} fs={fs}/>
+
+                  {/* ── SEÇÃO 5: REGRAS ── */}
+                  <div style={{background:"rgba(255,255,255,.03)",border:"1px solid #1a1a1a",borderRadius:14,padding:"18px",marginBottom:16}}>
+                    <div style={{fontSize:fs(18),letterSpacing:3,color:"#ffdf00",marginBottom:12}}>📖 REGRAS DO BOLÃO</div>
+                    <div style={{display:"grid",gap:10}}>
+                      {[
+                        {pts:"3 pts",c:"#009c3b",i:"🎯",t:"Placar Exato",d:"Acertou o placar correto dos dois lados."},
+                        {pts:"1 pt", c:"#c8a200",i:"✅",t:"Acertou o Vencedor/Empate",d:"Acertou quem ganha ou empate, mas errou o placar."},
+                        {pts:"0 pts",c:"#5a1010",i:"❌",t:"Errou",d:"Errou quem vence."},
+                      ].map(r=>(
+                        <div key={r.pts} style={{display:"flex",gap:12,alignItems:"center",background:"rgba(255,255,255,.03)",borderRadius:10,padding:"12px 14px"}}>
+                          <div style={{width:42,height:42,borderRadius:"50%",background:r.c,display:"flex",alignItems:"center",justifyContent:"center",fontSize:fs(20),flexShrink:0}}>{r.i}</div>
+                          <div>
+                            <div style={{display:"flex",gap:8,alignItems:"center",marginBottom:2}}>
+                              <span style={{fontSize:fs(16),letterSpacing:1}}>{r.t}</span>
+                              <span style={{background:r.c,color:"#fff",padding:"1px 8px",borderRadius:20,fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>{r.pts}</span>
+                            </div>
+                            <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#888"}}>{r.d}</div>
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{background:"rgba(255,223,0,.06)",border:"1px solid rgba(255,223,0,.2)",borderRadius:10,padding:"12px 14px",fontFamily:"sans-serif",fontSize:fs(12),color:"#ccc",lineHeight:1.8}}>
+                        <strong style={{color:"#ffdf00"}}>🏆 Desempate:</strong> 1º Mais placares exatos · 2º Mais acertos · 3º Sorteio
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── SEÇÃO 6: CONFIGURAÇÕES DO BOLÃO ── */}
+                  <div style={{background:"rgba(0,39,118,.1)",border:"1px solid rgba(0,39,118,.4)",borderRadius:14,padding:"18px",marginBottom:16}}>
+                    <div style={{fontSize:fs(18),letterSpacing:3,color:"#aaaaff",marginBottom:12}}>⚙️ CONFIGURAÇÕES DO BOLÃO</div>
+                    <BolaoConfigForm bolao={selectedBolao} db={db} notify={notify} fs={fs}/>
+                  </div>
+
+                </div>
+              )}
             </div>
           )}
 
@@ -1447,4 +1564,147 @@ export default function App() {
   }
 
   return <div style={{...BASE,display:"flex",alignItems:"center",justifyContent:"center"}}><div style={{color:"#ffdf00",fontSize:20,letterSpacing:4}}>⚽ Carregando...</div></div>;
+}
+
+// ── Componente: Adicionar membro manualmente ──────────────────────────────────
+function AddMemberForm({bolaoId, db, members, notify, approveMember}) {
+  const [nome, setNome]       = useState("");
+  const [apelido, setApelido] = useState("");
+  const [wa, setWa]           = useState("");
+  const [email, setEmail]     = useState("");
+  const [err, setErr]         = useState("");
+
+  async function handleAdd() {
+    setErr("");
+    if (!nome.trim()||!apelido.trim()) { setErr("Nome e apelido são obrigatórios."); return; }
+    const uid = apelido.trim().replace(/[.#$[\]/\s]/g,"_");
+    if (members[bolaoId]?.[uid]) { setErr("Este apelido já existe."); return; }
+    try {
+      await set(dbRef(db, `members/${bolaoId}/${uid}`), {
+        nome:nome.trim(), apelido:apelido.trim(),
+        whatsapp:wa.trim(), email:email.trim().toLowerCase(),
+        status:"pendente", createdAt:new Date().toISOString(),
+      });
+      await approveMember(bolaoId, uid);
+      setNome(""); setApelido(""); setWa(""); setEmail("");
+      notify(`✅ ${apelido} adicionado e aprovado!`);
+    } catch { setErr("Erro ao adicionar."); }
+  }
+
+  return (
+    <div style={{display:"grid",gap:8}}>
+      <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8}}>
+        {[
+          {ph:"Nome completo",val:nome,set:setNome},
+          {ph:"Apelido no bolão",val:apelido,set:setApelido},
+          {ph:"WhatsApp (opcional)",val:wa,set:setWa},
+          {ph:"Email (opcional)",val:email,set:setEmail},
+        ].map(f=>(
+          <input key={f.ph} type="text" placeholder={f.ph} value={f.val}
+            onChange={e=>f.set(e.target.value)}
+            style={{background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",borderRadius:6,padding:"8px 10px",fontSize:13,fontFamily:"sans-serif"}}/>
+        ))}
+      </div>
+      {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif"}}>{err}</div>}
+      <button onClick={handleAdd}
+        style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:8,padding:"9px",cursor:"pointer",fontSize:14,fontWeight:700}}>
+        ➕ Adicionar e Aprovar Direto
+      </button>
+    </div>
+  );
+}
+
+// ── Componente: Avisos do bolão ───────────────────────────────────────────────
+function AvisoForm({bolaoId, db, notify, fs}) {
+  const [texto, setTexto] = useState("");
+  const [avisos, setAvisos] = useState([]);
+
+  useEffect(() => {
+    const r = dbRef(db, `avisos/${bolaoId}`);
+    onValue(r, s => {
+      const val = s.val()||{};
+      setAvisos(Object.entries(val).map(([id,a])=>({id,...a})).sort((a,b)=>b.ts-a.ts));
+    });
+    return () => off(r);
+  }, [bolaoId, db]);
+
+  async function enviar() {
+    if (!texto.trim()) return;
+    await push(dbRef(db, `avisos/${bolaoId}`), {
+      texto:texto.trim(), ts:Date.now(),
+      data:new Date().toLocaleDateString("pt-BR")
+    });
+    setTexto("");
+    notify("📢 Aviso enviado para todos!");
+  }
+
+  async function excluir(id) {
+    await remove(dbRef(db, `avisos/${bolaoId}/${id}`));
+    notify("Aviso removido.");
+  }
+
+  return (
+    <div style={{background:"rgba(0,85,128,.1)",border:"1px solid rgba(0,85,128,.4)",borderRadius:14,padding:"18px",marginBottom:16}}>
+      <div style={{fontSize:fs?fs(18):18,letterSpacing:3,color:"#55aaff",marginBottom:12}}>📢 AVISOS PARA O BOLÃO</div>
+      <textarea placeholder="Escreva um aviso para todos os participantes..." value={texto}
+        onChange={e=>setTexto(e.target.value)} rows={3}
+        style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",borderRadius:8,padding:"10px",fontSize:13,fontFamily:"sans-serif",resize:"vertical",marginBottom:8}}/>
+      <button onClick={enviar}
+        style={{background:"linear-gradient(135deg,#005580,#003355)",color:"#fff",border:"none",borderRadius:8,padding:"9px 20px",cursor:"pointer",fontSize:14,fontWeight:700,marginBottom:16}}>
+        📢 Enviar Aviso
+      </button>
+      {avisos.length>0&&(
+        <div>
+          <div style={{fontFamily:"sans-serif",fontSize:12,color:"#666",letterSpacing:1,marginBottom:8}}>AVISOS ENVIADOS:</div>
+          {avisos.map(a=>(
+            <div key={a.id} style={{background:"rgba(255,255,255,.04)",border:"1px solid #1a2a3a",borderRadius:8,padding:"10px 12px",marginBottom:6,display:"flex",gap:10,alignItems:"flex-start"}}>
+              <div style={{flex:1}}>
+                <div style={{fontFamily:"sans-serif",fontSize:13,color:"#ddd",lineHeight:1.6}}>{a.texto}</div>
+                <div style={{fontFamily:"sans-serif",fontSize:10,color:"#555",marginTop:4}}>{a.data}</div>
+              </div>
+              <button onClick={()=>excluir(a.id)} style={{background:"transparent",border:"none",color:"#555",cursor:"pointer",fontSize:16,flexShrink:0}}>🗑️</button>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Componente: Configurações do bolão ────────────────────────────────────────
+function BolaoConfigForm({bolao, db, notify, fs}) {
+  const [nome, setNome]     = useState(bolao?.nome||"");
+  const [desc, setDesc]     = useState(bolao?.descricao||"");
+  const [ativo, setAtivo]   = useState(bolao?.ativo!==false);
+
+  async function salvar() {
+    await update(dbRef(db, `boloes/${bolao.id}`), {nome:nome.trim(), descricao:desc.trim(), ativo});
+    notify("✅ Configurações salvas!");
+  }
+
+  return (
+    <div style={{display:"grid",gap:10}}>
+      <div>
+        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>NOME DO BOLÃO</div>
+        <input type="text" value={nome} onChange={e=>setNome(e.target.value)}
+          style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a2a4a",borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+      </div>
+      <div>
+        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>DESCRIÇÃO</div>
+        <input type="text" value={desc} onChange={e=>setDesc(e.target.value)}
+          style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a2a4a",borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+      </div>
+      <div style={{display:"flex",alignItems:"center",gap:10}}>
+        <label style={{fontFamily:"sans-serif",fontSize:13,color:"#aaa",display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+          <input type="checkbox" checked={ativo} onChange={e=>setAtivo(e.target.checked)}
+            style={{width:18,height:18,cursor:"pointer"}}/>
+          Bolão ativo (visível para novos participantes)
+        </label>
+      </div>
+      <button onClick={salvar}
+        style={{background:"linear-gradient(135deg,#1a1a6a,#2a2aaa)",color:"#fff",border:"none",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:14,fontWeight:700}}>
+        💾 Salvar Configurações
+      </button>
+    </div>
+  );
 }
