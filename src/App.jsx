@@ -126,21 +126,35 @@ const SCHEDULE = [
   {id:104,home:"W101",away:"W102",group:"Final",date:"2026-07-19T16:00",city:"Nova York",knockout:true},
 ];
 
-const FLAGS = {
-  "Brasil":"🇧🇷","Argentina":"🇦🇷","França":"🇫🇷","Alemanha":"🇩🇪","Espanha":"🇪🇸",
-  "Inglaterra":"🏴󠁧󠁢󠁥󠁮󠁧󠁿","Portugal":"🇵🇹","México":"🇲🇽","EUA":"🇺🇸","Uruguai":"🇺🇾",
-  "Colômbia":"🇨🇴","Canadá":"🇨🇦","Equador":"🇪🇨","Panamá":"🇵🇦","Bélgica":"🇧🇪",
-  "Marrocos":"🇲🇦","Japão":"🇯🇵","Holanda":"🇳🇱","Croácia":"🇭🇷","Austrália":"🇦🇺",
-  "Noruega":"🇳🇴","Sérvia":"🇷🇸","Arábia Saudita":"🇸🇦","Senegal":"🇸🇳","Angola":"🇦🇴",
-  "Tunísia":"🇹🇳","Dinamarca":"🇩🇰","Coreia do Sul":"🇰🇷","Suíça":"🇨🇭","Eslováquia":"🇸🇰",
-  "Ucrânia":"🇺🇦","Argélia":"🇩🇿","África do Sul":"🇿🇦","Tchéquia":"🇨🇿",
-  "Bósnia-Herzegovina":"🇧🇦","Catar":"🇶🇦","Paraguai":"🇵🇾","Turquia":"🇹🇷",
-  "Costa do Marfim":"🇨🇮","Curaçao":"🇨🇼","Suécia":"🇸🇪","Cabo Verde":"🇨🇻",
-  "Egito":"🇪🇬","Irã":"🇮🇷","Nova Zelândia":"🇳🇿","Iraque":"🇮🇶","Jordânia":"🇯🇴",
-  "Áustria":"🇦🇹","RD Congo":"🇨🇩","Uzbequistão":"🇺🇿","Gana":"🇬🇭","Haiti":"🇭🇹",
-  "Escócia":"🏴󠁧󠁢󠁳󠁣󠁴󠁿",
+// Códigos de país ISO para usar com Twemoji/FlagCDN
+const FLAG_CODES = {
+  "Brasil":"br","Argentina":"ar","França":"fr","Alemanha":"de","Espanha":"es",
+  "Inglaterra":"gb-eng","Portugal":"pt","México":"mx","EUA":"us","Uruguai":"uy",
+  "Colômbia":"co","Canadá":"ca","Equador":"ec","Panamá":"pa","Bélgica":"be",
+  "Marrocos":"ma","Japão":"jp","Holanda":"nl","Croácia":"hr","Austrália":"au",
+  "Noruega":"no","Sérvia":"rs","Arábia Saudita":"sa","Senegal":"sn","Angola":"ao",
+  "Tunísia":"tn","Dinamarca":"dk","Coreia do Sul":"kr","Suíça":"ch","Eslováquia":"sk",
+  "Ucrânia":"ua","Argélia":"dz","África do Sul":"za","Tchéquia":"cz",
+  "Bósnia-Herzegovina":"ba","Catar":"qa","Paraguai":"py","Turquia":"tr",
+  "Costa do Marfim":"ci","Curacão":"cw","Suécia":"se","Cabo Verde":"cv",
+  "Egito":"eg","Irã":"ir","Nova Zelândia":"nz","Iraque":"iq","Jordânia":"jo",
+  "Áustria":"at","RD Congo":"cd","Uzbequistão":"uz","Gana":"gh","Haiti":"ht",
+  "Escócia":"gb-sct","Curaçao":"cw",
 };
-const flag = t => FLAGS[t] || "🏳️";
+
+const flag = (t, size=32) => {
+  const code = FLAG_CODES[t];
+  if (!code) return <span style={{fontSize:size,lineHeight:1}}>🏳️</span>;
+  // Usa flagcdn.com - funciona em todos os navegadores sem depender de emoji
+  return (
+    <img
+      src={`https://flagcdn.com/h${size}/${code}.png`}
+      alt={t}
+      style={{width:size,height:Math.round(size*0.75),objectFit:"cover",borderRadius:3,display:"inline-block",verticalAlign:"middle"}}
+      onError={e=>{e.target.style.display="none";}}
+    />
+  );
+};
 
 const fmtDate = iso => new Date(iso+":00-03:00").toLocaleDateString("pt-BR",{weekday:"short",day:"2-digit",month:"short"}).replace(".","");
 const fmtTime = iso => new Date(iso+":00-03:00").toLocaleTimeString("pt-BR",{hour:"2-digit",minute:"2-digit"})+"h";
@@ -1008,8 +1022,8 @@ export default function App() {
             <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8,marginBottom: mode==="meus"&&hasR&&gu ? 12 : 0}}>
 
               {/* Time da casa */}
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <span style={{fontSize:fs(36)}}>{flag(g.home)}</span>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                {flag(g.home, 48)}
                 <span style={{fontSize:fs(14),letterSpacing:1,textAlign:"center",lineHeight:1.2,fontFamily:"sans-serif",fontWeight:700,color:"#fff"}}>{g.home}</span>
               </div>
 
@@ -1095,8 +1109,8 @@ export default function App() {
               </div>
 
               {/* Time visitante */}
-              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4}}>
-                <span style={{fontSize:fs(36)}}>{flag(g.away)}</span>
+              <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                {flag(g.away, 48)}
                 <span style={{fontSize:fs(14),letterSpacing:1,textAlign:"center",lineHeight:1.2,fontFamily:"sans-serif",fontWeight:700,color:"#fff"}}>{g.away}</span>
               </div>
             </div>
@@ -1332,9 +1346,9 @@ export default function App() {
                         <span style={{fontSize:18,fontWeight:900}}>{fmtTime(g.date)}</span>
                       </div>
                       <div style={{fontFamily:"sans-serif",fontSize:13,display:"flex",alignItems:"center",gap:8}}>
-                        <span style={{fontSize:18}}>{flag(g.home)}</span><strong>{g.home}</strong>
+                        {flag(g.home,24)}<strong>{g.home}</strong>
                         {hasR?<span style={{color:"#ffdf00",fontSize:20,fontWeight:900,letterSpacing:3}}>{r.home}×{r.away}</span>:<span style={{color:"#333",fontSize:16}}>×</span>}
-                        <strong>{g.away}</strong><span style={{fontSize:18}}>{flag(g.away)}</span>
+                        <strong>{g.away}</strong>{flag(g.away,24)}
                       </div>
                     </div>
                     <div style={{padding:"10px 14px"}}>
