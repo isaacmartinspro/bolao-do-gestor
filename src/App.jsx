@@ -268,8 +268,15 @@ export default function App() {
 
   // ── Helpers ─────────────────────────────────────────────────────────────────
   const getResult = id => results[id];
-  const getGuessOf = (uid, id) => allGuesses[safeKey(uid)]?.[id];
-  const myGuesses = allGuesses[safeKey(currentUser?.uid)] || {};
+  const getGuessOf = (uid, bolaoId, id) => {
+    const key = `${safeKey(bolaoId)}_${safeKey(uid)}`;
+    return allGuesses[key]?.[id];
+  };
+  const myGuesses = (() => {
+    if (!currentUser) return {};
+    const key = `${safeKey(currentUser.bolaoId)}_${safeKey(currentUser.uid)}`;
+    return allGuesses[key] || {};
+  })();
 
   function getMembersOfBolao(bolaoId) {
     return Object.entries(members[bolaoId] || {}).map(([uid, data]) => ({ uid, ...data }));
@@ -347,7 +354,9 @@ export default function App() {
   // ── Palpites e resultados ────────────────────────────────────────────────────
   async function saveGuess(gameId, side, val) {
     if (!currentUser || !db) return;
-    await set(dbRef(db, `guesses/${safeKey(currentUser.uid)}/${gameId}/${side}`), val);
+    // Chave única: bolaoId + uid + gameId para evitar conflito entre bolões
+    const key = `${safeKey(currentUser.bolaoId)}_${safeKey(currentUser.uid)}`;
+    await set(dbRef(db, `guesses/${key}/${gameId}/${side}`), val);
   }
   async function saveResult(gameId, side, val) {
     if (!db) return;
@@ -382,7 +391,7 @@ export default function App() {
     return getApprovedMembers(selectedBolao.id).map(m => {
       let pts=0,exact=0,win=0;
       SCHEDULE.filter(g=>!g.knockout).forEach(g=>{
-        const r=getResult(g.id), gu=getGuessOf(m.uid,g.id);
+        const r=getResult(g.id), gu=getGuessOf(m.uid,selectedBolao?.id,g.id);
         if(r&&gu){const pt=calcPoints(gu,r);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
       });
       return {...m,pts,exact,win};
@@ -1214,7 +1223,7 @@ export default function App() {
                           <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:8}}>{flag(g.home)} {g.home} × {g.away} {flag(g.away)}{r?.home!==undefined&&<span style={{color:"#009c3b",marginLeft:8}}>→ {r.home}×{r.away}</span>}</div>
                           <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                             {approvedMembers.map(m=>{
-                              const gu=getGuessOf(m.uid,g.id);
+                              const gu=getGuessOf(m.uid,selectedBolao?.id,g.id);
                               const pts=r&&gu?calcPoints(gu,r):null;
                               const isMe=m.uid===currentUser.uid;
                               return(
@@ -1280,7 +1289,7 @@ export default function App() {
                       {!past?<div style={{fontFamily:"sans-serif",fontSize:12,color:"#555",textAlign:"center",padding:"8px"}}>🔒 Palpites revelados após o início</div>:(
                         <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
                           {approvedMembers.map(m=>{
-                            const gu=getGuessOf(m.uid,g.id), pts=hasR&&gu?calcPoints(gu,r):null, isMe=m.uid===currentUser.uid;
+                            const gu=getGuessOf(m.uid,selectedBolao?.id,g.id), pts=hasR&&gu?calcPoints(gu,r):null, isMe=m.uid===currentUser.uid;
                             return(
                               <div key={m.uid} style={{background:pts===3?"rgba(0,156,59,.18)":pts===1?"rgba(200,162,0,.15)":pts===0&&hasR?"rgba(90,16,16,.18)":"rgba(255,255,255,.04)",border:`1px solid ${pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#5a1010":isMe?"rgba(255,223,0,.4)":"#2a2a2a"}`,borderRadius:10,padding:"8px 12px",minWidth:90}}>
                                 <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
