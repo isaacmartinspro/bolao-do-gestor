@@ -882,13 +882,35 @@ export default function App() {
                 const rejected = getMembersOfBolao(bid).filter(m=>m.status==="rejeitado");
                 return (
                   <div key={bid} style={{background:"rgba(255,255,255,.03)",border:"1px solid #1a2a1a",borderRadius:12,marginBottom:16,overflow:"hidden"}}>
+                    {/* Cabeçalho do bolão com editar/excluir */}
                     <div style={{background:"linear-gradient(90deg,#004d22,#009c3b)",padding:"12px 18px",display:"flex",justifyContent:"space-between",alignItems:"center",flexWrap:"wrap",gap:8}}>
-                      <div>
+                      <div style={{flex:1}}>
                         <span style={{fontSize:18,letterSpacing:3}}>{b.nome}</span>
                         <span style={{fontFamily:"sans-serif",fontSize:12,color:"rgba(255,255,255,.6)",marginLeft:10}}>{b.descricao}</span>
+                        <div style={{fontFamily:"sans-serif",fontSize:12,color:"rgba(255,255,255,.6)",marginTop:2}}>
+                          ✅ {approved.length} aprovados · ⏳ {pending.length} pendentes · ❌ {rejected.length} rejeitados
+                        </div>
                       </div>
-                      <div style={{fontFamily:"sans-serif",fontSize:12,color:"rgba(255,255,255,.7)"}}>
-                        ✅ {approved.length} aprovados · ⏳ {pending.length} pendentes · ❌ {rejected.length} rejeitados
+                      <div style={{display:"flex",gap:8,flexShrink:0}}>
+                        <button onClick={()=>{
+                          const novoNome = window.prompt("Novo nome do bolão:", b.nome);
+                          if(novoNome&&novoNome.trim()) {
+                            update(dbRef(db,`boloes/${bid}`),{nome:novoNome.trim()})
+                              .then(()=>notify(`✅ Nome alterado para "${novoNome.trim()}"`))
+                              .catch(()=>notify("Erro ao alterar","err"));
+                          }
+                        }} style={{background:"rgba(255,255,255,.2)",color:"#fff",border:"none",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"sans-serif"}}>
+                          ✏️ Renomear
+                        </button>
+                        <button onClick={()=>{
+                          if(window.confirm(`Tem certeza que deseja EXCLUIR o bolão "${b.nome}"?\n\nEsta ação não pode ser desfeita.`)) {
+                            remove(dbRef(db,`boloes/${bid}`))
+                              .then(()=>notify(`🗑️ Bolão "${b.nome}" excluído.`))
+                              .catch(()=>notify("Erro ao excluir","err"));
+                          }
+                        }} style={{background:"rgba(120,16,16,.7)",color:"#ffaaaa",border:"1px solid rgba(180,30,30,.5)",borderRadius:6,padding:"6px 14px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"sans-serif"}}>
+                          🗑️ Excluir
+                        </button>
                       </div>
                     </div>
                     <div style={{padding:"14px 18px"}}>
