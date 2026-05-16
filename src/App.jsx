@@ -1687,38 +1687,87 @@ function AvisoForm({bolaoId, db, notify, fs}) {
 
 // ── Componente: Configurações do bolão ────────────────────────────────────────
 function BolaoConfigForm({bolao, db, notify, fs}) {
-  const [nome, setNome]     = useState(bolao?.nome||"");
-  const [desc, setDesc]     = useState(bolao?.descricao||"");
-  const [ativo, setAtivo]   = useState(bolao?.ativo!==false);
+  const [nome,    setNome]    = useState(bolao?.nome||"");
+  const [desc,    setDesc]    = useState(bolao?.descricao||"");
+  const [ativo,   setAtivo]   = useState(bolao?.ativo!==false);
+  const [confirm, setConfirm] = useState(false);
 
   async function salvar() {
-    await update(dbRef(db, `boloes/${bolao.id}`), {nome:nome.trim(), descricao:desc.trim(), ativo});
+    if (!nome.trim()) { notify("Digite o nome do bolão.","err"); return; }
+    await update(dbRef(db, `boloes/${bolao.id}`), {
+      nome:nome.trim(), descricao:desc.trim(), ativo
+    });
     notify("✅ Configurações salvas!");
   }
 
+  async function excluir() {
+    await remove(dbRef(db, `boloes/${bolao.id}`));
+    notify("🗑️ Bolão excluído.");
+    window.location.reload();
+  }
+
+  const fSize = fs || (b=>b);
+
   return (
-    <div style={{display:"grid",gap:10}}>
+    <div style={{display:"grid",gap:12}}>
       <div>
-        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>NOME DO BOLÃO</div>
+        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>NOME DO BOLÃO</div>
         <input type="text" value={nome} onChange={e=>setNome(e.target.value)}
-          style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a2a4a",borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+          style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #2a2a6a",
+            borderRadius:8,padding:"11px 12px",fontSize:fSize(15),fontFamily:"sans-serif"}}/>
       </div>
       <div>
-        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>DESCRIÇÃO</div>
+        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>DESCRIÇÃO</div>
         <input type="text" value={desc} onChange={e=>setDesc(e.target.value)}
-          style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a2a4a",borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+          style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a2a4a",
+            borderRadius:8,padding:"11px 12px",fontSize:fSize(14),fontFamily:"sans-serif"}}/>
       </div>
-      <div style={{display:"flex",alignItems:"center",gap:10}}>
-        <label style={{fontFamily:"sans-serif",fontSize:13,color:"#aaa",display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
+      <div>
+        <label style={{fontFamily:"sans-serif",fontSize:fSize(13),color:"#aaa",
+          display:"flex",alignItems:"center",gap:8,cursor:"pointer"}}>
           <input type="checkbox" checked={ativo} onChange={e=>setAtivo(e.target.checked)}
             style={{width:18,height:18,cursor:"pointer"}}/>
           Bolão ativo (visível para novos participantes)
         </label>
       </div>
       <button onClick={salvar}
-        style={{background:"linear-gradient(135deg,#1a1a6a,#2a2aaa)",color:"#fff",border:"none",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:14,fontWeight:700}}>
-        💾 Salvar Configurações
+        style={{background:"linear-gradient(135deg,#1a1a6a,#2a2aaa)",color:"#fff",
+          border:"none",borderRadius:8,padding:"11px",cursor:"pointer",
+          fontSize:fSize(15),fontWeight:700,letterSpacing:1}}>
+        💾 Salvar Alterações
       </button>
+
+      {/* Excluir bolão */}
+      <div style={{borderTop:"1px solid #2a1010",paddingTop:12,marginTop:4}}>
+        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>ZONA DE PERIGO</div>
+        {!confirm ? (
+          <button onClick={()=>setConfirm(true)}
+            style={{background:"rgba(120,16,16,.3)",color:"#ffaaaa",border:"1px solid #5a1010",
+              borderRadius:8,padding:"10px 16px",cursor:"pointer",fontSize:fSize(13),
+              fontFamily:"sans-serif",fontWeight:700,width:"100%"}}>
+            🗑️ Excluir este Bolão
+          </button>
+        ) : (
+          <div style={{background:"rgba(120,16,16,.2)",border:"1px solid #7a1010",
+            borderRadius:8,padding:"14px",textAlign:"center"}}>
+            <div style={{fontFamily:"sans-serif",fontSize:fSize(13),color:"#ffaaaa",marginBottom:12,lineHeight:1.6}}>
+              ⚠️ Tem certeza? Esta ação irá <strong>excluir permanentemente</strong> o bolão e todos os dados associados.
+            </div>
+            <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+              <button onClick={excluir}
+                style={{background:"#7a1010",color:"#fff",border:"none",borderRadius:7,
+                  padding:"9px 20px",cursor:"pointer",fontSize:fSize(13),fontWeight:700}}>
+                ✅ Sim, excluir
+              </button>
+              <button onClick={()=>setConfirm(false)}
+                style={{background:"#2a2a2a",color:"#aaa",border:"1px solid #444",borderRadius:7,
+                  padding:"9px 20px",cursor:"pointer",fontSize:fSize(13),fontFamily:"sans-serif"}}>
+                ❌ Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
