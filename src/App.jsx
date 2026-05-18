@@ -1345,45 +1345,141 @@ export default function App() {
           {/* PALPITES DO BOLÃO */}
           {subScreen==="menu_todos"&&(
             <div>
-              <div style={{fontSize:fs(20),letterSpacing:4,color:"#ffdf00",marginBottom:6}}>👀 PALPITES DE TODOS</div>
-              <p style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#777",marginBottom:14}}>Palpites revelados após o início de cada jogo.</p>
+              <div style={{fontSize:fs(22),letterSpacing:4,color:"#ffdf00",marginBottom:4}}>👀 PALPITES DO BOLÃO</div>
+              <p style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#777",marginBottom:16}}>
+                Palpites aparecem assim que cada participante registrar o seu.
+              </p>
               {filteredGames().map(g=>{
-                const r=getResult(g.id), past=isPast(g.date), hasR=r&&r.home!==undefined;
+                const r = getResult(g.id);
+                const hasR = r&&r.home!==undefined&&r.home!=="";
+                const today = isToday(g.date);
+                const past = isPast(g.date);
+
+                // Pegar todos os palpites deste jogo
+                const palpites = approvedMembers.map(m=>{
+                  const gu = getGuessOf(m.uid, selectedBolao?.id, g.id);
+                  const pts = hasR&&gu ? calcPoints(gu,r) : null;
+                  return {m, gu, pts};
+                }).filter(p => p.gu?.home !== undefined); // só quem já palpitou
+
+                // Não mostrar jogo se ninguém palpitou ainda
+                if (palpites.length === 0) return null;
+
                 return(
-                  <div key={g.id} style={{background:"rgba(255,255,255,.02)",border:"1px solid #1a2a1a",borderRadius:12,overflow:"hidden",marginBottom:12}}>
-                    <div style={{background:"rgba(255,255,255,.05)",borderBottom:"1px solid #1a2a1a",padding:"8px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-                      <div style={{display:"flex",alignItems:"center",gap:10}}>
-                        <span style={{fontSize:13,color:"#ffdf00",fontWeight:700}}>{fmtDate(g.date)}</span>
-                        <span style={{fontSize:18,fontWeight:900}}>{fmtTime(g.date)}</span>
-                      </div>
-                      <div style={{fontFamily:"sans-serif",fontSize:13,display:"flex",alignItems:"center",gap:8}}>
-                        {flag(g.home,24)}<strong>{g.home}</strong>
-                        {hasR?<span style={{color:"#ffdf00",fontSize:20,fontWeight:900,letterSpacing:3}}>{r.home}×{r.away}</span>:<span style={{color:"#333",fontSize:16}}>×</span>}
-                        <strong>{g.away}</strong>{flag(g.away,24)}
+                  <div key={g.id} style={{
+                    background:"rgba(255,255,255,.03)",
+                    border:`1px solid ${hasR?"#009c3b":today?"#ffdf00":"#1a2e1a"}`,
+                    borderRadius:14,overflow:"hidden",marginBottom:14
+                  }}>
+                    {/* Cabeçalho do jogo */}
+                    <div style={{
+                      background:today?"rgba(255,223,0,.12)":"rgba(255,255,255,.05)",
+                      borderBottom:`1px solid ${hasR?"#009c3b":today?"#ffdf00":"#1a2e1a"}`,
+                      padding:"10px 16px"
+                    }}>
+                      <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                        {/* Times */}
+                        <div style={{display:"flex",alignItems:"center",gap:10}}>
+                          {flag(g.home,28)}
+                          <span style={{fontSize:fs(16),fontWeight:700,color:"#fff"}}>{g.home}</span>
+                          <span style={{color:"#555",fontSize:fs(14)}}>×</span>
+                          <span style={{fontSize:fs(16),fontWeight:700,color:"#fff"}}>{g.away}</span>
+                          {flag(g.away,28)}
+                        </div>
+                        {/* Resultado real ou horário */}
+                        <div style={{textAlign:"right"}}>
+                          {hasR ? (
+                            <div>
+                              <span style={{fontSize:fs(22),color:"#ffdf00",fontWeight:900,letterSpacing:3}}>{r.home}×{r.away}</span>
+                              <div style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#009c3b"}}>✅ Resultado final</div>
+                            </div>
+                          ) : (
+                            <div>
+                              <div style={{fontSize:fs(14),color:"#ffdf00",fontWeight:700}}>{fmtDate(g.date)}</div>
+                              <div style={{fontSize:fs(13),color:"#fff",fontWeight:900}}>{fmtTime(g.date)}</div>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
-                    <div style={{padding:"10px 14px"}}>
-                      {!past?<div style={{fontFamily:"sans-serif",fontSize:12,color:"#555",textAlign:"center",padding:"8px"}}>🔒 Palpites revelados após o início</div>:(
-                        <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
-                          {approvedMembers.map(m=>{
-                            const gu=getGuessOf(m.uid,selectedBolao?.id,g.id), pts=hasR&&gu?calcPoints(gu,r):null, isMe=m.uid===currentUser.uid;
-                            return(
-                              <div key={m.uid} style={{background:pts===3?"rgba(0,156,59,.18)":pts===1?"rgba(200,162,0,.15)":pts===0&&hasR?"rgba(90,16,16,.18)":"rgba(255,255,255,.04)",border:`1px solid ${pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#5a1010":isMe?"rgba(255,223,0,.4)":"#2a2a2a"}`,borderRadius:10,padding:"8px 12px",minWidth:90}}>
-                                <div style={{display:"flex",alignItems:"center",gap:5,marginBottom:3}}>
-                                  <span style={{width:18,height:18,borderRadius:"50%",background:avatarColor(m.apelido),display:"inline-flex",alignItems:"center",justifyContent:"center",fontSize:9,fontWeight:700,color:"#fff"}}>{m.apelido[0].toUpperCase()}</span>
-                                  <span style={{fontFamily:"sans-serif",fontSize:10,color:isMe?"#ffdf00":"#aaa",fontWeight:isMe?700:400}}>{m.apelido}{isMe?" ★":""}</span>
-                                </div>
-                                <div style={{fontFamily:"monospace",fontSize:20,fontWeight:900,color:pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#ff6b6b":"#fff",textAlign:"center"}}>{gu?.home!==undefined?`${gu.home}×${gu.away}`:"—"}</div>
-                                {pts!==null&&<div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:10,color:pts===3?"#009c3b":pts===1?"#c8a200":"#ff6b6b",fontWeight:700}}>{pts===3?"🎯 3pts":pts===1?"✅ 1pt":"❌ 0pt"}</div>}
+
+                    {/* Lista de palpites no estilo solicitado */}
+                    <div style={{padding:"12px 16px"}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#888",letterSpacing:1,marginBottom:10}}>
+                        PALPITES ({palpites.length}/{approvedMembers.length}):
+                      </div>
+                      <div style={{display:"grid",gap:8}}>
+                        {palpites.map(({m, gu, pts})=>{
+                          const isMe = m.uid === currentUser.uid;
+                          return(
+                            <div key={m.uid} style={{
+                              display:"flex",alignItems:"center",gap:10,
+                              background:pts===3?"rgba(0,156,59,.15)":pts===1?"rgba(200,162,0,.12)":pts===0&&hasR?"rgba(90,16,16,.15)":isMe?"rgba(255,223,0,.06)":"rgba(255,255,255,.04)",
+                              border:`1px solid ${pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#5a1010":isMe?"rgba(255,223,0,.3)":"#1a1a1a"}`,
+                              borderRadius:10,padding:"10px 14px"
+                            }}>
+                              {/* Avatar */}
+                              <MemberAvatar member={m} size={fs(36)}/>
+
+                              {/* Nome */}
+                              <div style={{flex:1}}>
+                                <span style={{
+                                  fontSize:fs(15),letterSpacing:1,
+                                  color:isMe?"#ffdf00":"#fff",
+                                  fontWeight:isMe?700:400
+                                }}>
+                                  {m.apelido}{isMe&&<span style={{fontSize:fs(11),marginLeft:6,fontFamily:"sans-serif"}}>← você</span>}
+                                </span>
                               </div>
-                            );
-                          })}
-                        </div>
-                      )}
+
+                              {/* Palpite no formato "BRA 2 × 1 MAR" */}
+                              <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                                {flag(g.home,20)}
+                                <span style={{
+                                  fontSize:fs(22),fontFamily:"monospace",fontWeight:900,
+                                  color:pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#ff6b6b":"#fff",
+                                  letterSpacing:2
+                                }}>
+                                  {gu.home}×{gu.away}
+                                </span>
+                                {flag(g.away,20)}
+                              </div>
+
+                              {/* Badge de pontos (após resultado) */}
+                              {pts!==null&&(
+                                <div style={{
+                                  background:pts===3?"#009c3b":pts===1?"#c8a200":"#5a1010",
+                                  color:"#fff",borderRadius:20,
+                                  padding:"3px 10px",fontFamily:"sans-serif",
+                                  fontSize:fs(12),fontWeight:700,flexShrink:0
+                                }}>
+                                  {pts===3?"🎯 3pts":pts===1?"✅ 1pt":"❌ 0"}
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+
+                        {/* Quem ainda não palpitou */}
+                        {approvedMembers.filter(m=>!palpites.find(p=>p.m.uid===m.uid)).length>0&&(
+                          <div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#444",marginTop:4,fontStyle:"italic"}}>
+                            Ainda não palpitaram: {approvedMembers.filter(m=>!palpites.find(p=>p.m.uid===m.uid)).map(m=>m.apelido).join(", ")}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
               })}
+
+              {/* Se nenhum jogo tem palpites ainda */}
+              {filteredGames().every(g=>approvedMembers.every(m=>getGuessOf(m.uid,selectedBolao?.id,g.id)?.home===undefined))&&(
+                <div style={{textAlign:"center",padding:"40px",fontFamily:"sans-serif",color:"#555"}}>
+                  <div style={{fontSize:40,marginBottom:12}}>⚽</div>
+                  <div style={{fontSize:16,color:"#777"}}>Nenhum palpite registrado ainda</div>
+                  <div style={{fontSize:13,marginTop:6}}>Vá em <strong style={{color:"#009c3b"}}>⚽ Meus Palpites</strong> e registre o seu!</div>
+                </div>
+              )}
             </div>
           )}
 
