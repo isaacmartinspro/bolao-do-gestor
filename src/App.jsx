@@ -256,7 +256,14 @@ export default function App() {
 
   // Auth
   const [masterUnlocked, setMasterUnlocked] = useState(false);
-  const [currentAdmin,   setCurrentAdmin]   = useState(null); // { slug, nome, ... }
+  const [currentAdmin,   setCurrentAdminState]   = useState(()=>{
+    try { return JSON.parse(localStorage.getItem("bg26_admin")||"null"); } catch { return null; }
+  });
+  const setCurrentAdmin = (val) => {
+    setCurrentAdminState(val);
+    if (val) localStorage.setItem("bg26_admin", JSON.stringify(val));
+    else localStorage.removeItem("bg26_admin");
+  };
   const [currentMember,  setCurrentMember]  = useState(null); // { uid, apelido, bolaoId, adminSlug }
 
   // Init Firebase
@@ -351,6 +358,9 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
   const [novaSenha, setNovaSenha] = useState("");
   const [showNovaSenha, setShowNovaSenha] = useState(false);
   const [err, setErr]             = useState("");
+  const [esqueciAdmin, setEsqueciAdmin] = useState(false);
+  const [slugRecuperar, setSlugRecuperar] = useState("");
+  const [msgRecuperar, setMsgRecuperar]   = useState("");
 
   async function handleLogin() {
     setErr("");
@@ -358,8 +368,19 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     if (!s) { setErr("Digite seu link de acesso."); return; }
     if (!admins[s]) { setErr("Administrador não encontrado."); return; }
     if (admins[s].senha !== senha) { setErr("Senha incorreta."); return; }
+    // Salva admin no estado e redireciona para a página dele
     setCurrentAdmin({slug:s, ...admins[s]});
-    window.location.href = "/"+s;
+    // Pequeno delay para garantir que o state foi atualizado
+    setTimeout(()=>{ window.location.href = "/"+s; }, 100);
+  }
+
+  function handleRecuperarSenha() {
+    const s = safeKey(slugRecuperar.trim());
+    if (!s || !admins[s]) { setMsgRecuperar("Link não encontrado. Verifique e tente novamente."); return; }
+    const adminData = admins[s];
+    const emailAdmin = adminData.email || "";
+    // Mostra a senha (já que é sistema interno, sem servidor de email real)
+    setMsgRecuperar(`✅ Olá, ${adminData.nome}! Sua senha é: "${adminData.senha}"\n\nGuarde-a em lugar seguro.`);
   }
 
   async function handleCadastro() {
@@ -382,6 +403,7 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
       });
       await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:new Date().toISOString()});
       notify("✅ Cadastro realizado! Redirecionando...");
+      setCurrentAdmin({slug:s, nome:nome.trim(), senha:novaSenha, ativo:true});
       setTimeout(()=>{ window.location.href = "/"+s; }, 1500);
     } catch { setErr("Erro ao cadastrar. Tente novamente."); }
   }
@@ -420,34 +442,74 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
           <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"24px"}}>
             {tab==="entrar" ? (<>
               <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:16}}>ACESSAR PAINEL</div>
-              <div style={{marginBottom:12}}>
-                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SEU LINK DE ACESSO</div>
-                <input type="text" placeholder="Ex: joaosilva" value={slug}
-                  onChange={e=>{setSlug(e.target.value);setErr("");}}
-                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
-                    borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
-              </div>
-              <div style={{marginBottom:12}}>
-                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SENHA</div>
-                <div style={{position:"relative"}}>
-                  <input type={showSenhaLogin?"text":"password"} placeholder="Sua senha" value={senha}
-                    onChange={e=>{setSenha(e.target.value);setErr("");}}
-                    onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+
+              {!esqueciAdmin ? (<>
+                <div style={{marginBottom:12}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SEU LINK DE ACESSO</div>
+                  <input type="text" placeholder="Ex: joaosilva" value={slug}
+                    onChange={e=>{setSlug(e.target.value);setErr("");}}
                     style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
-                      borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
-                  <button onClick={()=>setShowSenhaLogin(s=>!s)}
-                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
-                      background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
-                    {showSenhaLogin?"🙈":"👁️"}
+                      borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                </div>
+                <div style={{marginBottom:12}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SENHA</div>
+                  <div style={{position:"relative"}}>
+                    <input type={showSenhaLogin?"text":"password"} placeholder="Sua senha" value={senha}
+                      onChange={e=>{setSenha(e.target.value);setErr("");}}
+                      onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+                      style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                        borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                    <button onClick={()=>setShowSenhaLogin(s=>!s)}
+                      style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                        background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                      {showSenhaLogin?"🙈":"👁️"}
+                    </button>
+                  </div>
+                </div>
+                {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{err}</div>}
+                <button onClick={handleLogin}
+                  style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                    border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:3,cursor:"pointer",marginBottom:10}}>
+                  ENTRAR ▶
+                </button>
+                <div style={{textAlign:"center"}}>
+                  <button onClick={()=>{setEsqueciAdmin(true);setMsgRecuperar("");}}
+                    style={{background:"transparent",border:"none",color:"#888",cursor:"pointer",
+                      fontSize:12,fontFamily:"sans-serif",textDecoration:"underline"}}>
+                    Esqueci minha senha
                   </button>
                 </div>
-              </div>
-              {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{err}</div>}
-              <button onClick={handleLogin}
-                style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
-                  border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:3,cursor:"pointer",marginTop:4}}>
-                ENTRAR ▶
-              </button>
+              </>) : (
+                <div>
+                  <div style={{fontSize:15,letterSpacing:2,color:"#ffdf00",marginBottom:10}}>🔑 RECUPERAR SENHA</div>
+                  <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:10,lineHeight:1.6}}>
+                    Digite seu link de acesso para recuperar sua senha:
+                  </div>
+                  <input type="text" placeholder="Seu link (ex: joaosilva)" value={slugRecuperar}
+                    onChange={e=>{setSlugRecuperar(e.target.value);setMsgRecuperar("");}}
+                    style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                      borderRadius:8,padding:"10px 14px",fontSize:14,fontFamily:"sans-serif",marginBottom:10}}/>
+                  {msgRecuperar&&(
+                    <div style={{background:msgRecuperar.startsWith("✅")?"rgba(0,156,59,.15)":"rgba(120,16,16,.15)",
+                      border:`1px solid ${msgRecuperar.startsWith("✅")?"#009c3b":"#5a1010"}`,
+                      borderRadius:8,padding:"12px",fontFamily:"sans-serif",fontSize:13,
+                      color:msgRecuperar.startsWith("✅")?"#fff":"#ff6b6b",marginBottom:10,
+                      whiteSpace:"pre-wrap",lineHeight:1.8}}>
+                      {msgRecuperar}
+                    </div>
+                  )}
+                  <button onClick={handleRecuperarSenha}
+                    style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                      border:"none",borderRadius:8,padding:"11px",fontSize:15,letterSpacing:2,cursor:"pointer",marginBottom:8}}>
+                    🔑 Recuperar Senha
+                  </button>
+                  <button onClick={()=>{setEsqueciAdmin(false);setMsgRecuperar("");setSlugRecuperar("");}}
+                    style={{width:"100%",background:"transparent",color:"#777",border:"1px solid #333",
+                      borderRadius:8,padding:"9px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>
+                    ← Voltar
+                  </button>
+                </div>
+              )}
             </>) : (<>
               <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:4}}>NOVO ADMINISTRADOR</div>
               <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:16,lineHeight:1.6}}>
@@ -928,7 +990,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                   borderRadius:6,padding:"6px 12px",fontSize:12,fontFamily:"sans-serif",textDecoration:"none",fontWeight:700}}>
                 🔗 Ver minha página
               </a>
-              <button onClick={()=>setCurrentAdmin(null)}
+              <button onClick={()=>{setCurrentAdmin(null);window.location.href="/";}}
                 style={{background:"#cc0000",border:"none",color:"#fff",borderRadius:6,
                   padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>
                 Sair
@@ -2330,10 +2392,14 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
             </>) : (
               <div style={{background:"rgba(255,255,255,.05)",border:"1px solid #333",borderRadius:10,padding:"16px",textAlign:"left"}}>
                 <div style={{fontSize:14,letterSpacing:2,color:"#ffdf00",marginBottom:10}}>🔑 RECUPERAÇÃO DE SENHA</div>
-                <div style={{fontFamily:"sans-serif",fontSize:13,color:"#aaa",lineHeight:1.8,marginBottom:10}}>
-                  A senha do painel Master é definida no código-fonte do sistema.<br/>
-                  Entre em contato com o desenvolvedor ou acesse o arquivo:<br/>
-                  <strong style={{color:"#fff",fontFamily:"monospace",fontSize:12}}>src/App.jsx → linha: MASTER_PASS</strong>
+                <div style={{fontFamily:"sans-serif",fontSize:13,color:"#aaa",lineHeight:1.8,marginBottom:12}}>
+                  Para recuperar sua senha do Painel Master, entre em contato:<br/>
+                  <a href="mailto:isaac.pim65@gmail.com" style={{color:"#ffdf00",textDecoration:"none",fontWeight:700}}>
+                    📧 isaac.pim65@gmail.com
+                  </a>
+                </div>
+                <div style={{background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.2)",borderRadius:8,padding:"10px 12px",fontFamily:"monospace",fontSize:12,color:"#ffdf00",marginBottom:12}}>
+                  Dica: A senha padrão é <strong>isaacmartins2026</strong>
                 </div>
                 <button onClick={()=>setEsqueci(false)}
                   style={{width:"100%",background:"#333",color:"#aaa",border:"none",borderRadius:8,
