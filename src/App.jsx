@@ -291,23 +291,29 @@ export default function App() {
   );
 
   // ── Roteamento por slug ───────────────────────────────────────────────────
-  // /master → Painel Master (Isaac)
   if (slug === "master") {
     return <MasterPanel db={db} admins={admins} licencas={licencas}
       allBoloes={allBoloes} members={members} results={results}
       notify={notify} notification={notification}/>;
   }
 
-  // /SLUG → Página do Admin (e participantes)
   if (slug && admins[slug]) {
     const adminData = admins[slug];
-    // Bolões deste admin
     const meusBoloes = Object.entries(allBoloes)
       .filter(([,b])=>b.adminSlug===slug)
       .reduce((acc,[k,v])=>({...acc,[k]:v}),{});
 
+    // Admin logado → Painel Admin
+    if (currentAdmin?.slug === slug) {
+      return <AdminPainelScreen
+        db={db} adminData={adminData} adminSlug={slug}
+        setCurrentAdmin={setCurrentAdmin}
+        boloes={meusBoloes} members={members} guesses={guesses} results={results}
+        notify={notify} notification={notification}/>;
+    }
+
+    // Participante logado → Tela do Bolão
     if (currentMember?.adminSlug === slug) {
-      // Participante logado → Tela do Bolão
       return <BolaoScreen
         db={db} adminData={adminData} adminSlug={slug}
         currentMember={currentMember} setCurrentMember={setCurrentMember}
@@ -315,15 +321,16 @@ export default function App() {
         notify={notify} notification={notification}/>;
     }
 
-    // Tela de login do participante
+    // Tela de login (participante ou admin)
     return <ParticipanteLogin
       db={db} adminData={adminData} adminSlug={slug}
       boloes={meusBoloes} members={members}
       setCurrentMember={setCurrentMember}
+      setCurrentAdmin={setCurrentAdmin}
+      admins={admins}
       notify={notify} notification={notification}/>;
   }
 
-  // / → Home: cadastro de admin ou acesso ao painel admin
   return <HomeScreen
     db={db} admins={admins} licencas={licencas}
     currentAdmin={currentAdmin} setCurrentAdmin={setCurrentAdmin}
@@ -479,21 +486,31 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
 // ══════════════════════════════════════════════════════════════════════════════
 // LOGIN DO PARTICIPANTE — página exclusiva do admin (bolao.vercel.app/SLUG)
 // ══════════════════════════════════════════════════════════════════════════════
-function ParticipanteLogin({db, adminData, adminSlug, boloes, members, setCurrentMember, notify, notification}) {
+function ParticipanteLogin({db, adminData, adminSlug, boloes, members,
+  setCurrentMember, setCurrentAdmin, admins, notify, notification}) {
   const [selectedBolaoId, setSelectedBolaoId] = useState("");
-  const [err, setErr] = useState("");
+  const [showAdminLogin, setShowAdminLogin]   = useState(false);
+  const [adminSenha, setAdminSenha]           = useState("");
+  const [showSenha, setShowSenha]             = useState(false);
+  const [err, setErr]                         = useState("");
 
   const boloesList = Object.entries(boloes).filter(([,b])=>b.ativo!==false);
-
   useEffect(()=>{ if(boloesList.length>0) setSelectedBolaoId(boloesList[0][0]); },[boloes]);
 
   const membrosAprovados = Object.entries(members[selectedBolaoId]||{})
-    .filter(([,m])=>m.status==="aprovado")
-    .map(([uid,m])=>({uid,...m}));
+    .filter(([,m])=>m.status==="aprovado").map(([uid,m])=>({uid,...m}));
 
   function entrar(m) {
     setCurrentMember({uid:m.uid, apelido:m.apelido, bolaoId:selectedBolaoId, adminSlug});
     notify(`⚽ Bem-vindo(a), ${m.apelido}!`);
+  }
+
+  function loginAdmin() {
+    if (adminSenha !== admins[adminSlug]?.senha) {
+      setErr("Senha incorreta."); return;
+    }
+    setCurrentAdmin({slug:adminSlug, ...admins[adminSlug]});
+    notify(`🔐 Bem-vindo ao painel, ${adminData.nome}!`);
   }
 
   return (
@@ -502,7 +519,6 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members, setCurren
       <BrStripe/>
       <Notif n={notification}/>
 
-      {/* Header */}
       <header>
         <div style={{background:"linear-gradient(135deg,#004d22,#009c3b 25%,#002776 60%,#001240)"}}>
           <div style={{background:"rgba(0,0,0,.55)",padding:"14px 20px",textAlign:"center"}}>
@@ -518,71 +534,106 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members, setCurren
       <div style={{flex:1,display:"flex",alignItems:"center",justifyContent:"center",padding:"24px 16px"}}>
         <div style={{width:"100%",maxWidth:440}}>
 
-          {/* Seleção de bolão se tiver mais de 1 */}
-          {boloesList.length > 1 && (
-            <div style={{marginBottom:16}}>
-              <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:6}}>ESCOLHA O BOLÃO:</div>
-              <div style={{display:"grid",gap:8}}>
-                {boloesList.map(([bid,b])=>(
-                  <button key={bid} onClick={()=>setSelectedBolaoId(bid)}
-                    style={{background:selectedBolaoId===bid?"rgba(0,156,59,.2)":"rgba(255,255,255,.04)",
-                      border:`2px solid ${selectedBolaoId===bid?"#009c3b":"#1a2a1a"}`,
-                      borderRadius:10,padding:"12px 16px",cursor:"pointer",color:"#fff",
-                      display:"flex",alignItems:"center",gap:12,transition:".2s"}}>
-                    <span style={{fontSize:24}}>⚽</span>
-                    <div style={{textAlign:"left"}}>
-                      <div style={{fontSize:16,letterSpacing:2}}>{b.nome}</div>
-                      <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888"}}>{b.descricao}</div>
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-          {boloesList.length===1&&(
-            <div style={{background:"rgba(0,156,59,.1)",border:"1px solid rgba(0,156,59,.3)",
-              borderRadius:10,padding:"12px 16px",marginBottom:16,
-              fontFamily:"sans-serif",fontSize:14,color:"#009c3b",fontWeight:700}}>
-              ⚽ {boloesList[0][1].nome}
-            </div>
-          )}
-
-          {/* Lista de participantes */}
-          <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"20px"}}>
-            <div style={{fontSize:18,letterSpacing:3,color:"#ffdf00",marginBottom:4}}>QUEM É VOCÊ?</div>
-            <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:16}}>
-              Clique no seu nome para entrar no bolão:
-            </div>
-
-            {membrosAprovados.length===0 ? (
-              <div style={{textAlign:"center",padding:"20px",fontFamily:"sans-serif",color:"#555"}}>
-                Nenhum participante cadastrado ainda.
-              </div>
-            ) : (
-              <div style={{display:"grid",gap:10}}>
-                {membrosAprovados.map(m=>(
-                  <button key={m.uid} onClick={()=>entrar(m)}
-                    className="hbtn"
-                    style={{background:"rgba(255,255,255,.05)",border:"2px solid #1a3a1a",
-                      borderRadius:12,padding:"14px 16px",cursor:"pointer",color:"#fff",
-                      display:"flex",alignItems:"center",gap:14,textAlign:"left",width:"100%"}}>
-                    <MemberAvatar member={m} size={48}/>
-                    <div style={{flex:1}}>
-                      <div style={{fontSize:20,letterSpacing:2}}>{m.apelido}</div>
-                      <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888"}}>{m.nome}</div>
-                    </div>
-                    <div style={{fontSize:22,color:"#009c3b"}}>▶</div>
-                  </button>
-                ))}
+          {!showAdminLogin ? (<>
+            {/* Seleção de bolão */}
+            {boloesList.length > 1 && (
+              <div style={{marginBottom:16}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:6}}>ESCOLHA O BOLÃO:</div>
+                <div style={{display:"grid",gap:8}}>
+                  {boloesList.map(([bid,b])=>(
+                    <button key={bid} onClick={()=>setSelectedBolaoId(bid)} className="hbtn"
+                      style={{background:selectedBolaoId===bid?"rgba(0,156,59,.2)":"rgba(255,255,255,.04)",
+                        border:`2px solid ${selectedBolaoId===bid?"#009c3b":"#1a2a1a"}`,
+                        borderRadius:10,padding:"12px 16px",cursor:"pointer",color:"#fff",
+                        display:"flex",alignItems:"center",gap:12,transition:".2s"}}>
+                      <span style={{fontSize:24}}>⚽</span>
+                      <div style={{textAlign:"left"}}>
+                        <div style={{fontSize:16,letterSpacing:2}}>{b.nome}</div>
+                        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888"}}>{b.descricao}</div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
-          </div>
+            {boloesList.length===1&&(
+              <div style={{background:"rgba(0,156,59,.1)",border:"1px solid rgba(0,156,59,.3)",
+                borderRadius:10,padding:"12px 16px",marginBottom:16,
+                fontFamily:"sans-serif",fontSize:14,color:"#009c3b",fontWeight:700}}>
+                ⚽ {boloesList[0][1].nome}
+              </div>
+            )}
 
-          {/* Link para o admin */}
-          <div style={{textAlign:"center",marginTop:16,fontFamily:"sans-serif",fontSize:11,color:"#444"}}>
-            Administrador?{" "}
-            <a href="/" style={{color:"#ffdf00",textDecoration:"none"}}>Acesse o painel aqui</a>
-          </div>
+            {/* Lista de participantes */}
+            <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"20px"}}>
+              <div style={{fontSize:18,letterSpacing:3,color:"#ffdf00",marginBottom:4}}>QUEM É VOCÊ?</div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:16}}>
+                Clique no seu nome para entrar:
+              </div>
+              {membrosAprovados.length===0 ? (
+                <div style={{textAlign:"center",padding:"20px",fontFamily:"sans-serif",color:"#555"}}>
+                  Nenhum participante cadastrado ainda.
+                </div>
+              ) : (
+                <div style={{display:"grid",gap:10}}>
+                  {membrosAprovados.map(m=>(
+                    <button key={m.uid} onClick={()=>entrar(m)} className="hbtn"
+                      style={{background:"rgba(255,255,255,.05)",border:"2px solid #1a3a1a",
+                        borderRadius:12,padding:"14px 16px",cursor:"pointer",color:"#fff",
+                        display:"flex",alignItems:"center",gap:14,textAlign:"left",width:"100%"}}>
+                      <MemberAvatar member={m} size={48}/>
+                      <div style={{flex:1}}>
+                        <div style={{fontSize:20,letterSpacing:2}}>{m.apelido}</div>
+                        <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888"}}>{m.nome}</div>
+                      </div>
+                      <div style={{fontSize:22,color:"#009c3b"}}>▶</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Botão admin */}
+            <div style={{textAlign:"center",marginTop:16}}>
+              <button onClick={()=>setShowAdminLogin(true)}
+                style={{background:"transparent",border:"1px solid #2a2a4a",color:"#6666aa",
+                  borderRadius:8,padding:"8px 18px",cursor:"pointer",fontSize:13,
+                  fontFamily:"sans-serif",transition:".2s"}}>
+                🔐 Sou o Administrador
+              </button>
+            </div>
+          </>) : (<>
+            {/* Login Admin */}
+            <div style={{background:"rgba(255,255,255,.04)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"24px"}}>
+              <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:16}}>🔐 ACESSO DO ADMINISTRADOR</div>
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SENHA</div>
+                <div style={{position:"relative"}}>
+                  <input type={showSenha?"text":"password"} placeholder="Digite sua senha"
+                    value={adminSenha} onChange={e=>{setAdminSenha(e.target.value);setErr("");}}
+                    onKeyDown={e=>e.key==="Enter"&&loginAdmin()}
+                    style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",
+                      borderRadius:8,padding:"11px 44px 11px 14px",fontSize:16,fontFamily:"sans-serif"}}/>
+                  <button onClick={()=>setShowSenha(s=>!s)}
+                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                      background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                    {showSenha?"🙈":"👁️"}
+                  </button>
+                </div>
+              </div>
+              {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{err}</div>}
+              <button onClick={loginAdmin}
+                style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                  border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:3,cursor:"pointer",marginBottom:10}}>
+                ENTRAR ▶
+              </button>
+              <button onClick={()=>{setShowAdminLogin(false);setErr("");setAdminSenha("");}}
+                style={{width:"100%",background:"transparent",color:"#777",border:"1px solid #333",
+                  borderRadius:8,padding:"9px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>
+                ← Voltar
+              </button>
+            </div>
+          </>)}
         </div>
       </div>
       <BrStripe/>
@@ -591,8 +642,597 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members, setCurren
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// TELA DO BOLÃO — participante logado
+// PAINEL DO ADMINISTRADOR — tela completa após login admin
 // ══════════════════════════════════════════════════════════════════════════════
+function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
+  boloes, members, guesses, results, notify, notification}) {
+
+  const [aba, setAba] = useState("boloes");
+  const [selectedBid, setSelectedBid] = useState(Object.keys(boloes)[0]||"");
+  const [filterGrp, setFilterGrp] = useState("Todos");
+
+  // Bolão atual
+  const bolaoAtual = boloes[selectedBid]||{};
+  const membrosDosBolao = Object.entries(members[selectedBid]||{}).map(([uid,m])=>({uid,...m}));
+  const aprovados = membrosDosBolao.filter(m=>m.status==="aprovado");
+
+  // Estados para criação de bolão
+  const [newBNome, setNewBNome] = useState("");
+  const [newBDesc, setNewBDesc] = useState("");
+
+  // Estados participantes
+  const [editM, setEditM]       = useState(null);
+  const [newNome, setNewNome]   = useState("");
+  const [newApe, setNewApe]     = useState("");
+  const [newWa, setNewWa]       = useState("");
+  const [newEmail, setNewEmail] = useState("");
+
+  // Estados regras e prêmio
+  const [regras, setRegras]   = useState(()=>bolaoAtual.regras||{acerto3:3,acerto1:1,errouDesc:"0 pontos"});
+  const [premio, setPremio]   = useState(()=>bolaoAtual.premio||"");
+
+  // Estados avisos
+  const [aviso, setAviso]     = useState("");
+  const [avisos, setAvisos]   = useState([]);
+
+  // Estados resultados
+  const [apiKey, setApiKey]   = useState(localStorage.getItem("bg26_apikey")||"");
+  const [fetching, setFetching] = useState(false);
+  const [lastUp, setLastUp]   = useState(null);
+
+  // Carregar avisos
+  useEffect(()=>{
+    if(!db||!selectedBid) return;
+    const r = dbRef(db,`avisos/${selectedBid}`);
+    onValue(r, s=>{
+      const v=s.val()||{};
+      setAvisos(Object.entries(v).map(([id,a])=>({id,...a})).sort((a,b)=>b.ts-a.ts));
+    });
+    return ()=>off(r);
+  },[db,selectedBid]);
+
+  // Atualizar regras quando muda bolão
+  useEffect(()=>{
+    setRegras(bolaoAtual.regras||{acerto3:3,acerto1:1,errouDesc:"0 pontos"});
+    setPremio(bolaoAtual.premio||"");
+  },[selectedBid,boloes]);
+
+  const numBoloes = Object.keys(boloes).length;
+
+  const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"32 Avos","Oitavas","Quartas","Semifinal","Final"];
+
+  function filteredGames() {
+    return SCHEDULE.filter(g=>{
+      if(filterGrp==="Todos") return true;
+      if(filterGrp==="Hoje") return isToday(g.date);
+      if(filterGrp==="32 Avos") return g.group==="32avos";
+      if(filterGrp==="Oitavas") return g.group==="Oitavas";
+      if(filterGrp==="Quartas") return g.group==="Quartas";
+      if(filterGrp==="Semifinal") return g.group==="Semifinal";
+      if(filterGrp==="Final") return g.group==="Final";
+      return "Grupo "+g.group===filterGrp;
+    });
+  }
+
+  async function criarBolao() {
+    if(!newBNome.trim()){notify("Digite o nome","err");return;}
+    if(numBoloes>=MAX_BOLAOS){notify(`Limite de ${MAX_BOLAOS} bolões!`,"err");return;}
+    const id=safeKey(newBNome)+"_"+Date.now();
+    await set(dbRef(db,`boloes/${id}`),{
+      nome:newBNome.trim(),descricao:newBDesc.trim()||"Copa do Mundo 2026",
+      adminSlug,ativo:true,criadoEm:new Date().toISOString(),
+      regras:{placarExato:3,acertouVencedor:1},premio:""
+    });
+    setNewBNome("");setNewBDesc("");
+    setSelectedBid(id);
+    notify(`✅ Bolão "${newBNome}" criado!`);
+  }
+
+  async function addMembro() {
+    if(!newNome.trim()||!newApe.trim()){notify("Nome e apelido obrigatórios","err");return;}
+    if(aprovados.length>=MAX_MEMBROS){notify(`Limite de ${MAX_MEMBROS}!`,"err");return;}
+    const uid=safeKey(newApe.trim());
+    if(members[selectedBid]?.[uid]){notify("Apelido já existe","err");return;}
+    await set(dbRef(db,`members/${selectedBid}/${uid}`),{
+      nome:newNome.trim(),apelido:newApe.trim(),
+      whatsapp:newWa.trim(),email:newEmail.trim(),
+      status:"aprovado",criadoEm:new Date().toISOString()
+    });
+    setNewNome("");setNewApe("");setNewWa("");setNewEmail("");
+    notify(`✅ ${newApe} adicionado!`);
+  }
+
+  async function salvarRegras() {
+    await update(dbRef(db,`boloes/${selectedBid}`),{regras});
+    notify("✅ Regras salvas!");
+  }
+
+  async function salvarPremio() {
+    await update(dbRef(db,`boloes/${selectedBid}`),{premio});
+    notify("✅ Prêmio salvo!");
+  }
+
+  async function enviarAviso() {
+    if(!aviso.trim()){notify("Digite o aviso","err");return;}
+    await push(dbRef(db,`avisos/${selectedBid}`),{
+      texto:aviso.trim(),ts:Date.now(),
+      data:new Date().toLocaleDateString("pt-BR")
+    });
+    setAviso("");
+    notify("📢 Aviso enviado!");
+  }
+
+  async function fetchResultados() {
+    setFetching(true);
+    try {
+      if(!apiKey){notify("Configure a chave de API","warn");setFetching(false);return;}
+      const res=await fetch("https://api.football-data.org/v4/competitions/WC/matches?status=FINISHED&season=2026",
+        {headers:{"X-Auth-Token":apiKey}});
+      if(!res.ok) throw new Error();
+      const data=await res.json();
+      for(const m of (data.matches||[])){
+        const hn=(m.homeTeam?.shortName||"").toLowerCase().slice(0,4);
+        const found=SCHEDULE.find(s=>s.home.toLowerCase().startsWith(hn));
+        if(found&&m.score?.fullTime?.home!=null)
+          await set(dbRef(db,`results/${found.id}`),{home:String(m.score.fullTime.home),away:String(m.score.fullTime.away)});
+      }
+      const t=new Date().toLocaleTimeString("pt-BR");
+      setLastUp(t);notify("✅ Resultados atualizados!");
+    } catch{notify("❌ Erro na API","err");}
+    setFetching(false);
+  }
+
+  // Ranking
+  function getRanking() {
+    return aprovados.map(m=>{
+      let pts=0,exact=0,win=0;
+      SCHEDULE.filter(g=>!g.knockout).forEach(g=>{
+        const r=results[g.id];
+        const key=`${safeKey(adminSlug)}_${safeKey(selectedBid)}_${safeKey(m.uid)}`;
+        const gu=guesses[key]?.[g.id];
+        if(r&&gu){const pt=calcPoints(gu,r);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
+      });
+      return{...m,pts,exact,win};
+    }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.win-a.win);
+  }
+
+  const tabStyle = t => ({
+    background:aba===t?"#ffdf00":"rgba(255,255,255,.07)",
+    color:aba===t?"#000":"#aaa",border:"none",cursor:"pointer",
+    padding:"9px 14px",fontSize:13,fontWeight:700,fontFamily:"sans-serif",
+    letterSpacing:1,whiteSpace:"nowrap",borderRadius:7,transition:".15s"
+  });
+
+  const Card = ({children, color="#1a3a1a"}) => (
+    <div style={{background:"rgba(255,255,255,.03)",border:`1px solid ${color}`,borderRadius:12,padding:"16px",marginBottom:14}}>
+      {children}
+    </div>
+  );
+
+  const Label = ({children}) => (
+    <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>{children}</div>
+  );
+
+  const Input = ({value,onChange,placeholder,type="text"}) => (
+    <input type={type} value={value} onChange={onChange} placeholder={placeholder}
+      style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+        borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+  );
+
+  return(
+    <div style={{...BASE_BG,minHeight:"100vh"}}>
+      <style>{GLOBAL_CSS}</style>
+      <Notif n={notification}/>
+
+      {/* Header */}
+      <header>
+        <div style={{background:"linear-gradient(135deg,#004d22,#009c3b 25%,#002776 60%,#001240)"}}>
+          <div style={{background:"rgba(0,0,0,.55)",padding:"12px 16px",
+            display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+            <div>
+              <div style={{fontSize:26,letterSpacing:5}}>⚽ PAINEL DO ADMINISTRADOR</div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#ffdf00",letterSpacing:2}}>{adminData.nome}</div>
+            </div>
+            <div style={{display:"flex",gap:8,alignItems:"center"}}>
+              <a href={"/"+adminSlug} target="_blank"
+                style={{background:"rgba(0,156,59,.3)",color:"#009c3b",border:"1px solid rgba(0,156,59,.4)",
+                  borderRadius:6,padding:"6px 12px",fontSize:12,fontFamily:"sans-serif",textDecoration:"none",fontWeight:700}}>
+                🔗 Ver minha página
+              </a>
+              <button onClick={()=>setCurrentAdmin(null)}
+                style={{background:"#cc0000",border:"none",color:"#fff",borderRadius:6,
+                  padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>
+                Sair
+              </button>
+            </div>
+          </div>
+        </div>
+        <BrStripe/>
+      </header>
+
+      {/* Seletor de bolão + abas */}
+      <div style={{background:"rgba(0,0,0,.85)",borderBottom:"1px solid #1a2a1a",padding:"10px 14px"}}>
+        {/* Seletor */}
+        <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:10,flexWrap:"wrap"}}>
+          <span style={{fontFamily:"sans-serif",fontSize:12,color:"#888"}}>MEU BOLÃO:</span>
+          {Object.entries(boloes).map(([bid,b])=>(
+            <button key={bid} onClick={()=>setSelectedBid(bid)}
+              style={{background:selectedBid===bid?"rgba(255,223,0,.15)":"rgba(255,255,255,.06)",
+                border:`2px solid ${selectedBid===bid?"#ffdf00":"#2a2a2a"}`,
+                color:selectedBid===bid?"#ffdf00":"#aaa",borderRadius:8,
+                padding:"6px 14px",cursor:"pointer",fontSize:13,fontWeight:700,fontFamily:"sans-serif"}}>
+              ⚽ {b.nome}
+            </button>
+          ))}
+          {numBoloes < MAX_BOLAOS && (
+            <button onClick={()=>setAba("boloes")}
+              style={{background:"rgba(0,156,59,.2)",border:"1px solid rgba(0,156,59,.4)",
+                color:"#009c3b",borderRadius:8,padding:"6px 14px",cursor:"pointer",
+                fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>
+              + Novo Bolão
+            </button>
+          )}
+        </div>
+        {/* Abas */}
+        <div style={{display:"flex",gap:6,overflowX:"auto",flexWrap:"nowrap"}}>
+          {[
+            {id:"boloes",      label:"🏆 Bolões"},
+            {id:"participantes",label:"👥 Participantes"},
+            {id:"resultados",  label:"⚽ Resultados"},
+            {id:"ranking",     label:"📊 Ranking"},
+            {id:"regras",      label:"📋 Regras"},
+            {id:"premio",      label:"🎁 Prêmio"},
+            {id:"avisos",      label:"📢 Avisos"},
+          ].map(t=>(
+            <button key={t.id} onClick={()=>setAba(t.id)} style={tabStyle(t.id)}>{t.label}</button>
+          ))}
+        </div>
+      </div>
+
+      <main style={{maxWidth:760,margin:"0 auto",padding:"16px 12px"}}>
+
+        {/* ── BOLÕES ── */}
+        {aba==="boloes"&&(
+          <div>
+            {numBoloes < MAX_BOLAOS && (
+              <Card color="rgba(0,156,59,.3)">
+                <div style={{fontSize:16,letterSpacing:3,color:"#009c3b",marginBottom:12}}>➕ CRIAR NOVO BOLÃO</div>
+                <div style={{display:"grid",gap:8,marginBottom:10}}>
+                  <div><Label>NOME DO BOLÃO *</Label><Input value={newBNome} onChange={e=>setNewBNome(e.target.value)} placeholder="Ex: Bolão da Família 2026"/></div>
+                  <div><Label>DESCRIÇÃO</Label><Input value={newBDesc} onChange={e=>setNewBDesc(e.target.value)} placeholder="Ex: Copa do Mundo 2026"/></div>
+                </div>
+                <button onClick={criarBolao}
+                  style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:15,fontWeight:700,letterSpacing:2}}>
+                  CRIAR BOLÃO ▶
+                </button>
+              </Card>
+            )}
+            {numBoloes >= MAX_BOLAOS && (
+              <div style={{background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.3)",borderRadius:10,padding:"12px 16px",marginBottom:14,fontFamily:"sans-serif",fontSize:13,color:"#ffdf00"}}>
+                ⚠️ Limite de {MAX_BOLAOS} bolões atingido para sua licença.
+              </div>
+            )}
+            {Object.entries(boloes).map(([bid,b])=>(
+              <Card key={bid} color={selectedBid===bid?"#ffdf00":"#1a2a1a"}>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10}}>
+                  <div>
+                    <div style={{fontSize:20,letterSpacing:3,color:selectedBid===bid?"#ffdf00":"#fff"}}>{b.nome}</div>
+                    <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginTop:2}}>
+                      {b.descricao} · ✅ {Object.values(members[bid]||{}).filter(m=>m.status==="aprovado").length}/{MAX_MEMBROS} participantes
+                    </div>
+                    <div style={{fontFamily:"sans-serif",fontSize:11,color:"#009c3b",marginTop:2}}>
+                      🔗 Link: <strong>{window.location.origin}/{adminSlug}</strong>
+                    </div>
+                  </div>
+                  <div style={{display:"flex",gap:8}}>
+                    <button onClick={()=>{
+                      const n=window.prompt("Novo nome:",b.nome);
+                      if(n?.trim()) update(dbRef(db,`boloes/${bid}`),{nome:n.trim()}).then(()=>notify("✅ Renomeado!"));
+                    }} style={{background:"rgba(255,223,0,.15)",color:"#ffdf00",border:"1px solid rgba(255,223,0,.3)",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>✏️ Renomear</button>
+                    <button onClick={()=>{
+                      if(window.confirm(`Excluir "${b.nome}"?`))
+                        remove(dbRef(db,`boloes/${bid}`)).then(()=>notify("🗑️ Excluído."));
+                    }} style={{background:"rgba(120,16,16,.3)",color:"#ffaaaa",border:"1px solid #5a1010",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif"}}>🗑️ Excluir</button>
+                  </div>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+
+        {/* ── PARTICIPANTES ── */}
+        {aba==="participantes"&&(
+          <div>
+            <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:12}}>
+              ✅ {aprovados.length}/{MAX_MEMBROS} participantes no bolão <strong style={{color:"#fff"}}>{bolaoAtual.nome}</strong>
+            </div>
+            {aprovados.map(m=>(
+              <div key={m.uid} style={{background:"rgba(0,156,59,.06)",border:"1px solid rgba(0,156,59,.2)",borderRadius:10,padding:"10px 14px",marginBottom:8}}>
+                {editM?.uid===m.uid?(
+                  <div style={{display:"grid",gap:8}}>
+                    {[{l:"Nome",k:"nome"},{l:"Apelido",k:"apelido"},{l:"WhatsApp",k:"whatsapp"},{l:"Email",k:"email"}].map(f=>(
+                      <div key={f.k}>
+                        <Label>{f.l.toUpperCase()}</Label>
+                        <Input value={editM[f.k]||""} onChange={e=>setEditM(p=>({...p,[f.k]:e.target.value}))}/>
+                      </div>
+                    ))}
+                    {/* Avatar */}
+                    <div>
+                      <Label>AVATAR</Label>
+                      <div style={{display:"flex",gap:4,flexWrap:"wrap",background:"#050d0a",borderRadius:8,padding:"8px",border:"1px solid #009c3b"}}>
+                        {AVATARES.map(av=>(
+                          <button key={av} onClick={()=>setEditM(p=>({...p,avatar:av}))}
+                            style={{background:editM.avatar===av?"rgba(0,156,59,.4)":"transparent",
+                              border:`2px solid ${editM.avatar===av?"#009c3b":"transparent"}`,
+                              borderRadius:6,padding:"3px",cursor:"pointer",fontSize:22,lineHeight:1}}>
+                            {av}
+                          </button>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",gap:5,flexWrap:"wrap",marginTop:6}}>
+                        {AVATAR_COLORS.map((c,i)=>(
+                          <button key={c} onClick={()=>setEditM(p=>({...p,avatarColor:i}))}
+                            style={{width:24,height:24,borderRadius:"50%",background:c,border:`3px solid ${editM.avatarColor===i?"#fff":"transparent"}`,cursor:"pointer"}}/>
+                        ))}
+                      </div>
+                      <div style={{display:"flex",alignItems:"center",gap:8,marginTop:6,fontFamily:"sans-serif",fontSize:12,color:"#888"}}>
+                        Preview: <MemberAvatar member={editM} size={36}/> <span style={{color:"#fff"}}>{editM.apelido}</span>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={()=>{ update(dbRef(db,`members/${selectedBid}/${m.uid}`),editM).then(()=>{setEditM(null);notify("✅ Salvo!");}); }}
+                        style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:6,padding:"8px 16px",cursor:"pointer",fontSize:14,fontWeight:700}}>💾 Salvar</button>
+                      <button onClick={()=>setEditM(null)}
+                        style={{background:"#333",color:"#aaa",border:"none",borderRadius:6,padding:"8px 14px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>Cancelar</button>
+                    </div>
+                  </div>
+                ):(
+                  <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
+                    <MemberAvatar member={m} size={40}/>
+                    <div style={{flex:1}}>
+                      <div style={{fontSize:16,letterSpacing:1}}>{m.apelido}</div>
+                      <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777"}}>👤 {m.nome}{m.whatsapp&&<> · 📱 {m.whatsapp}</>}</div>
+                    </div>
+                    <div style={{display:"flex",gap:6}}>
+                      <button onClick={()=>setEditM({...m})}
+                        style={{background:"rgba(255,223,0,.15)",color:"#ffdf00",border:"1px solid rgba(255,223,0,.3)",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>✏️</button>
+                      <button onClick={()=>{if(window.confirm(`Remover ${m.apelido}?`)) remove(dbRef(db,`members/${selectedBid}/${m.uid}`)).then(()=>notify("Removido."));}}
+                        style={{background:"rgba(120,16,16,.3)",color:"#ffaaaa",border:"1px solid #5a1010",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12}}>🗑️</button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+
+            {aprovados.length < MAX_MEMBROS && (
+              <Card color="rgba(0,156,59,.2)">
+                <div style={{fontSize:14,letterSpacing:3,color:"#009c3b",marginBottom:10}}>➕ ADICIONAR PARTICIPANTE</div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
+                  {[{ph:"Nome completo *",val:newNome,set:setNewNome},{ph:"Apelido *",val:newApe,set:setNewApe},
+                    {ph:"WhatsApp",val:newWa,set:setNewWa},{ph:"Email",val:newEmail,set:setNewEmail}].map(f=>(
+                    <input key={f.ph} type="text" placeholder={f.ph} value={f.val} onChange={e=>f.set(e.target.value)}
+                      style={{background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",borderRadius:6,padding:"8px 10px",fontSize:13,fontFamily:"sans-serif"}}/>
+                  ))}
+                </div>
+                <button onClick={addMembro}
+                  style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:14,fontWeight:700}}>
+                  ➕ Adicionar
+                </button>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* ── RESULTADOS ── */}
+        {aba==="resultados"&&(
+          <div>
+            <Card color="rgba(0,156,59,.3)">
+              <div style={{fontSize:14,letterSpacing:3,color:"#009c3b",marginBottom:8}}>🌐 ATUALIZAÇÃO AUTOMÁTICA</div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#aaa",marginBottom:10,lineHeight:1.7}}>
+                Cadastre-se grátis em <strong style={{color:"#fff"}}>football-data.org</strong> e cole sua chave:
+              </div>
+              <div style={{display:"flex",gap:8,flexWrap:"wrap",marginBottom:8}}>
+                <input type="text" placeholder="Chave de API" value={apiKey}
+                  onChange={e=>{setApiKey(e.target.value);localStorage.setItem("bg26_apikey",e.target.value);}}
+                  style={{flex:1,minWidth:160,background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:8,padding:"9px 12px",fontSize:13,fontFamily:"monospace"}}/>
+                <button onClick={fetchResultados} disabled={fetching}
+                  style={{background:fetching?"#1a1a1a":"#009c3b",color:"#fff",border:"none",borderRadius:8,padding:"9px 16px",cursor:"pointer",fontSize:13,fontWeight:700}}>
+                  {fetching?"⏳":"🔄"} Atualizar
+                </button>
+              </div>
+              {lastUp&&<div style={{fontFamily:"sans-serif",fontSize:11,color:"#666"}}>🕐 {lastUp}</div>}
+            </Card>
+
+            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+              <select value={filterGrp} onChange={e=>setFilterGrp(e.target.value)}
+                style={{background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:6,padding:"7px 10px",fontSize:13,fontFamily:"sans-serif",cursor:"pointer"}}>
+                {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
+              </select>
+            </div>
+
+            {filteredGames().map(g=>{
+              const r=results[g.id]||{};
+              const hasR=r.home!==undefined&&r.home!=="";
+              return(
+                <div key={g.id} style={{background:hasR?"rgba(0,156,59,.07)":"rgba(255,255,255,.02)",
+                  border:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,borderRadius:12,overflow:"hidden",marginBottom:8}}>
+                  <div style={{background:"rgba(255,255,255,.05)",borderBottom:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,
+                    padding:"7px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
+                    <div style={{fontFamily:"sans-serif",fontSize:12,display:"flex",gap:10}}>
+                      <span style={{color:"#ffdf00",fontWeight:700}}>{fmtDate(g.date)}</span>
+                      <span style={{fontWeight:700}}>{fmtTime(g.date)} BRT</span>
+                      <span style={{color:"#666"}}>📍{g.city}</span>
+                    </div>
+                    <span style={{fontFamily:"sans-serif",fontSize:10,background:"#002776",color:"#aaa",padding:"2px 8px",borderRadius:20}}>
+                      {g.knockout?g.group:`GR.${g.group}`}
+                    </span>
+                  </div>
+                  <div style={{padding:"10px 14px",display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8}}>
+                    <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:14,fontWeight:700}}>{g.home}</div>
+                    <div style={{display:"flex",alignItems:"center",gap:6}}>
+                      <input type="number" min="0" max="20" value={r.home??""} placeholder="–"
+                        onChange={e=>set(dbRef(db,`results/${g.id}/home`),e.target.value)}
+                        style={{width:48,height:48,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,fontSize:22,fontFamily:"monospace"}}/>
+                      <span style={{color:"#fff",fontSize:20,fontWeight:900}}>×</span>
+                      <input type="number" min="0" max="20" value={r.away??""} placeholder="–"
+                        onChange={e=>set(dbRef(db,`results/${g.id}/away`),e.target.value)}
+                        style={{width:48,height:48,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,fontSize:22,fontFamily:"monospace"}}/>
+                    </div>
+                    <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:14,fontWeight:700}}>{g.away}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* ── RANKING ── */}
+        {aba==="ranking"&&(
+          <div>
+            <div style={{fontSize:20,letterSpacing:4,color:"#ffdf00",marginBottom:14}}>🏆 RANKING — {bolaoAtual.nome}</div>
+            {getRanking().map((p,i)=>(
+              <div key={p.uid} style={{
+                background:i===0?"linear-gradient(90deg,rgba(255,215,0,.18),transparent)":i===1?"linear-gradient(90deg,rgba(192,192,192,.1),transparent)":i===2?"linear-gradient(90deg,rgba(205,127,50,.1),transparent)":"rgba(255,255,255,.03)",
+                border:`1px solid ${i===0?"rgba(255,215,0,.4)":"#1a1a1a"}`,borderRadius:12,padding:"14px 16px",
+                display:"flex",alignItems:"center",gap:12,marginBottom:8}}>
+                <div style={{fontSize:24,width:36,textAlign:"center"}}>
+                  {i===0?"🥇":i===1?"🥈":i===2?"🥉":<span style={{fontFamily:"sans-serif",fontWeight:900,color:"#666",fontSize:16}}>{i+1}°</span>}
+                </div>
+                <MemberAvatar member={p} size={36}/>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:17,letterSpacing:2}}>{p.apelido}</div>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#666"}}>🎯 {p.exact} exatos · ✅ {p.win} acertos</div>
+                </div>
+                <div style={{textAlign:"right"}}>
+                  <div style={{fontSize:28,color:i===0?"#ffdf00":"#fff",fontWeight:900,lineHeight:1}}>{p.pts}</div>
+                  <div style={{fontFamily:"sans-serif",fontSize:10,color:"#555"}}>PTS</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* ── REGRAS ── */}
+        {aba==="regras"&&(
+          <div>
+            <Card color="rgba(255,223,0,.2)">
+              <div style={{fontSize:16,letterSpacing:3,color:"#ffdf00",marginBottom:14}}>📋 REGRAS DO BOLÃO</div>
+              <div style={{display:"grid",gap:12,marginBottom:14}}>
+                <div>
+                  <Label>PONTOS POR PLACAR EXATO 🎯</Label>
+                  <input type="number" min="1" max="10" value={regras.placarExato||3}
+                    onChange={e=>setRegras(r=>({...r,placarExato:parseInt(e.target.value)||3}))}
+                    style={{width:80,background:"#050d0a",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,padding:"8px",fontSize:18,fontFamily:"monospace",textAlign:"center"}}/>
+                  <span style={{fontFamily:"sans-serif",fontSize:13,color:"#888",marginLeft:8}}>pontos</span>
+                </div>
+                <div>
+                  <Label>PONTOS POR ACERTAR O VENCEDOR ✅</Label>
+                  <input type="number" min="0" max="5" value={regras.acertouVencedor||1}
+                    onChange={e=>setRegras(r=>({...r,acertouVencedor:parseInt(e.target.value)||1}))}
+                    style={{width:80,background:"#050d0a",color:"#c8a200",border:"2px solid #c8a200",borderRadius:8,padding:"8px",fontSize:18,fontFamily:"monospace",textAlign:"center"}}/>
+                  <span style={{fontFamily:"sans-serif",fontSize:13,color:"#888",marginLeft:8}}>pontos</span>
+                </div>
+                <div>
+                  <Label>OBSERVAÇÕES ADICIONAIS</Label>
+                  <textarea value={regras.obs||""} onChange={e=>setRegras(r=>({...r,obs:e.target.value}))}
+                    placeholder="Ex: Em caso de empate no ranking, critério de desempate será..."
+                    rows={3} style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",borderRadius:8,padding:"10px 12px",fontSize:13,fontFamily:"sans-serif",resize:"vertical"}}/>
+                </div>
+              </div>
+              <button onClick={salvarRegras}
+                style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",border:"none",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:15,fontWeight:700,letterSpacing:2}}>
+                💾 SALVAR REGRAS
+              </button>
+
+              {/* Preview das regras */}
+              <div style={{marginTop:14,background:"rgba(255,255,255,.04)",borderRadius:10,padding:"12px"}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:8}}>COMO FICARÁ PARA OS PARTICIPANTES:</div>
+                {[
+                  {icon:"🎯",pts:regras.placarExato||3,desc:"Acertou o placar exato"},
+                  {icon:"✅",pts:regras.acertouVencedor||1,desc:"Acertou quem vence (mas errou o placar)"},
+                  {icon:"❌",pts:0,desc:"Errou quem vence"},
+                ].map(r=>(
+                  <div key={r.desc} style={{display:"flex",alignItems:"center",gap:10,marginBottom:6,fontFamily:"sans-serif",fontSize:13}}>
+                    <span style={{fontSize:18}}>{r.icon}</span>
+                    <span style={{color:"#ffdf00",fontWeight:700,minWidth:50}}>{r.pts} pts</span>
+                    <span style={{color:"#aaa"}}>{r.desc}</span>
+                  </div>
+                ))}
+                {regras.obs&&<div style={{fontFamily:"sans-serif",fontSize:12,color:"#777",marginTop:8,borderTop:"1px solid #1a1a1a",paddingTop:8}}>{regras.obs}</div>}
+              </div>
+            </Card>
+          </div>
+        )}
+
+        {/* ── PRÊMIO ── */}
+        {aba==="premio"&&(
+          <div>
+            <Card color="rgba(200,162,0,.3)">
+              <div style={{fontSize:16,letterSpacing:3,color:"#c8a200",marginBottom:12}}>🎁 PRÊMIO DO BOLÃO</div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:10,lineHeight:1.7}}>
+                Descreva o prêmio do bolão. Será exibido para todos os participantes.
+              </div>
+              <textarea value={premio} onChange={e=>setPremio(e.target.value)}
+                placeholder="Ex: 1º lugar: R$ 200,00 em Pix&#10;2º lugar: R$ 100,00 em Pix&#10;3º lugar: R$ 50,00 em Pix"
+                rows={6} style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #c8a200",borderRadius:8,padding:"12px",fontSize:14,fontFamily:"sans-serif",resize:"vertical",marginBottom:10}}/>
+              <button onClick={salvarPremio}
+                style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",border:"none",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:15,fontWeight:700,letterSpacing:2}}>
+                💾 SALVAR PRÊMIO
+              </button>
+              {premio&&(
+                <div style={{marginTop:12,background:"rgba(200,162,0,.08)",borderRadius:10,padding:"12px",border:"1px solid rgba(200,162,0,.2)"}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#c8a200",letterSpacing:1,marginBottom:6}}>🎁 PREVIEW:</div>
+                  <div style={{fontFamily:"sans-serif",fontSize:14,color:"#fff",whiteSpace:"pre-wrap",lineHeight:1.8}}>{premio}</div>
+                </div>
+              )}
+            </Card>
+          </div>
+        )}
+
+        {/* ── AVISOS ── */}
+        {aba==="avisos"&&(
+          <div>
+            <Card color="rgba(0,85,180,.3)">
+              <div style={{fontSize:16,letterSpacing:3,color:"#55aaff",marginBottom:10}}>📢 ENVIAR AVISO</div>
+              <textarea value={aviso} onChange={e=>setAviso(e.target.value)}
+                placeholder="Digite o aviso para todos os participantes..."
+                rows={3} style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a5a",borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif",resize:"vertical",marginBottom:10}}/>
+              <button onClick={enviarAviso}
+                style={{width:"100%",background:"linear-gradient(135deg,#003580,#0055c8)",color:"#fff",border:"none",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:15,fontWeight:700,letterSpacing:2}}>
+                📢 ENVIAR PARA TODOS
+              </button>
+            </Card>
+
+            {avisos.length>0&&(
+              <div>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:10}}>AVISOS ENVIADOS:</div>
+                {avisos.map(a=>(
+                  <div key={a.id} style={{background:"rgba(255,255,255,.04)",border:"1px solid #1a2a3a",borderRadius:10,padding:"12px 14px",marginBottom:8,display:"flex",gap:10,alignItems:"flex-start"}}>
+                    <div style={{flex:1}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:14,color:"#ddd",lineHeight:1.6}}>{a.texto}</div>
+                      <div style={{fontFamily:"sans-serif",fontSize:10,color:"#555",marginTop:4}}>📅 {a.data}</div>
+                    </div>
+                    <button onClick={()=>remove(dbRef(db,`avisos/${selectedBid}/${a.id}`)).then(()=>notify("Aviso removido."))}
+                      style={{background:"transparent",border:"none",color:"#555",cursor:"pointer",fontSize:18,flexShrink:0}}>🗑️</button>
+                  </div>
+                ))}
+              </div>
+            )}
+            {avisos.length===0&&(
+              <div style={{textAlign:"center",padding:"30px",fontFamily:"sans-serif",color:"#555"}}>Nenhum aviso enviado ainda.</div>
+            )}
+          </div>
+        )}
+
+      </main>
+
+      <BrStripe/>
+      <div style={{textAlign:"center",padding:"12px",fontFamily:"sans-serif",fontSize:11,color:"#1a1a1a"}}>
+        ⚽ Bolão do Gestor · By Prof. Isaac Martins
+      </div>
+    </div>
+  );
+}
 function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   boloes, members, guesses, results, notify, notification}) {
 
