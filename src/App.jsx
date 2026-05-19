@@ -1409,6 +1409,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   const [subScreen, setSubScreen] = useState("menu");
   const [filterGrp, setFilterGrp] = useState("Todos");
   const [fontSize,  setFontSize]  = useState(()=>parseInt(localStorage.getItem("bg26_fs")||"16"));
+  const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
   const [liveFetching, setLiveFetching] = useState(false);
@@ -1417,6 +1418,22 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
 
   const fs = b => Math.round(b * fontSize / 16);
   const changeFs = d => { const n=Math.min(24,Math.max(13,fontSize+d)); setFontSize(n); localStorage.setItem("bg26_fs",String(n)); };
+  const toggleDark = () => { const n=!darkMode; setDarkMode(n); localStorage.setItem("bg26_dark",String(n)); };
+
+  // Tema claro/escuro
+  const THEME = darkMode ? {
+    bg: "radial-gradient(ellipse at 30% 0%,#003d1a 0%,#001a0a 40%,#050d1a 70%,#000509 100%)",
+    cardBg: "rgba(255,255,255,.03)", cardBorder: "#1a2e1a",
+    text: "#fff", textSub: "#aaa", textMuted: "#666",
+    inputBg: "#050d0a", headerBg: "rgba(0,0,0,.55)",
+    navBg: "rgba(0,0,0,.92)",
+  } : {
+    bg: "linear-gradient(135deg,#f0f4f0 0%,#e8f0e8 50%,#f0f0f8 100%)",
+    cardBg: "rgba(255,255,255,.9)", cardBorder: "#c8d8c8",
+    text: "#1a2a1a", textSub: "#555", textMuted: "#999",
+    inputBg: "#fff", headerBg: "rgba(0,80,30,.85)",
+    navBg: "rgba(255,255,255,.95)",
+  };
 
   const bolaoAtual = boloes[currentMember.bolaoId];
   const membrosAprovados = Object.entries(members[currentMember.bolaoId]||{})
@@ -1443,18 +1460,80 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   function getRanking() {
     return membrosAprovados.map(m=>{
       let pts=0,exact=0,win=0;
+      const pe = m.pontosExtras||0;
       SCHEDULE.filter(g=>!g.knockout).forEach(g=>{
         const r=getResult(g.id), gu=getGuessOf(m.uid,g.id);
         if(r&&gu){const pt=calcPoints(gu,r);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
       });
-      return {...m,pts,exact,win};
+      return {...m,pts:pts+pe,exact,win,pe};
     }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.win-a.win);
+  }
+
+  // ── Classificação de grupo pelos PALPITES do usuário atual ────────────────
+  function getGroupStandings(group) {
+    const jogos = SCHEDULE.filter(g=>g.group===group&&!g.knockout);
+    const teams = [...new Set(jogos.flatMap(g=>[g.home,g.away]))];
+    const standings = teams.map(team=>({
+      team, pts:0, vit:0, emp:0, der:0, gp:0, gc:0, saldo:0, jogos:0
+    }));
+
+    jogos.forEach(g=>{
+      const gu = myGuesses[g.id];
+      if(!gu||gu.home===undefined||gu.away===undefined) return;
+      const gh=parseInt(gu.home), ga=parseInt(gu.away);
+      if(isNaN(gh)||isNaN(ga)) return;
+
+      const home = standings.find(s=>s.team===g.home);
+      const away = standings.find(s=>s.team===g.away);
+      if(!home||!away) return;
+
+      home.gp+=gh; home.gc+=ga; home.saldo+=gh-ga; home.jogos++;
+      away.gp+=ga; away.gc+=gh; away.saldo+=ga-gh; away.jogos++;
+
+      if(gh>ga){home.pts+=3;home.vit++;away.der++;}
+      else if(gh===ga){home.pts+=1;away.pts+=1;home.emp++;away.emp++;}
+      else{away.pts+=3;away.vit++;home.der++;}
+    });
+
+    return standings
+      .filter(s=>s.jogos>0)
+      .sort((a,b)=>b.pts-a.pts||b.saldo-a.saldo||b.gp-a.gp||a.team.localeCompare(b.team));
+  }
+
+  // ── Confrontos 16A baseados nos palpites ──────────────────────────────────
+  function get16AConfrontos() {
+    // Pega 1º e 2º de cada grupo pelos palpites
+    const posicoes = {};
+    GROUPS.forEach(g=>{
+      const st = getGroupStandings(g);
+      posicoes[`1${g}`] = st[0]?.team||`1º Gr.${g}`;
+      posicoes[`2${g}`] = st[1]?.team||`2º Gr.${g}`;
+    });
+
+    // Confrontos da fase 16A da FIFA 2026 (48 países, 12 grupos A-L)
+    return [
+      {id:1, home:posicoes["2A"]||"2A", away:posicoes["2B"]||"2B"},
+      {id:2, home:posicoes["1E"]||"1E", away:"3º (A/B/C)"},
+      {id:3, home:posicoes["1F"]||"1F", away:posicoes["2C"]||"2C"},
+      {id:4, home:posicoes["1C"]||"1C", away:posicoes["2F"]||"2F"},
+      {id:5, home:posicoes["1I"]||"1I", away:"3º (D/E/F)"},
+      {id:6, home:posicoes["2E"]||"2E", away:posicoes["2I"]||"2I"},
+      {id:7, home:posicoes["1A"]||"1A", away:"3º (G/H/I)"},
+      {id:8, home:posicoes["1L"]||"1L", away:"3º (J/K/L)"},
+      {id:9, home:posicoes["1D"]||"1D", away:"3º (B/E/F)"},
+      {id:10,home:posicoes["1G"]||"1G", away:"3º (A/H/I)"},
+      {id:11,home:posicoes["2K"]||"2K", away:posicoes["2L"]||"2L"},
+      {id:12,home:posicoes["1H"]||"1H", away:posicoes["2J"]||"2J"},
+      {id:13,home:posicoes["1B"]||"1B", away:"3º (E/F/G)"},
+      {id:14,home:posicoes["1J"]||"1J", away:posicoes["2H"]||"2H"},
+      {id:15,home:posicoes["1K"]||"1K", away:"3º (D/I/J)"},
+      {id:16,home:posicoes["2D"]||"2D", away:posicoes["2G"]||"2G"},
+    ];
   }
 
   const ranking = getRanking();
   const myRank  = ranking.findIndex(r=>r.uid===currentMember.uid)+1;
   const myPts   = ranking.find(r=>r.uid===currentMember.uid)?.pts||0;
-  const leader  = ranking[0];
   const todayGames = SCHEDULE.filter(g=>isToday(g.date));
 
   const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"16 Avos","Oitavas","Quartas","Semifinal","3 Lugar","Final"];
@@ -1572,7 +1651,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   };
 
   return(
-    <div style={BASE_BG}>
+    <div style={{...BASE_BG, background:THEME.bg, minHeight:"100vh"}}>
       <style>{GLOBAL_CSS}</style>
       <Notif n={notification}/>
 
@@ -1594,6 +1673,14 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                 <span style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#fff",fontWeight:700,minWidth:20,textAlign:"center"}}>A</span>
                 <button onClick={()=>changeFs(1)}  style={{background:"rgba(255,255,255,.1)",border:"none",color:"#fff",borderRadius:4,width:22,height:22,cursor:"pointer",fontSize:14}}>+</button>
               </div>
+              {/* Tema claro/escuro */}
+              <button onClick={toggleDark}
+                style={{background:"rgba(255,255,255,.12)",border:"none",color:"#fff",
+                  borderRadius:20,padding:"5px 12px",cursor:"pointer",fontSize:fs(14),
+                  display:"flex",alignItems:"center",gap:5}}>
+                {darkMode?"☀️":"🌙"}
+                <span style={{fontFamily:"sans-serif",fontSize:fs(11)}}>{darkMode?"Claro":"Escuro"}</span>
+              </button>
               {/* Usuário */}
               <div style={{display:"flex",alignItems:"center",gap:8}}>
                 <MemberAvatar member={membrosAprovados.find(m=>m.uid===currentMember.uid)} size={30}/>
@@ -1689,12 +1776,103 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
             <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:14}}>
               <MemberAvatar member={membrosAprovados.find(m=>m.uid===currentMember.uid)} size={fs(32)}/>
               <span style={{fontSize:fs(20),color:"#ffdf00",letterSpacing:2}}>{currentMember.apelido}</span>
-              <span style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#555"}}>
+              <span style={{fontFamily:"sans-serif",fontSize:fs(11),color:darkMode?"#555":"#888"}}>
                 {filteredGames().filter(g=>myGuesses[g.id]?.home!==undefined).length}/{filteredGames().length} preenchidos
               </span>
             </div>
             {filteredGames().map(g=><GameRow key={g.id} g={g} mode="meus"/>)}
-            <p style={{textAlign:"center",marginTop:12,fontFamily:"sans-serif",fontSize:fs(11),color:"#444"}}>
+
+            {/* Classificação do grupo pelos palpites */}
+            {(filterGrp==="Todos"||filterGrp.startsWith("Grupo "))&&(()=>{
+              const grupos = filterGrp==="Todos" ? GROUPS : [filterGrp.replace("Grupo ","")];
+              return grupos.map(grp=>{
+                const st = getGroupStandings(grp);
+                if(st.length===0) return null;
+                return(
+                  <div key={grp} style={{marginTop:14,background:darkMode?"rgba(255,223,0,.05)":"rgba(0,100,40,.08)",
+                    border:"1px solid rgba(255,223,0,.2)",borderRadius:12,overflow:"hidden",marginBottom:12}}>
+                    <div style={{background:"rgba(255,223,0,.12)",padding:"8px 14px",
+                      fontSize:fs(13),letterSpacing:3,color:"#ffdf00"}}>
+                      📊 CLASSIFICAÇÃO GRUPO {grp} — SEU PALPITE
+                    </div>
+                    <div style={{padding:"8px 14px"}}>
+                      <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"sans-serif",fontSize:fs(11)}}>
+                        <thead>
+                          <tr style={{borderBottom:`1px solid ${darkMode?"#1a2a1a":"#c8d8c8"}`}}>
+                            {["#","Time","Pts","J","V","E","D","GP","GC","SG"].map(h=>(
+                              <th key={h} style={{textAlign:h==="Time"?"left":"center",
+                                padding:"4px 5px",color:darkMode?"#888":"#666",fontWeight:700,fontSize:fs(10)}}>
+                                {h}
+                              </th>
+                            ))}
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {st.map((s,i)=>(
+                            <tr key={s.team} style={{
+                              background:i<2?(darkMode?"rgba(0,156,59,.12)":"rgba(0,156,59,.07)"):"transparent",
+                              borderBottom:`1px solid ${darkMode?"#0a1a0a":"#e0e8e0"}`
+                            }}>
+                              <td style={{padding:"5px",textAlign:"center",fontWeight:700,
+                                color:i===0?"#ffdf00":i===1?"#aaa":darkMode?"#fff":"#333",fontSize:fs(12)}}>
+                                {i+1}°
+                              </td>
+                              <td style={{padding:"5px"}}>
+                                <div style={{display:"flex",alignItems:"center",gap:5}}>
+                                  <Flag team={s.team} size={fs(16)}/>
+                                  <span style={{color:darkMode?"#fff":"#1a2a1a",fontWeight:i<2?700:400,fontSize:fs(12)}}>{s.team}</span>
+                                </div>
+                              </td>
+                              {[s.pts,s.jogos,s.vit,s.emp,s.der,s.gp,s.gc,s.saldo].map((v,j)=>(
+                                <td key={j} style={{padding:"5px",textAlign:"center",
+                                  color:j===0?(darkMode?"#ffdf00":"#009c3b"):darkMode?"#aaa":"#555",
+                                  fontWeight:j===0?700:400,fontSize:fs(12)}}>
+                                  {v}
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                      <div style={{fontFamily:"sans-serif",fontSize:fs(10),color:darkMode?"#444":"#999",marginTop:5}}>
+                        🟢 Top 2 classificam para 16 Avos · Baseado nos seus palpites
+                      </div>
+                    </div>
+                  </div>
+                );
+              });
+            })()}
+
+            {/* Confrontos 16A gerados pelos palpites */}
+            {filterGrp==="Todos"&&GROUPS.some(g=>getGroupStandings(g).length>0)&&(
+              <div style={{marginTop:14,background:darkMode?"rgba(60,0,120,.1)":"rgba(60,0,120,.05)",
+                border:"1px solid rgba(100,0,200,.3)",borderRadius:12,overflow:"hidden",marginBottom:12}}>
+                <div style={{background:"rgba(100,0,200,.2)",padding:"8px 14px",
+                  fontSize:fs(13),letterSpacing:3,color:"#cc88ff"}}>
+                  ⚡ FASE 16 AVOS — CONFRONTOS DO SEU PALPITE
+                </div>
+                <div style={{padding:"10px 14px",display:"grid",gap:6}}>
+                  {get16AConfrontos().map((c,i)=>(
+                    <div key={c.id} style={{display:"flex",alignItems:"center",gap:8,
+                      background:darkMode?"rgba(255,255,255,.03)":"rgba(60,0,120,.04)",
+                      border:`1px solid ${darkMode?"#2a1a4a":"#c8b8e8"}`,
+                      borderRadius:8,padding:"8px 12px",fontFamily:"sans-serif"}}>
+                      <span style={{color:darkMode?"#888":"#999",fontWeight:700,minWidth:20,fontSize:fs(11)}}>{i+1}</span>
+                      <Flag team={c.home} size={fs(20)}/>
+                      <span style={{flex:1,fontWeight:700,color:darkMode?"#fff":"#1a2a1a",fontSize:fs(13)}}>{c.home}</span>
+                      <span style={{color:"#cc88ff",fontWeight:900,fontSize:fs(13),padding:"0 6px"}}>vs</span>
+                      <span style={{flex:1,textAlign:"right",fontWeight:700,color:darkMode?"#fff":"#1a2a1a",fontSize:fs(13)}}>{c.away}</span>
+                      <Flag team={c.away} size={fs(20)}/>
+                    </div>
+                  ))}
+                </div>
+                <div style={{fontFamily:"sans-serif",fontSize:fs(10),color:darkMode?"#444":"#aaa",padding:"0 14px 10px"}}>
+                  ⚡ Confrontos gerados automaticamente pelos seus palpites nos grupos
+                </div>
+              </div>
+            )}
+
+            <p style={{textAlign:"center",marginTop:12,fontFamily:"sans-serif",fontSize:fs(11),color:darkMode?"#444":"#aaa"}}>
               💾 Salvo em tempo real · 🔒 Bloqueado após início
             </p>
           </div>
