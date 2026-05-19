@@ -641,6 +641,21 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members,
   );
 }
 
+// ── Componentes utilitários globais (fora de qualquer função para evitar re-render) ──
+const Card = ({children, color="#1a3a1a"}) => (
+  <div style={{background:"rgba(255,255,255,.03)",border:`1px solid ${color}`,borderRadius:12,padding:"16px",marginBottom:14}}>
+    {children}
+  </div>
+);
+const Label = ({children}) => (
+  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>{children}</div>
+);
+const AdminInput = ({value,onChange,placeholder,type="text"}) => (
+  <input type={type} value={value} onChange={onChange} placeholder={placeholder}
+    style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+      borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+);
+
 // ══════════════════════════════════════════════════════════════════════════════
 // PAINEL DO ADMINISTRADOR — tela completa após login admin
 // ══════════════════════════════════════════════════════════════════════════════
@@ -803,22 +818,6 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
     letterSpacing:1,whiteSpace:"nowrap",borderRadius:7,transition:".15s"
   });
 
-  const Card = ({children, color="#1a3a1a"}) => (
-    <div style={{background:"rgba(255,255,255,.03)",border:`1px solid ${color}`,borderRadius:12,padding:"16px",marginBottom:14}}>
-      {children}
-    </div>
-  );
-
-  const Label = ({children}) => (
-    <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:5}}>{children}</div>
-  );
-
-  const Input = ({value,onChange,placeholder,type="text"}) => (
-    <input type={type} value={value} onChange={onChange} placeholder={placeholder}
-      style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
-        borderRadius:8,padding:"10px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
-  );
-
   return(
     <div style={{...BASE_BG,minHeight:"100vh"}}>
       <style>{GLOBAL_CSS}</style>
@@ -898,8 +897,8 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
               <Card color="rgba(0,156,59,.3)">
                 <div style={{fontSize:16,letterSpacing:3,color:"#009c3b",marginBottom:12}}>➕ CRIAR NOVO BOLÃO</div>
                 <div style={{display:"grid",gap:8,marginBottom:10}}>
-                  <div><Label>NOME DO BOLÃO *</Label><Input value={newBNome} onChange={e=>setNewBNome(e.target.value)} placeholder="Ex: Bolão da Família 2026"/></div>
-                  <div><Label>DESCRIÇÃO</Label><Input value={newBDesc} onChange={e=>setNewBDesc(e.target.value)} placeholder="Ex: Copa do Mundo 2026"/></div>
+                  <div><Label>NOME DO BOLÃO *</Label><AdminInput value={newBNome} onChange={e=>setNewBNome(e.target.value)} placeholder="Ex: Bolão da Família 2026"/></div>
+                  <div><Label>DESCRIÇÃO</Label><AdminInput value={newBDesc} onChange={e=>setNewBDesc(e.target.value)} placeholder="Ex: Copa do Mundo 2026"/></div>
                 </div>
                 <button onClick={criarBolao}
                   style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"11px",cursor:"pointer",fontSize:15,fontWeight:700,letterSpacing:2}}>
@@ -953,7 +952,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                     {[{l:"Nome",k:"nome"},{l:"Apelido",k:"apelido"},{l:"WhatsApp",k:"whatsapp"},{l:"Email",k:"email"}].map(f=>(
                       <div key={f.k}>
                         <Label>{f.l.toUpperCase()}</Label>
-                        <Input value={editM[f.k]||""} onChange={e=>setEditM(p=>({...p,[f.k]:e.target.value}))}/>
+                        <AdminInput value={editM[f.k]||""} onChange={e=>setEditM(p=>({...p,[f.k]:e.target.value}))}/>
                       </div>
                     ))}
                     {/* Avatar */}
