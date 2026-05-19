@@ -17,7 +17,7 @@ const FIREBASE_CONFIG = {
 };
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
-const MASTER_PASS   = "IsaacMaster2026#";
+const MASTER_PASS   = "isaacmartins2026";
 const MAX_BOLAOS    = 3;
 const MAX_MEMBROS   = 50;
 
@@ -149,22 +149,22 @@ const SCHEDULE = [
   {id:67, home:"Panamá",            away:"Inglaterra",         group:"L", date:"2026-06-27T18:00", city:"Nova York"},
   {id:68, home:"Croácia",           away:"Gana",               group:"L", date:"2026-06-27T18:00", city:"Filadélfia"},
   // ELIMINATÓRIAS
-  {id:73, home:"2A",away:"2B",group:"32avos",date:"2026-06-28T16:00",city:"Los Angeles",knockout:true},
-  {id:74, home:"1E",away:"3ABC",group:"32avos",date:"2026-06-29T14:00",city:"Boston",knockout:true},
-  {id:75, home:"1F",away:"2C",group:"32avos",date:"2026-06-29T17:30",city:"Monterrey",knockout:true},
-  {id:76, home:"1C",away:"2F",group:"32avos",date:"2026-06-29T22:00",city:"Houston",knockout:true},
-  {id:77, home:"1I",away:"3DEF",group:"32avos",date:"2026-06-30T14:00",city:"Nova York",knockout:true},
-  {id:78, home:"2E",away:"2I",group:"32avos",date:"2026-06-30T18:00",city:"Dallas",knockout:true},
-  {id:79, home:"1A",away:"3GHI",group:"32avos",date:"2026-06-30T22:00",city:"Cidade do México",knockout:true},
-  {id:80, home:"1L",away:"3JKL",group:"32avos",date:"2026-07-01T13:00",city:"Atlanta",knockout:true},
-  {id:81, home:"1D",away:"3BEF",group:"32avos",date:"2026-07-01T17:00",city:"São Francisco",knockout:true},
-  {id:82, home:"1G",away:"3AHI",group:"32avos",date:"2026-07-01T21:00",city:"Seattle",knockout:true},
-  {id:83, home:"2K",away:"2L",group:"32avos",date:"2026-07-02T00:00",city:"Toronto",knockout:true},
-  {id:84, home:"1H",away:"2J",group:"32avos",date:"2026-07-02T16:00",city:"Los Angeles",knockout:true},
-  {id:85, home:"1B",away:"3EFG",group:"32avos",date:"2026-07-02T20:00",city:"Vancouver",knockout:true},
-  {id:86, home:"1J",away:"2H",group:"32avos",date:"2026-07-03T15:00",city:"Atlanta",knockout:true},
-  {id:87, home:"1K",away:"3DIJ",group:"32avos",date:"2026-07-03T17:00",city:"Kansas City",knockout:true},
-  {id:88, home:"2D",away:"2G",group:"32avos",date:"2026-07-03T22:30",city:"Dallas",knockout:true},
+  {id:73, home:"2A",away:"2B",group:"16avos",date:"2026-06-28T16:00",city:"Los Angeles",knockout:true},
+  {id:74, home:"1E",away:"3ABC",group:"16avos",date:"2026-06-29T14:00",city:"Boston",knockout:true},
+  {id:75, home:"1F",away:"2C",group:"16avos",date:"2026-06-29T17:30",city:"Monterrey",knockout:true},
+  {id:76, home:"1C",away:"2F",group:"16avos",date:"2026-06-29T22:00",city:"Houston",knockout:true},
+  {id:77, home:"1I",away:"3DEF",group:"16avos",date:"2026-06-30T14:00",city:"Nova York",knockout:true},
+  {id:78, home:"2E",away:"2I",group:"16avos",date:"2026-06-30T18:00",city:"Dallas",knockout:true},
+  {id:79, home:"1A",away:"3GHI",group:"16avos",date:"2026-06-30T22:00",city:"Cidade do México",knockout:true},
+  {id:80, home:"1L",away:"3JKL",group:"16avos",date:"2026-07-01T13:00",city:"Atlanta",knockout:true},
+  {id:81, home:"1D",away:"3BEF",group:"16avos",date:"2026-07-01T17:00",city:"São Francisco",knockout:true},
+  {id:82, home:"1G",away:"3AHI",group:"16avos",date:"2026-07-01T21:00",city:"Seattle",knockout:true},
+  {id:83, home:"2K",away:"2L",group:"16avos",date:"2026-07-02T00:00",city:"Toronto",knockout:true},
+  {id:84, home:"1H",away:"2J",group:"16avos",date:"2026-07-02T16:00",city:"Los Angeles",knockout:true},
+  {id:85, home:"1B",away:"3EFG",group:"16avos",date:"2026-07-02T20:00",city:"Vancouver",knockout:true},
+  {id:86, home:"1J",away:"2H",group:"16avos",date:"2026-07-03T15:00",city:"Atlanta",knockout:true},
+  {id:87, home:"1K",away:"3DIJ",group:"16avos",date:"2026-07-03T17:00",city:"Kansas City",knockout:true},
+  {id:88, home:"2D",away:"2G",group:"16avos",date:"2026-07-03T22:30",city:"Dallas",knockout:true},
   {id:89, home:"W74",away:"W77",group:"Oitavas",date:"2026-07-04T14:00",city:"Filadélfia",knockout:true},
   {id:90, home:"W73",away:"W75",group:"Oitavas",date:"2026-07-04T18:00",city:"Houston",knockout:true},
   {id:91, home:"W76",away:"W78",group:"Oitavas",date:"2026-07-05T17:00",city:"Nova York",knockout:true},
@@ -341,13 +341,15 @@ export default function App() {
 // HOME — cadastro/login do administrador
 // ══════════════════════════════════════════════════════════════════════════════
 function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify, notification}) {
-  const [tab, setTab]             = useState("entrar"); // entrar | cadastrar
+  const [tab, setTab]             = useState("entrar");
   const [slug, setSlug]           = useState("");
   const [senha, setSenha]         = useState("");
+  const [showSenhaLogin, setShowSenhaLogin] = useState(false);
   const [licenca, setLicenca]     = useState("");
   const [nome, setNome]           = useState("");
   const [novoSlug, setNovoSlug]   = useState("");
   const [novaSenha, setNovaSenha] = useState("");
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
   const [err, setErr]             = useState("");
 
   async function handleLogin() {
@@ -367,20 +369,17 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     if (!nome.trim()) { setErr("Digite seu nome."); return; }
     if (!novaSenha || novaSenha.length < 6) { setErr("Senha deve ter pelo menos 6 caracteres."); return; }
     if (!licenca.trim()) { setErr("Digite o código de licença."); return; }
+    if (admins[s]) { setErr("Esse nome já foi usado, por favor crie outro."); return; }
 
-    // Valida licença
     const lic = Object.entries(licencas).find(([,l])=>l.codigo===licenca.trim().toUpperCase()&&!l.usado);
     if (!lic) { setErr("Código de licença inválido ou já utilizado."); return; }
-    if (admins[s]) { setErr("Este link já está em uso. Escolha outro."); return; }
 
     try {
-      // Registra admin
       await set(dbRef(db, `admins/${s}`), {
         nome: nome.trim(), slug: s, senha: novaSenha,
         licenca: licenca.trim().toUpperCase(),
         criadoEm: new Date().toISOString(), ativo: true,
       });
-      // Marca licença como usada
       await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:new Date().toISOString()});
       notify("✅ Cadastro realizado! Redirecionando...");
       setTimeout(()=>{ window.location.href = "/"+s; }, 1500);
@@ -394,7 +393,6 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
       <Notif n={notification}/>
 
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px"}}>
-        {/* Logo */}
         <div style={{textAlign:"center",marginBottom:36}}>
           <div style={{fontSize:64,animation:"float 3s ease-in-out infinite",marginBottom:4}}>⚽</div>
           <div style={{fontSize:48,letterSpacing:8,lineHeight:1,animation:"glow 3s ease-in-out infinite",
@@ -407,9 +405,7 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
           </div>
         </div>
 
-        {/* Card */}
         <div style={{width:"100%",maxWidth:420}}>
-          {/* Tabs */}
           <div style={{display:"flex",gap:8,marginBottom:16}}>
             {[["entrar","🔑 Acessar meu Bolão"],["cadastrar","➕ Sou novo Administrador"]].map(([t,l])=>(
               <button key={t} onClick={()=>{setTab(t);setErr("");}}
@@ -424,19 +420,28 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
           <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"24px"}}>
             {tab==="entrar" ? (<>
               <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:16}}>ACESSAR PAINEL</div>
-              {[
-                {label:"Seu link de acesso",ph:"Ex: joaosilva",val:slug,set:setSlug},
-                {label:"Senha",ph:"Sua senha",val:senha,set:setSenha,type:"password"},
-              ].map(f=>(
-                <div key={f.label} style={{marginBottom:12}}>
-                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>{f.label.toUpperCase()}</div>
-                  <input type={f.type||"text"} placeholder={f.ph} value={f.val}
-                    onChange={e=>{f.set(e.target.value);setErr("");}}
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SEU LINK DE ACESSO</div>
+                <input type="text" placeholder="Ex: joaosilva" value={slug}
+                  onChange={e=>{setSlug(e.target.value);setErr("");}}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                    borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+              </div>
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SENHA</div>
+                <div style={{position:"relative"}}>
+                  <input type={showSenhaLogin?"text":"password"} placeholder="Sua senha" value={senha}
+                    onChange={e=>{setSenha(e.target.value);setErr("");}}
                     onKeyDown={e=>e.key==="Enter"&&handleLogin()}
                     style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
-                      borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                      borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                  <button onClick={()=>setShowSenhaLogin(s=>!s)}
+                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                      background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                    {showSenhaLogin?"🙈":"👁️"}
+                  </button>
                 </div>
-              ))}
+              </div>
               {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{err}</div>}
               <button onClick={handleLogin}
                 style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
@@ -446,25 +451,55 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
             </>) : (<>
               <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:4}}>NOVO ADMINISTRADOR</div>
               <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:16,lineHeight:1.6}}>
-                Você precisa de um código de licença. Entre em contato com o Prof. Isaac Martins para adquirir.
+                Você precisa de um código de licença. Entre em contato com o Prof. Isaac Martins.
               </div>
-              {[
-                {label:"Código de licença *",ph:"Ex: COPA2026-XXXXX",val:licenca,set:setLicenca},
-                {label:"Seu nome *",ph:"Ex: João Silva",val:nome,set:setNome},
-                {label:"Seu link exclusivo *",ph:"Ex: joaosilva (sem espaços)",val:novoSlug,set:setNovoSlug},
-                {label:"Crie uma senha *",ph:"Mínimo 6 caracteres",val:novaSenha,set:setNovaSenha,type:"password"},
-              ].map(f=>(
-                <div key={f.label} style={{marginBottom:12}}>
-                  <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>{f.label.toUpperCase()}</div>
-                  <input type={f.type||"text"} placeholder={f.ph} value={f.val}
-                    onChange={e=>{f.set(e.target.value);setErr("");}}
+              {/* Código de licença */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>CÓDIGO DE LICENÇA *</div>
+                <input type="text" placeholder="Ex: BOLAO-XXXXX" value={licenca}
+                  onChange={e=>{setLicenca(e.target.value.toUpperCase());setErr("");}}
+                  style={{width:"100%",background:"#050d0a",color:"#ffdf00",border:"1px solid #2a3a2a",
+                    borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"monospace",letterSpacing:2}}/>
+              </div>
+              {/* Nome */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SEU NOME *</div>
+                <input type="text" placeholder="Ex: João Silva" value={nome}
+                  onChange={e=>{setNome(e.target.value);setErr("");}}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                    borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+              </div>
+              {/* Link exclusivo */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>SEU LINK EXCLUSIVO DO BOLÃO *</div>
+                <input type="text" placeholder="Ex: joaosilva (sem espaços)" value={novoSlug}
+                  onChange={e=>{setNovoSlug(e.target.value.replace(/\s/g,"").toLowerCase());setErr("");}}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                    borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                {novoSlug&&(
+                  <div style={{fontFamily:"sans-serif",fontSize:11,marginTop:4,
+                    color:admins[safeKey(novoSlug)]?"#ff6b6b":"#009c3b"}}>
+                    {admins[safeKey(novoSlug)]
+                      ? "❌ Esse nome já foi usado, por favor crie outro"
+                      : `✅ bolao-do-gestor.vercel.app/${safeKey(novoSlug)}`}
+                  </div>
+                )}
+              </div>
+              {/* Senha */}
+              <div style={{marginBottom:12}}>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#888",letterSpacing:1,marginBottom:4}}>CRIE UMA SENHA *</div>
+                <div style={{position:"relative"}}>
+                  <input type={showNovaSenha?"text":"password"} placeholder="Mínimo 6 caracteres" value={novaSenha}
+                    onChange={e=>{setNovaSenha(e.target.value);setErr("");}}
                     style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
-                      borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                      borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                  <button onClick={()=>setShowNovaSenha(s=>!s)}
+                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                      background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                    {showNovaSenha?"🙈":"👁️"}
+                  </button>
                 </div>
-              ))}
-              {novoSlug&&<div style={{fontFamily:"sans-serif",fontSize:12,color:"#009c3b",marginBottom:8}}>
-                Seu link: <strong>bolao-do-gestor.vercel.app/{safeKey(novoSlug)}</strong>
-              </div>}
+              </div>
               {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:10}}>{err}</div>}
               <button onClick={handleCadastro}
                 style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
@@ -493,6 +528,10 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members,
   const [adminSenha, setAdminSenha]           = useState("");
   const [showSenha, setShowSenha]             = useState(false);
   const [err, setErr]                         = useState("");
+  const [membroSelecionado, setMembroSelecionado] = useState(null);
+  const [senhaInput, setSenhaInput]           = useState("");
+  const [showSenhaParticipante, setShowSenhaParticipante] = useState(false);
+  const [errSenha, setErrSenha]               = useState("");
 
   const boloesList = Object.entries(boloes).filter(([,b])=>b.ativo!==false);
   useEffect(()=>{ if(boloesList.length>0) setSelectedBolaoId(boloesList[0][0]); },[boloes]);
@@ -501,8 +540,18 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members,
     .filter(([,m])=>m.status==="aprovado").map(([uid,m])=>({uid,...m}));
 
   function entrar(m) {
-    setCurrentMember({uid:m.uid, apelido:m.apelido, bolaoId:selectedBolaoId, adminSlug});
-    notify(`⚽ Bem-vindo(a), ${m.apelido}!`);
+    setSenhaInput("");
+    setMembroSelecionado(m);
+  }
+
+  function confirmarEntrada() {
+    if (!membroSelecionado) return;
+    if (membroSelecionado.senha && senhaInput !== membroSelecionado.senha) {
+      setErrSenha("Senha incorreta. Tente novamente.");
+      return;
+    }
+    setCurrentMember({uid:membroSelecionado.uid, apelido:membroSelecionado.apelido, bolaoId:selectedBolaoId, adminSlug});
+    notify(`⚽ Bem-vindo(a), ${membroSelecionado.apelido}!`);
   }
 
   function loginAdmin() {
@@ -573,6 +622,42 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members,
               {membrosAprovados.length===0 ? (
                 <div style={{textAlign:"center",padding:"20px",fontFamily:"sans-serif",color:"#555"}}>
                   Nenhum participante cadastrado ainda.
+                </div>
+              ) : membroSelecionado ? (
+                /* Modal de senha */
+                <div>
+                  <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:16,padding:"10px",background:"rgba(0,156,59,.08)",borderRadius:10}}>
+                    <MemberAvatar member={membroSelecionado} size={44}/>
+                    <div>
+                      <div style={{fontSize:18,letterSpacing:2}}>{membroSelecionado.apelido}</div>
+                      <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888"}}>{membroSelecionado.nome}</div>
+                    </div>
+                  </div>
+                  <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:8}}>Digite sua senha para entrar:</div>
+                  <div style={{position:"relative",marginBottom:8}}>
+                    <input type={showSenhaParticipante?"text":"password"} placeholder="Sua senha" value={senhaInput}
+                      onChange={e=>{setSenhaInput(e.target.value);setErrSenha("");}}
+                      onKeyDown={e=>e.key==="Enter"&&confirmarEntrada()}
+                      autoFocus
+                      style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #009c3b",
+                        borderRadius:8,padding:"11px 44px 11px 14px",fontSize:16,fontFamily:"sans-serif"}}/>
+                    <button onClick={()=>setShowSenhaParticipante(s=>!s)}
+                      style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                        background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                      {showSenhaParticipante?"🙈":"👁️"}
+                    </button>
+                  </div>
+                  {errSenha&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:8}}>{errSenha}</div>}
+                  <button onClick={confirmarEntrada}
+                    style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                      border:"none",borderRadius:10,padding:"12px",fontSize:16,letterSpacing:2,cursor:"pointer",marginBottom:8}}>
+                    ENTRAR ⚽
+                  </button>
+                  <button onClick={()=>{setMembroSelecionado(null);setErrSenha("");setSenhaInput("");}}
+                    style={{width:"100%",background:"transparent",color:"#777",border:"1px solid #333",
+                      borderRadius:8,padding:"9px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>
+                    ← Escolher outro nome
+                  </button>
                 </div>
               ) : (
                 <div style={{display:"grid",gap:10}}>
@@ -681,6 +766,8 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   const [newApe, setNewApe]     = useState("");
   const [newWa, setNewWa]       = useState("");
   const [newEmail, setNewEmail] = useState("");
+  const [newSenha, setNewSenha] = useState("");
+  const [newPontosExtras, setNewPontosExtras] = useState(0);
 
   // Estados regras e prêmio
   const [regras, setRegras]   = useState(()=>bolaoAtual.regras||{acerto3:3,acerto1:1,errouDesc:"0 pontos"});
@@ -714,13 +801,13 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
 
   const numBoloes = Object.keys(boloes).length;
 
-  const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"32 Avos","Oitavas","Quartas","Semifinal","Final"];
+  const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"16 Avos","Oitavas","Quartas","Semifinal","Final"];
 
   function filteredGames() {
     return SCHEDULE.filter(g=>{
       if(filterGrp==="Todos") return true;
       if(filterGrp==="Hoje") return isToday(g.date);
-      if(filterGrp==="32 Avos") return g.group==="32avos";
+      if(filterGrp==="16 Avos") return g.group==="16avos";
       if(filterGrp==="Oitavas") return g.group==="Oitavas";
       if(filterGrp==="Quartas") return g.group==="Quartas";
       if(filterGrp==="Semifinal") return g.group==="Semifinal";
@@ -745,15 +832,18 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
 
   async function addMembro() {
     if(!newNome.trim()||!newApe.trim()){notify("Nome e apelido obrigatórios","err");return;}
+    if(!newSenha.trim()){notify("Crie uma senha para o participante","err");return;}
     if(aprovados.length>=MAX_MEMBROS){notify(`Limite de ${MAX_MEMBROS}!`,"err");return;}
     const uid=safeKey(newApe.trim());
     if(members[selectedBid]?.[uid]){notify("Apelido já existe","err");return;}
     await set(dbRef(db,`members/${selectedBid}/${uid}`),{
       nome:newNome.trim(),apelido:newApe.trim(),
       whatsapp:newWa.trim(),email:newEmail.trim(),
+      senha:newSenha.trim(),
+      pontosExtras:newPontosExtras||0,
       status:"aprovado",criadoEm:new Date().toISOString()
     });
-    setNewNome("");setNewApe("");setNewWa("");setNewEmail("");
+    setNewNome("");setNewApe("");setNewWa("");setNewEmail("");setNewSenha("");setNewPontosExtras(0);
     notify(`✅ ${newApe} adicionado!`);
   }
 
@@ -1006,6 +1096,14 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
             {aprovados.length < MAX_MEMBROS && (
               <Card color="rgba(0,156,59,.2)">
                 <div style={{fontSize:14,letterSpacing:3,color:"#009c3b",marginBottom:10}}>➕ ADICIONAR PARTICIPANTE</div>
+                <div style={{marginBottom:8}}>
+                  <Label>BOLÃO *</Label>
+                  <select value={selectedBid} onChange={e=>setSelectedBid(e.target.value)}
+                    style={{width:"100%",background:"#050d0a",color:"#ffdf00",border:"1px solid #009c3b",
+                      borderRadius:8,padding:"10px 12px",fontSize:14,cursor:"pointer"}}>
+                    {Object.entries(boloes).map(([bid,b])=><option key={bid} value={bid}>{b.nome}</option>)}
+                  </select>
+                </div>
                 <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
                   {[{ph:"Nome completo *",val:newNome,set:setNewNome},{ph:"Apelido *",val:newApe,set:setNewApe},
                     {ph:"WhatsApp",val:newWa,set:setNewWa},{ph:"Email",val:newEmail,set:setNewEmail}].map(f=>(
@@ -1013,9 +1111,20 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                       style={{background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",borderRadius:6,padding:"8px 10px",fontSize:13,fontFamily:"sans-serif"}}/>
                   ))}
                 </div>
+                <div style={{marginBottom:8}}>
+                  <Label>SENHA DO PARTICIPANTE * <span style={{color:"#555",fontWeight:400}}>(para ele entrar no bolão)</span></Label>
+                  <input type="text" placeholder="Ex: 1234 ou nome do participante" value={newSenha||""} onChange={e=>setNewSenha(e.target.value)}
+                    style={{width:"100%",background:"#050d0a",color:"#ffdf00",border:"1px solid #009c3b",borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+                </div>
+                <div style={{marginBottom:10}}>
+                  <Label>PONTOS EXTRAS (opcional)</Label>
+                  <input type="number" min="0" max="999" placeholder="0" value={newPontosExtras||""} onChange={e=>setNewPontosExtras(parseInt(e.target.value)||0)}
+                    style={{width:100,background:"#050d0a",color:"#c8a200",border:"1px solid #c8a200",borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"monospace",textAlign:"center"}}/>
+                  <span style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginLeft:8}}>pontos de bônus iniciais</span>
+                </div>
                 <button onClick={addMembro}
                   style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",border:"none",borderRadius:8,padding:"10px",cursor:"pointer",fontSize:14,fontWeight:700}}>
-                  ➕ Adicionar
+                  ➕ Adicionar Participante
                 </button>
               </Card>
             )}
@@ -1286,12 +1395,12 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   const leader  = ranking[0];
   const todayGames = SCHEDULE.filter(g=>isToday(g.date));
 
-  const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"32 Avos","Oitavas","Quartas","Semifinal","3 Lugar","Final"];
+  const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"16 Avos","Oitavas","Quartas","Semifinal","3 Lugar","Final"];
   function filteredGames() {
     return SCHEDULE.filter(g=>{
       if(filterGrp==="Todos") return true;
       if(filterGrp==="Hoje") return isToday(g.date);
-      if(filterGrp==="32 Avos") return g.group==="32avos";
+      if(filterGrp==="16 Avos") return g.group==="16avos";
       if(filterGrp==="Oitavas") return g.group==="Oitavas";
       if(filterGrp==="Quartas") return g.group==="Quartas";
       if(filterGrp==="Semifinal") return g.group==="Semifinal";
@@ -1466,8 +1575,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
         {["meus","todos","agenda","hoje"].includes(subScreen)&&(
           <div style={{padding:"0 10px 7px",display:"flex",alignItems:"center",gap:5,overflowX:"auto",flexWrap:"nowrap"}}>
             <span style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#555",flexShrink:0}}>FILTRO:</span>
-            {["Todos","Hoje",...GROUPS.map(g=>g),"32A","OIT","QUA","SEMI","FINAL"].map(g=>{
-              const fgVal = GROUPS.includes(g)?"Grupo "+g:g==="Todos"?"Todos":g==="Hoje"?"Hoje":g==="32A"?"32 Avos":g==="OIT"?"Oitavas":g==="QUA"?"Quartas":g==="SEMI"?"Semifinal":g==="FINAL"?"Final":"3 Lugar";
+            {["Todos","Hoje",...GROUPS.map(g=>g),"16A","OIT","QUA","SEMI","FINAL"].map(g=>{
+              const fgVal = GROUPS.includes(g)?"Grupo "+g:g==="Todos"?"Todos":g==="Hoje"?"Hoje":g==="16A"?"16 Avos":g==="OIT"?"Oitavas":g==="QUA"?"Quartas":g==="SEMI"?"Semifinal":g==="FINAL"?"Final":"3 Lugar";
               const active = filterGrp===fgVal||(filterGrp==="Grupo "+g&&GROUPS.includes(g));
               return(
                 <button key={g} onClick={()=>setFilterGrp(fgVal)} style={{
@@ -2146,7 +2255,10 @@ function BolaoConfigInline({db, bid, bolao, notify, fs, apiKey, setApiKey, liveF
 function MasterPanel({db, admins, licencas, allBoloes, members, results, notify, notification}) {
   const [unlocked, setUnlocked] = useState(false);
   const [pass, setPass]         = useState("");
+  const [showPass, setShowPass] = useState(false);
+  const [esqueci, setEsqueci]   = useState(false);
   const [abaM, setAbaM]         = useState("admins");
+  const [expandAdmin, setExpandAdmin] = useState(null);
   const [newLicName, setNewLicName] = useState("");
   const [newLicQtd, setNewLicQtd]   = useState(1);
 
@@ -2191,21 +2303,52 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
           <div style={{maxWidth:380,margin:"60px auto",background:"rgba(255,223,0,.07)",border:"1px solid rgba(255,223,0,.3)",borderRadius:14,padding:"28px",textAlign:"center"}}>
             <div style={{fontSize:48,marginBottom:8}}>🔐</div>
             <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:14}}>ACESSO RESTRITO</div>
-            <input type="password" placeholder="Senha Master" value={pass}
-              onChange={e=>setPass(e.target.value)}
-              onKeyDown={e=>e.key==="Enter"&&(pass===MASTER_PASS?setUnlocked(true):notify("Senha incorreta","err"))}
-              style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #ffdf00",borderRadius:8,padding:"11px",fontSize:16,fontFamily:"sans-serif",marginBottom:10,textAlign:"center"}}/>
-            <button onClick={()=>pass===MASTER_PASS?setUnlocked(true):notify("Senha incorreta","err")}
-              style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",border:"none",borderRadius:8,padding:"12px",fontSize:17,letterSpacing:2,cursor:"pointer"}}>
-              ENTRAR ▶
-            </button>
+
+            {!esqueci ? (<>
+              <div style={{position:"relative",marginBottom:10}}>
+                <input type={showPass?"text":"password"} placeholder="Senha Master" value={pass}
+                  onChange={e=>setPass(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&(pass===MASTER_PASS?setUnlocked(true):notify("Senha incorreta","err"))}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"2px solid #ffdf00",
+                    borderRadius:8,padding:"11px 44px 11px 14px",fontSize:16,fontFamily:"sans-serif",textAlign:"center"}}/>
+                <button onClick={()=>setShowPass(s=>!s)}
+                  style={{position:"absolute",right:12,top:"50%",transform:"translateY(-50%)",
+                    background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                  {showPass?"🙈":"👁️"}
+                </button>
+              </div>
+              <button onClick={()=>pass===MASTER_PASS?setUnlocked(true):notify("Senha incorreta","err")}
+                style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                  border:"none",borderRadius:8,padding:"12px",fontSize:17,letterSpacing:2,cursor:"pointer",marginBottom:12}}>
+                ENTRAR ▶
+              </button>
+              <button onClick={()=>setEsqueci(true)}
+                style={{background:"transparent",border:"none",color:"#888",cursor:"pointer",
+                  fontSize:12,fontFamily:"sans-serif",textDecoration:"underline"}}>
+                Esqueci minha senha
+              </button>
+            </>) : (
+              <div style={{background:"rgba(255,255,255,.05)",border:"1px solid #333",borderRadius:10,padding:"16px",textAlign:"left"}}>
+                <div style={{fontSize:14,letterSpacing:2,color:"#ffdf00",marginBottom:10}}>🔑 RECUPERAÇÃO DE SENHA</div>
+                <div style={{fontFamily:"sans-serif",fontSize:13,color:"#aaa",lineHeight:1.8,marginBottom:10}}>
+                  A senha do painel Master é definida no código-fonte do sistema.<br/>
+                  Entre em contato com o desenvolvedor ou acesse o arquivo:<br/>
+                  <strong style={{color:"#fff",fontFamily:"monospace",fontSize:12}}>src/App.jsx → linha: MASTER_PASS</strong>
+                </div>
+                <button onClick={()=>setEsqueci(false)}
+                  style={{width:"100%",background:"#333",color:"#aaa",border:"none",borderRadius:8,
+                    padding:"9px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>
+                  ← Voltar
+                </button>
+              </div>
+            )}
             <div style={{marginTop:14}}>
-              <a href="/" style={{color:"#888",fontFamily:"sans-serif",fontSize:12,textDecoration:"none"}}>← Voltar ao início</a>
+              <a href="/" style={{color:"#555",fontFamily:"sans-serif",fontSize:12,textDecoration:"none"}}>← Voltar ao início</a>
             </div>
           </div>
         ):(
           <>
-            {/* Stats rápidas */}
+            {/* Stats */}
             <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(140px,1fr))",gap:12,marginBottom:20}}>
               {[
                 {label:"Administradores",value:Object.keys(admins).length,icon:"👤"},
@@ -2224,8 +2367,9 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
             {/* Abas */}
             <div style={{display:"flex",gap:8,marginBottom:16,flexWrap:"wrap"}}>
               {[
-                {id:"admins",label:"👤 Administradores"},
-                {id:"licencas",label:"🔑 Licenças"},
+                {id:"admins",     label:"👤 Administradores"},
+                {id:"participantes", label:"👥 Participantes"},
+                {id:"licencas",   label:"🔑 Licenças"},
               ].map(t=>(
                 <button key={t.id} onClick={()=>setAbaM(t.id)} style={tabS(t.id)}>{t.label}</button>
               ))}
@@ -2237,35 +2381,80 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                 {Object.entries(admins).map(([slug,a])=>{
                   const seusBolaoes = Object.entries(allBoloes).filter(([,b])=>b.adminSlug===slug);
                   const totalMembros = seusBolaoes.reduce((acc,[bid])=>acc+Object.keys(members[bid]||{}).length,0);
+                  const isExpanded = expandAdmin===slug;
                   return(
-                    <div key={slug} style={{background:"rgba(255,255,255,.03)",border:`1px solid ${a.ativo===false?"#5a1010":"#1a3a1a"}`,borderRadius:12,padding:"16px",marginBottom:12}}>
-                      <div style={{display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                    <div key={slug} style={{background:"rgba(255,255,255,.03)",border:`1px solid ${a.ativo===false?"#5a1010":"#1a3a1a"}`,borderRadius:12,marginBottom:12,overflow:"hidden"}}>
+                      <div style={{padding:"14px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
                         <div style={{flex:1}}>
                           <div style={{fontSize:18,letterSpacing:2}}>{a.nome}</div>
                           <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginTop:2}}>
-                            🔗 bolao-do-gestor.vercel.app/<strong style={{color:"#ffdf00"}}>{slug}</strong>
+                            🔗 <strong style={{color:"#ffdf00"}}>{window.location.origin}/{slug}</strong>
                           </div>
                           <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777",marginTop:2}}>
-                            ⚽ {seusBolaoes.length}/{MAX_BOLAOS} bolões · 
-                            👥 {totalMembros} participantes · 
-                            🔑 {a.licenca} · 
-                            📅 {new Date(a.criadoEm).toLocaleDateString("pt-BR")}
+                            ⚽ {seusBolaoes.length}/{MAX_BOLAOS} bolões · 👥 {totalMembros} participantes · 📅 {new Date(a.criadoEm).toLocaleDateString("pt-BR")}
                             {a.ativo===false&&<span style={{color:"#ff6b6b",marginLeft:8}}>🔴 REVOGADO</span>}
                           </div>
                         </div>
-                        <div style={{display:"flex",gap:8}}>
+                        <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                          <button onClick={()=>setExpandAdmin(isExpanded?null:slug)}
+                            style={{background:"rgba(255,223,0,.15)",color:"#ffdf00",border:"1px solid rgba(255,223,0,.3)",
+                              borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>
+                            {isExpanded?"▲ Fechar":"👥 Ver participantes"}
+                          </button>
                           <a href={"/"+slug} target="_blank"
-                            style={{background:"rgba(0,156,59,.2)",color:"#009c3b",border:"1px solid rgba(0,156,59,.3)",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700,textDecoration:"none"}}>
+                            style={{background:"rgba(0,156,59,.2)",color:"#009c3b",border:"1px solid rgba(0,156,59,.3)",
+                              borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700,textDecoration:"none"}}>
                             🔗 Ver
                           </a>
                           {a.ativo!==false&&(
                             <button onClick={()=>revogarAdmin(slug)}
-                              style={{background:"rgba(120,16,16,.3)",color:"#ffaaaa",border:"1px solid #5a1010",borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif"}}>
+                              style={{background:"rgba(120,16,16,.3)",color:"#ffaaaa",border:"1px solid #5a1010",
+                                borderRadius:6,padding:"6px 12px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif"}}>
                               🚫 Revogar
                             </button>
                           )}
                         </div>
                       </div>
+
+                      {/* Expandido: participantes deste admin */}
+                      {isExpanded&&(
+                        <div style={{borderTop:"1px solid #1a2a1a",padding:"12px 16px",background:"rgba(0,0,0,.3)"}}>
+                          {seusBolaoes.length===0?(
+                            <div style={{fontFamily:"sans-serif",fontSize:13,color:"#555"}}>Nenhum bolão criado ainda.</div>
+                          ):(
+                            seusBolaoes.map(([bid,b])=>{
+                              const mems = Object.entries(members[bid]||{}).map(([uid,m])=>({uid,...m}));
+                              const aprov = mems.filter(m=>m.status==="aprovado");
+                              return(
+                                <div key={bid} style={{marginBottom:14}}>
+                                  <div style={{fontSize:15,letterSpacing:2,color:"#ffdf00",marginBottom:8}}>
+                                    ⚽ {b.nome} <span style={{fontFamily:"sans-serif",fontSize:11,color:"#888"}}>({aprov.length} participantes)</span>
+                                  </div>
+                                  {aprov.length===0?(
+                                    <div style={{fontFamily:"sans-serif",fontSize:12,color:"#555"}}>Nenhum participante ainda.</div>
+                                  ):(
+                                    <div style={{display:"grid",gap:6}}>
+                                      {aprov.map(m=>(
+                                        <div key={m.uid} style={{background:"rgba(255,255,255,.04)",border:"1px solid #1a2a1a",borderRadius:8,padding:"8px 12px",display:"flex",alignItems:"center",gap:10}}>
+                                          <MemberAvatar member={m} size={30}/>
+                                          <div style={{flex:1}}>
+                                            <div style={{fontSize:14,letterSpacing:1}}>{m.apelido}</div>
+                                            <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777"}}>
+                                              👤 {m.nome}
+                                              {m.whatsapp&&<> · 📱 {m.whatsapp}</>}
+                                              {m.email&&<> · ✉️ {m.email}</>}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -2275,10 +2464,63 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
               </div>
             )}
 
+            {/* ABA PARTICIPANTES — base completa */}
+            {abaM==="participantes"&&(
+              <div>
+                <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:16,lineHeight:1.8}}>
+                  Base completa de todos os participantes cadastrados em todos os bolões de todos os administradores.
+                </div>
+                {Object.entries(admins).map(([slug,a])=>{
+                  const seusBolaoes = Object.entries(allBoloes).filter(([,b])=>b.adminSlug===slug);
+                  if(seusBolaoes.length===0) return null;
+                  return(
+                    <div key={slug} style={{background:"rgba(255,255,255,.03)",border:"1px solid #1a3a1a",borderRadius:12,marginBottom:16,overflow:"hidden"}}>
+                      <div style={{background:"linear-gradient(90deg,#004d22,#009c3b)",padding:"10px 16px"}}>
+                        <div style={{fontSize:16,letterSpacing:2}}>{a.nome}</div>
+                        <div style={{fontFamily:"sans-serif",fontSize:11,color:"rgba(255,255,255,.7)"}}>/{slug}</div>
+                      </div>
+                      {seusBolaoes.map(([bid,b])=>{
+                        const aprov = Object.entries(members[bid]||{}).filter(([,m])=>m.status==="aprovado").map(([uid,m])=>({uid,...m}));
+                        return(
+                          <div key={bid} style={{padding:"12px 16px",borderBottom:"1px solid #0a1a0a"}}>
+                            <div style={{fontSize:14,color:"#ffdf00",letterSpacing:2,marginBottom:8}}>⚽ {b.nome} ({aprov.length})</div>
+                            {aprov.length===0?(
+                              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#555"}}>Nenhum participante.</div>
+                            ):(
+                              <div style={{overflowX:"auto"}}>
+                                <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"sans-serif",fontSize:12}}>
+                                  <thead>
+                                    <tr style={{borderBottom:"1px solid #1a2a1a"}}>
+                                      {["Apelido","Nome","WhatsApp","Email"].map(h=>(
+                                        <th key={h} style={{textAlign:"left",padding:"6px 10px",color:"#888",fontWeight:700}}>{h}</th>
+                                      ))}
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    {aprov.map(m=>(
+                                      <tr key={m.uid} style={{borderBottom:"1px solid #0a0a0a"}}>
+                                        <td style={{padding:"6px 10px",color:"#fff",fontWeight:700}}>{m.apelido}</td>
+                                        <td style={{padding:"6px 10px",color:"#aaa"}}>{m.nome}</td>
+                                        <td style={{padding:"6px 10px",color:"#25d366"}}>{m.whatsapp||"—"}</td>
+                                        <td style={{padding:"6px 10px",color:"#aaa"}}>{m.email||"—"}</td>
+                                      </tr>
+                                    ))}
+                                  </tbody>
+                                </table>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
             {/* ABA LICENÇAS */}
             {abaM==="licencas"&&(
               <div>
-                {/* Gerar novas */}
                 <div style={{background:"rgba(200,162,0,.08)",border:"1px solid rgba(200,162,0,.3)",borderRadius:12,padding:"16px",marginBottom:16}}>
                   <div style={{fontSize:16,letterSpacing:3,color:"#c8a200",marginBottom:10}}>🔑 GERAR NOVAS LICENÇAS</div>
                   <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
@@ -2292,11 +2534,9 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                     </button>
                   </div>
                 </div>
-
-                {/* Lista de licenças */}
                 <div style={{display:"grid",gap:8}}>
                   {Object.entries(licencas).sort((a,b)=>b[1].criadoEm?.localeCompare(a[1].criadoEm||"")||0).map(([id,l])=>(
-                    <div key={id} style={{background:`rgba(255,255,255,.03)`,border:`1px solid ${l.usado?"#1a2a1a":"rgba(200,162,0,.3)"}`,borderRadius:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                    <div key={id} style={{background:"rgba(255,255,255,.03)",border:`1px solid ${l.usado?"#1a2a1a":"rgba(200,162,0,.3)"}`,borderRadius:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
                       <div style={{flex:1}}>
                         <div style={{display:"flex",alignItems:"center",gap:10,flexWrap:"wrap"}}>
                           <span style={{fontFamily:"monospace",fontSize:16,color:l.usado?"#555":"#ffdf00",fontWeight:700,letterSpacing:2}}>{l.codigo}</span>
