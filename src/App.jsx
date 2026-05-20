@@ -206,6 +206,7 @@ const BASE_BG = {
 };
 const GLOBAL_CSS = `
   @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+  html { lang: pt-BR; }
   *{box-sizing:border-box;} input,select,button,textarea{font-family:inherit;}
   ::-webkit-scrollbar{width:5px;height:5px;}
   ::-webkit-scrollbar-thumb{background:linear-gradient(#009c3b,#002776);border-radius:3px;}
@@ -216,6 +217,8 @@ const GLOBAL_CSS = `
   .hbtn{transition:all .2s ease!important;}
   input:focus,textarea:focus{outline:none;}
   input[type=number]::-webkit-inner-spin-button{opacity:.5;}
+  /* Forçar português no corretor ortográfico */
+  input, textarea { lang: pt-BR; }
 `;
 
 // Notificação flutuante
@@ -617,11 +620,14 @@ function ParticipanteLogin({db, adminData, adminSlug, boloes, members,
   }
 
   function loginAdmin() {
+    if (!adminSenha.trim()) { setErr("Digite sua senha."); return; }
     if (adminSenha !== admins[adminSlug]?.senha) {
-      setErr("Senha incorreta."); return;
+      setErr("Senha incorreta. Tente novamente."); return;
     }
-    setCurrentAdmin({slug:adminSlug, ...admins[adminSlug]});
-    notify(`🔐 Bem-vindo ao painel, ${adminData.nome}!`);
+    // Salva no localStorage e recarrega para o roteamento funcionar
+    const adminInfo = {slug:adminSlug, ...admins[adminSlug]};
+    localStorage.setItem("bg26_admin", JSON.stringify(adminInfo));
+    window.location.reload();
   }
 
   return (
