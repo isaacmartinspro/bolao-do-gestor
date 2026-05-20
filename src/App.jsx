@@ -68,10 +68,29 @@ const FLAG_CODES = {
 };
 const Flag = ({team, size=32}) => {
   const code = FLAG_CODES[team];
-  if (!code) return <span style={{fontSize:size*0.8}}>🏳️</span>;
-  return <img src={`https://flagcdn.com/h${size}/${code}.png`} alt={team}
-    style={{width:size,height:Math.round(size*0.75),objectFit:"cover",borderRadius:3,verticalAlign:"middle"}}
-    onError={e=>e.target.style.display="none"}/>;
+  // flagcdn aceita: 20, 24, 32, 40, 48, 64, 80, 160, 240
+  const validSizes = [20,24,32,40,48,64,80];
+  const cdnSize = validSizes.reduce((prev,curr) =>
+    Math.abs(curr-size) < Math.abs(prev-size) ? curr : prev
+  );
+  // Tamanho mínimo de exibição: 28px
+  const displaySize = Math.max(size, 28);
+  if (!code) return <span style={{fontSize:displaySize*0.8,lineHeight:1}}>🏳️</span>;
+  return (
+    <img
+      src={`https://flagcdn.com/h${cdnSize}/${code}.png`}
+      alt={team}
+      style={{
+        width:displaySize,
+        height:Math.round(displaySize*0.75),
+        objectFit:"cover",
+        borderRadius:3,
+        verticalAlign:"middle",
+        display:"inline-block"
+      }}
+      onError={e=>{e.target.style.display="none";}}
+    />
+  );
 };
 
 // ─── CALENDÁRIO FIFA 2026 ─────────────────────────────────────────────────────
