@@ -1456,6 +1456,12 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   })();
 
   async function saveGuess(gameId, side, val) {
+    // Proteção: verifica se o jogo já começou (horário de Brasília UTC-3)
+    const jogo = SCHEDULE.find(g=>g.id===gameId);
+    if (jogo && isPast(jogo.date)) {
+      notify("⛔ Palpite bloqueado — jogo já iniciou!","err");
+      return;
+    }
     const key = `${safeKey(adminSlug)}_${safeKey(currentMember.bolaoId)}_${safeKey(currentMember.uid)}`;
     await set(dbRef(db,`guesses/${key}/${gameId}/${side}`), val);
   }
@@ -1598,16 +1604,31 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
             {/* Placar central */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:8}}>
               {mode==="meus" ? (
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <input type="number" min="0" max="20" value={gu?.home??""} disabled={locked}
-                    onChange={e=>saveGuess(g.id,"home",e.target.value)} placeholder="–"
-                    style={{width:fs(52),height:fs(52),textAlign:"center",background:"#060f06",color:"#fff",
-                      border:`3px solid ${locked?"#2a2a2a":"#009c3b"}`,borderRadius:8,fontSize:fs(24),fontFamily:"monospace"}}/>
-                  <span style={{color:"#ffdf00",fontSize:fs(22),fontWeight:900}}>×</span>
-                  <input type="number" min="0" max="20" value={gu?.away??""} disabled={locked}
-                    onChange={e=>saveGuess(g.id,"away",e.target.value)} placeholder="–"
-                    style={{width:fs(52),height:fs(52),textAlign:"center",background:"#060f06",color:"#fff",
-                      border:`3px solid ${locked?"#2a2a2a":"#009c3b"}`,borderRadius:8,fontSize:fs(24),fontFamily:"monospace"}}/>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <input type="number" min="0" max="20" value={gu?.home??""} disabled={locked}
+                      onChange={e=>saveGuess(g.id,"home",e.target.value)} placeholder="–"
+                      style={{width:fs(52),height:fs(52),textAlign:"center",
+                        background:locked?"#0a0a0a":"#060f06",color:locked?"#444":"#fff",
+                        border:`3px solid ${locked?"#1a1a1a":"#009c3b"}`,
+                        borderRadius:8,fontSize:fs(24),fontFamily:"monospace",
+                        cursor:locked?"not-allowed":"text"}}/>
+                    <span style={{color:locked?"#333":"#ffdf00",fontSize:fs(22),fontWeight:900}}>×</span>
+                    <input type="number" min="0" max="20" value={gu?.away??""} disabled={locked}
+                      onChange={e=>saveGuess(g.id,"away",e.target.value)} placeholder="–"
+                      style={{width:fs(52),height:fs(52),textAlign:"center",
+                        background:locked?"#0a0a0a":"#060f06",color:locked?"#444":"#fff",
+                        border:`3px solid ${locked?"#1a1a1a":"#009c3b"}`,
+                        borderRadius:8,fontSize:fs(24),fontFamily:"monospace",
+                        cursor:locked?"not-allowed":"text"}}/>
+                  </div>
+                  {locked&&(
+                    <div style={{display:"flex",alignItems:"center",gap:5,
+                      background:"rgba(80,0,0,.3)",border:"1px solid #3a1010",
+                      borderRadius:20,padding:"3px 10px",fontFamily:"sans-serif",fontSize:fs(11),color:"#ff8888"}}>
+                      🔒 Encerrado às {fmtTime(g.date)} — jogo iniciado
+                    </div>
+                  )}
                 </div>
               ) : mode==="admin" ? (
                 <div style={{display:"flex",alignItems:"center",gap:6}}>
