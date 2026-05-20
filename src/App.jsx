@@ -900,7 +900,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
       if(filterGrp==="Semifinal") return g.group==="Semifinal";
       if(filterGrp==="Final") return g.group==="Final";
       return "Grupo "+g.group===filterGrp;
-    });
+    }).sort((a,b)=>a.date.localeCompare(b.date));
   }
 
   async function criarBolao() {
@@ -1579,7 +1579,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
       if(filterGrp==="3 Lugar") return g.group==="3Lugar";
       if(filterGrp==="Final") return g.group==="Final";
       return "Grupo "+g.group===filterGrp;
-    });
+    }).sort((a,b)=>a.date.localeCompare(b.date));
   }
 
   // Card de jogo
