@@ -306,10 +306,10 @@ export default function App() {
     setDb(database);
   }, []);
 
-  // Listeners
+  // Listeners — dataReady vira true após admins responder (ou timeout 3s)
   useEffect(() => {
     if (!db) return;
-    const refs = [
+    const paths = [
       ["admins",   setAdmins],
       ["boloes",   setAllBoloes],
       ["members",  setMembers],
@@ -317,15 +317,23 @@ export default function App() {
       ["results",  setResults],
       ["licencas", setLicencas],
     ];
-    let loadedCount = 0;
-    refs.forEach(([path, setter]) => {
+    // Garante dataReady após admins carregar (coleção mais crítica)
+    let adminLoaded = false;
+    const timer = setTimeout(() => setDataReady(true), 3000); // fallback 3s
+    paths.forEach(([path, setter]) => {
       onValue(dbRef(db, path), s => {
         setter(s.val()||{});
-        loadedCount++;
-        if (loadedCount >= refs.length) setDataReady(true);
+        if (path === "admins" && !adminLoaded) {
+          adminLoaded = true;
+          clearTimeout(timer);
+          setDataReady(true);
+        }
       });
     });
-    return () => refs.forEach(([path]) => off(dbRef(db, path)));
+    return () => {
+      clearTimeout(timer);
+      paths.forEach(([path]) => off(dbRef(db, path)));
+    };
   }, [db]);
 
   // Tela de carregamento: aguarda DB + 1ª resposta do Firebase
@@ -455,9 +463,11 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
         whatsapp:whatsapp.trim(), email:email.trim(), profissao:profissao.trim(),
         plano:"gratis", criadoEm:new Date().toISOString(), ativo:true,
       });
-      notify("🎉 Bem-vindo ao Bolão do Gestor! Conta gratuita criada!");
-      setCurrentAdmin({slug:s, nome:nome.trim(), senha:novaSenha, plano:"gratis", ativo:true});
-      setTimeout(()=>{ window.location.href = "/"+s; }, 1500);
+      const adminObj = {slug:s, nome:nome.trim(), senha:novaSenha, plano:"gratis", ativo:true};
+      setCurrentAdmin(adminObj);
+      localStorage.setItem("bg26_admin", JSON.stringify(adminObj));
+      notify("🎉 Bem-vindo ao Bolão do Gestor! Conta criada!");
+      setTimeout(()=>{ window.location.href = "/"+s; }, 2500);
     } catch { setErr("Erro ao cadastrar. Tente novamente."); }
   }
 
@@ -480,9 +490,11 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
         plano, criadoEm:new Date().toISOString(), ativo:true,
       });
       await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:new Date().toISOString()});
+      const adminObj2 = {slug:s, nome:nome.trim(), senha:novaSenha, plano, ativo:true};
+      setCurrentAdmin(adminObj2);
+      localStorage.setItem("bg26_admin", JSON.stringify(adminObj2));
       notify("✅ Cadastro realizado! Redirecionando...");
-      setCurrentAdmin({slug:s, nome:nome.trim(), senha:novaSenha, plano, ativo:true});
-      setTimeout(()=>{ window.location.href = "/"+s; }, 1500);
+      setTimeout(()=>{ window.location.href = "/"+s; }, 2500);
     } catch { setErr("Erro ao cadastrar. Tente novamente."); }
   }
 
