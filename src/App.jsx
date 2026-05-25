@@ -463,6 +463,7 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
   const [email, setEmail]         = useState("");
   const [profissao, setProfissao] = useState("");
   const [novoSlug, setNovoSlug]   = useState("");
+  const [nomeBolao, setNomeBolao] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [showNovaSenha, setShowNovaSenha] = useState(false);
   const [err, setErr]             = useState("");
@@ -496,16 +497,24 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     if (!novaSenha || novaSenha.length < 6) { setErr("Senha deve ter pelo menos 6 caracteres."); return; }
     if (admins[s])           { setErr("Esse link já foi usado, por favor crie outro."); return; }
     if (s === "master")      { setErr("Este link é reservado. Escolha outro."); return; }
+    if (!nomeBolao.trim()) { setErr("Digite o nome do seu bolão."); return; }
     try {
       await set(dbRef(db, `admins/${s}`), {
         nome:nome.trim(), slug:s, senha:novaSenha,
         whatsapp:whatsapp.trim(), email:email.trim(), profissao:profissao.trim(),
         plano:"gratis", criadoEm:new Date().toISOString(), ativo:true,
       });
+      // Criar o primeiro bolão automaticamente
+      const bolaoId = safeKey(nomeBolao.trim())+"_"+Date.now();
+      await set(dbRef(db, `boloes/${bolaoId}`), {
+        nome:nomeBolao.trim(), descricao:"Copa do Mundo 2026",
+        adminSlug:s, ativo:true, criadoEm:new Date().toISOString(),
+        regras:{placarExato:3, acertouVencedor:1}, premio:"",
+      });
       const adminObj = {slug:s, nome:nome.trim(), senha:novaSenha, plano:"gratis", ativo:true};
       setCurrentAdmin(adminObj);
       localStorage.setItem("bg26_admin", JSON.stringify(adminObj));
-      notify("🎉 Bem-vindo ao Bolão do Gestor! Conta criada!");
+      notify("🎉 Bem-vindo! Conta e bolão criados com sucesso!");
       setTimeout(()=>{ window.location.href = "/"+s; }, 2500);
     } catch { setErr("Erro ao cadastrar. Tente novamente."); }
   }
@@ -797,6 +806,7 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
               {inp("WhatsApp com DDD *", whatsapp, setWhatsapp, "tel")}
               {inp("E-mail *", email, setEmail, "email")}
               {inp("Profissão (opcional)", profissao, setProfissao)}
+              {inp("Nome do seu bolão * (ex: Bolão da Família)", nomeBolao, setNomeBolao)}
               {inp("Seu link exclusivo * (ex: joaosilva)", novoSlug, v=>setNovoSlug(v.replace(/\s/g,"").toLowerCase()))}
               {novoSlug&&(
                 <div style={{fontFamily:"sans-serif",fontSize:11,marginTop:-8,marginBottom:8,
