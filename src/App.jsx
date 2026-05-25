@@ -377,11 +377,10 @@ export default function App() {
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
-// HOME — cadastro/login do administrador
-// ══════════════════════════════════════════════════════════════════════════════
+// HOME — cadastro/login do administrador  (visual Copa 2026)
 // ══════════════════════════════════════════════════════════════════════════════
 function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify, notification}) {
-  const [tab, setTab]             = useState("entrar"); // entrar | gratis | pago
+  const [tab, setTab]             = useState(null); // null=hero | entrar | gratis | pago
   const [slug, setSlug]           = useState("");
   const [senha, setSenha]         = useState("");
   const [showSenhaLogin, setShowSenhaLogin] = useState(false);
@@ -467,6 +466,140 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
         borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif",marginBottom:10}}/>
   );
 
+  // ── HERO (tela inicial com os 4 botões) ────────────────────────────────────
+  const heroCSS = `
+    @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Montserrat:wght@400;600;700;900&display=swap');
+    @keyframes heroPulse{0%,100%{opacity:1}50%{opacity:.25}}
+    @keyframes heroFadeDown{from{opacity:0;transform:translateY(-14px)}to{opacity:1;transform:translateY(0)}}
+    @keyframes heroFadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+    .hbtn-grid{position:relative;background:rgba(255,255,255,.95);border:none;border-radius:16px;
+      cursor:pointer;font-family:'Montserrat',sans-serif;overflow:hidden;
+      transition:transform .18s ease,box-shadow .18s ease;
+      box-shadow:0 6px 28px rgba(0,0,0,.4);padding:20px 14px 18px;
+      display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;}
+    .hbtn-grid:hover{transform:translateY(-4px);box-shadow:0 14px 38px rgba(0,0,0,.55);background:#fff;}
+    .hbtn-grid:active{transform:scale(.97);}
+    .hbtn-grid::after{content:"";position:absolute;bottom:0;left:0;right:0;height:4px;border-radius:0 0 16px 16px;}
+    .hb1::after{background:linear-gradient(90deg,#009639,#00c853);}
+    .hb2::after{background:linear-gradient(90deg,#002776,#1a5fc8);}
+    .hb3::after{background:linear-gradient(90deg,#cc8800,#FFD700);}
+    .hb4::after{background:linear-gradient(90deg,#880000,#cc0000);}
+    .hero-badge-dot{width:7px;height:7px;border-radius:50%;background:#FFD700;animation:heroPulse 1.4s infinite;}
+  `;
+
+  if (tab === null) return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",position:"relative",overflow:"hidden",background:"#012a1a"}}>
+      <style>{heroCSS}</style>
+      <style>{GLOBAL_CSS}</style>
+      <Notif n={notification}/>
+
+      {/* Fundo: gradiente Copa + overlay */}
+      <div style={{position:"absolute",inset:0,zIndex:0,
+        background:"radial-gradient(ellipse at 50% 0%,#003d1a 0%,#001a0a 40%,#050d1a 70%,#000509 100%)"}}/>
+      {/* Overlay verde escuro */}
+      <div style={{position:"absolute",inset:0,zIndex:1,
+        background:"linear-gradient(to bottom,rgba(0,15,8,.60) 0%,rgba(0,18,10,.50) 45%,rgba(0,8,4,.82) 100%)"}}/>
+
+      {/* Faixa BR topo */}
+      <div style={{position:"relative",zIndex:10}}>
+        <BrStripe/>
+      </div>
+
+      {/* Conteúdo central */}
+      <div style={{position:"relative",zIndex:10,flex:1,display:"flex",flexDirection:"column",
+        alignItems:"center",justifyContent:"center",padding:"28px 22px 32px"}}>
+
+        {/* Título */}
+        <div style={{fontFamily:"'Bebas Neue',sans-serif",
+          fontSize:"clamp(38px,9vw,60px)",color:"#FFD700",
+          letterSpacing:3,textAlign:"center",lineHeight:1.05,
+          textShadow:"0 0 40px rgba(255,215,0,.55),0 2px 0 rgba(0,0,0,.4)",
+          marginBottom:4,animation:"heroFadeDown .7s ease both"}}>
+          Bolão dos<br/>Amigos &amp; Família
+        </div>
+
+        {/* Sub */}
+        <div style={{fontSize:11,color:"rgba(255,255,255,.72)",letterSpacing:4,
+          textTransform:"uppercase",textAlign:"center",marginBottom:8,
+          fontFamily:"'Montserrat',sans-serif",animation:"heroFadeDown .7s ease .1s both"}}>
+          Copa do Mundo 2026
+        </div>
+
+        {/* Badge ao vivo */}
+        <div style={{display:"inline-flex",alignItems:"center",gap:7,
+          background:"rgba(255,215,0,.12)",border:"1px solid rgba(255,215,0,.35)",
+          borderRadius:100,padding:"5px 14px",marginBottom:32,
+          fontSize:11,color:"#FFD700",fontWeight:700,letterSpacing:1.2,
+          fontFamily:"'Montserrat',sans-serif",animation:"heroFadeDown .7s ease .15s both"}}>
+          <div className="hero-badge-dot"/>
+          🇺🇸 🇲🇽 🇨🇦 &nbsp;·&nbsp; 48 Seleções &nbsp;·&nbsp; 104 Jogos
+        </div>
+
+        {/* Grid 4 botões */}
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,
+          width:"100%",maxWidth:460,animation:"heroFadeUp .7s ease .25s both"}}>
+
+          <button className="hbtn-grid hb1" onClick={()=>setTab("gratis")}>
+            <div style={{position:"absolute",top:9,right:9,background:"#009639",color:"#fff",
+              fontSize:8,fontWeight:900,letterSpacing:1,padding:"2px 7px",
+              borderRadius:100,textTransform:"uppercase",fontFamily:"'Montserrat',sans-serif"}}>Novo</div>
+            <div style={{fontSize:34,lineHeight:1}}>🏆</div>
+            <div style={{fontSize:11.5,fontWeight:800,color:"#012A1A",letterSpacing:.4,
+              textTransform:"uppercase",lineHeight:1.3,fontFamily:"'Montserrat',sans-serif"}}>
+              Montar o Seu Bolão
+            </div>
+            <div style={{fontSize:9.5,color:"#555",fontWeight:500,lineHeight:1.3,
+              fontFamily:"'Montserrat',sans-serif"}}>Crie e configure seu grupo</div>
+          </button>
+
+          <button className="hbtn-grid hb2" onClick={()=>setTab("entrar")}>
+            <div style={{fontSize:34,lineHeight:1}}>⚽</div>
+            <div style={{fontSize:11.5,fontWeight:800,color:"#012A1A",letterSpacing:.4,
+              textTransform:"uppercase",lineHeight:1.3,fontFamily:"'Montserrat',sans-serif"}}>
+              Entrar no Bolão
+            </div>
+            <div style={{fontSize:9.5,color:"#555",fontWeight:500,lineHeight:1.3,
+              fontFamily:"'Montserrat',sans-serif"}}>Acesse com seu link e senha</div>
+          </button>
+
+          <button className="hbtn-grid hb3" onClick={()=>{ window.location.href="/tabela" || notify("Em breve: Tabela de Jogos 📅"); }}>
+            <div style={{fontSize:34,lineHeight:1}}>📅</div>
+            <div style={{fontSize:11.5,fontWeight:800,color:"#012A1A",letterSpacing:.4,
+              textTransform:"uppercase",lineHeight:1.3,fontFamily:"'Montserrat',sans-serif"}}>
+              Tabela dos Jogos
+            </div>
+            <div style={{fontSize:9.5,color:"#555",fontWeight:500,lineHeight:1.3,
+              fontFamily:"'Montserrat',sans-serif"}}>Veja jogos e resultados</div>
+          </button>
+
+          <button className="hbtn-grid hb4" onClick={()=>setTab("pago")}>
+            <div style={{fontSize:34,lineHeight:1}}>🔐</div>
+            <div style={{fontSize:11.5,fontWeight:800,color:"#012A1A",letterSpacing:.4,
+              textTransform:"uppercase",lineHeight:1.3,fontFamily:"'Montserrat',sans-serif"}}>
+              Área do Administrador
+            </div>
+            <div style={{fontSize:9.5,color:"#555",fontWeight:500,lineHeight:1.3,
+              fontFamily:"'Montserrat',sans-serif"}}>Gerencie bolões e aprovações</div>
+          </button>
+
+        </div>
+
+        {/* Footer */}
+        <div style={{marginTop:24,textAlign:"center",fontSize:10,
+          color:"rgba(255,255,255,.28)",letterSpacing:.5,fontFamily:"'Montserrat',sans-serif",
+          animation:"heroFadeUp .7s ease .4s both"}}>
+          Desenvolvido por <span style={{color:"rgba(255,215,0,.5)",fontWeight:700}}>Instituto Isaac Martins</span> &nbsp;·&nbsp; 2026
+        </div>
+      </div>
+
+      {/* Faixa BR rodapé */}
+      <div style={{position:"relative",zIndex:10}}>
+        <BrStripe/>
+      </div>
+    </div>
+  );
+
+  // ── FORMULÁRIOS (após escolha no hero) ────────────────────────────────────
   return (
     <div style={{...BASE_BG,display:"flex",flexDirection:"column",minHeight:"100vh"}}>
       <style>{GLOBAL_CSS}</style>
@@ -474,20 +607,27 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
       <Notif n={notification}/>
 
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px"}}>
-        <div style={{textAlign:"center",marginBottom:32}}>
-          <div style={{fontSize:56,animation:"float 3s ease-in-out infinite",marginBottom:4}}>⚽</div>
-          <div style={{fontSize:44,letterSpacing:8,lineHeight:1,animation:"glow 3s ease-in-out infinite",
+        {/* Header compacto com botão voltar */}
+        <div style={{textAlign:"center",marginBottom:24}}>
+          <button onClick={()=>{setTab(null);setErr("");}}
+            style={{background:"transparent",border:"none",color:"rgba(255,255,255,.4)",
+              cursor:"pointer",fontSize:12,fontFamily:"sans-serif",letterSpacing:1,
+              marginBottom:12,textDecoration:"underline"}}>
+            ← Voltar ao início
+          </button>
+          <div style={{fontSize:36,animation:"float 3s ease-in-out infinite",marginBottom:2}}>⚽</div>
+          <div style={{fontSize:32,letterSpacing:6,lineHeight:1,
             background:"linear-gradient(135deg,#fff 30%,#ffdf00 70%)",
             WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
             BOLÃO DO GESTOR
           </div>
-          <div style={{fontFamily:"sans-serif",fontSize:13,color:"#ffdf00",letterSpacing:3,marginTop:6}}>
+          <div style={{fontFamily:"sans-serif",fontSize:12,color:"#ffdf00",letterSpacing:3,marginTop:4}}>
             By Prof. Isaac Martins · 🇧🇷 Copa do Mundo 2026
           </div>
         </div>
 
         <div style={{width:"100%",maxWidth:440}}>
-          {/* 3 Tabs */}
+          {/* Tabs de navegação */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:16}}>
             {[
               ["entrar",  "🔑 Entrar"],
@@ -563,12 +703,11 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
 
             {/* ── TAB GRÁTIS ── */}
             {tab==="gratis"&&(<>
-              {/* Banner do plano grátis */}
               <div style={{background:"rgba(80,80,80,.2)",border:"1px solid #555",borderRadius:10,
                 padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
-                <div style={{fontSize:32}}>🆓</div>
+                <div style={{fontSize:32}}>🏆</div>
                 <div>
-                  <div style={{fontSize:16,letterSpacing:2,color:"#fff"}}>PLANO GRATUITO</div>
+                  <div style={{fontSize:16,letterSpacing:2,color:"#fff"}}>MONTAR MEU BOLÃO</div>
                   <div style={{fontFamily:"sans-serif",fontSize:12,color:"#aaa"}}>
                     1 bolão · até 5 participantes · sem custo
                   </div>
@@ -601,10 +740,10 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
               </div>
               {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:8}}>{err}</div>}
               <button onClick={handleCadastroGratis}
-                style={{width:"100%",background:"linear-gradient(135deg,#555,#333)",color:"#fff",
-                  border:"2px solid #777",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:2,
+                style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                  border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:2,
                   cursor:"pointer",marginBottom:10}}>
-                🆓 CRIAR CONTA GRÁTIS
+                🏆 CRIAR MEU BOLÃO GRÁTIS
               </button>
               <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:11,color:"#555"}}>
                 Quer mais recursos?{" "}
@@ -617,7 +756,6 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
 
             {/* ── TAB PAGO ── */}
             {tab==="pago"&&(<>
-              {/* Comparativo de planos */}
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
                 {[
                   {plano:"pro",     desc:"1 bolão · 50 pessoas"},
@@ -677,6 +815,7 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     </div>
   );
 }
+
 
 // ══════════════════════════════════════════════════════════════════════════════
 // LOGIN DO PARTICIPANTE — página exclusiva do admin (bolao.vercel.app/SLUG)
