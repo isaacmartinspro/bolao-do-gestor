@@ -281,6 +281,7 @@ export default function App() {
   const [guesses,   setGuesses]   = useState({});
   const [results,   setResults]   = useState({});
   const [licencas,  setLicencas]  = useState({});
+  const [dataReady, setDataReady] = useState(false); // true após 1ª carga do Firebase
 
   // UI global
   const [notification, setNotif] = useState(null);
@@ -316,16 +317,23 @@ export default function App() {
       ["results",  setResults],
       ["licencas", setLicencas],
     ];
+    let loadedCount = 0;
     refs.forEach(([path, setter]) => {
-      onValue(dbRef(db, path), s => setter(s.val()||{}));
+      onValue(dbRef(db, path), s => {
+        setter(s.val()||{});
+        loadedCount++;
+        if (loadedCount >= refs.length) setDataReady(true);
+      });
     });
     return () => refs.forEach(([path]) => off(dbRef(db, path)));
   }, [db]);
 
-  if (!db) return (
-    <div style={{...BASE_BG,display:"flex",alignItems:"center",justifyContent:"center"}}>
+  // Tela de carregamento: aguarda DB + 1ª resposta do Firebase
+  if (!db || !dataReady) return (
+    <div style={{...BASE_BG,display:"flex",alignItems:"center",justifyContent:"center",flexDirection:"column",gap:16}}>
       <style>{GLOBAL_CSS}</style>
-      <div style={{color:"#ffdf00",fontSize:24,letterSpacing:4}}>⚽ Carregando...</div>
+      <div style={{fontSize:48,animation:"float 1.5s ease-in-out infinite"}}>⚽</div>
+      <div style={{color:"#ffdf00",fontSize:20,letterSpacing:4,fontFamily:"sans-serif"}}>Carregando...</div>
     </div>
   );
 
@@ -369,6 +377,24 @@ export default function App() {
       admins={admins}
       notify={notify} notification={notification}/>;
   }
+
+  // Slug na URL mas não encontrado no Firebase → página não encontrada
+  if (slug) return (
+    <div style={{...BASE_BG,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",gap:16}}>
+      <style>{GLOBAL_CSS}</style>
+      <BrStripe/>
+      <div style={{fontSize:48}}>🔍</div>
+      <div style={{fontSize:28,letterSpacing:4,color:"#ffdf00"}}>Bolão não encontrado</div>
+      <div style={{fontFamily:"sans-serif",fontSize:14,color:"#888",textAlign:"center",maxWidth:320}}>
+        O link <strong style={{color:"#fff"}}>/{slug}</strong> não existe ou ainda não foi criado.
+      </div>
+      <button onClick={()=>{ window.location.href="/"; }}
+        style={{marginTop:8,background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+          border:"none",borderRadius:10,padding:"12px 28px",fontSize:16,letterSpacing:2,cursor:"pointer"}}>
+        ← Ir para o início
+      </button>
+    </div>
+  );
 
   return <HomeScreen
     db={db} admins={admins} licencas={licencas}
