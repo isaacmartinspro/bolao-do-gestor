@@ -274,6 +274,7 @@ const GLOBAL_CSS = `
   @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
   @keyframes glow{0%,100%{text-shadow:0 0 20px rgba(255,223,0,.3)}50%{text-shadow:0 0 40px rgba(255,223,0,.7)}}
   .hbtn:hover{transform:translateY(-2px)!important;filter:brightness(1.1)!important;}
+  @keyframes upgradePulse{0%,100%{box-shadow:0 0 8px rgba(200,162,0,.3)}50%{box-shadow:0 0 20px rgba(200,162,0,.7)}}
   .hbtn{transition:all .2s ease!important;}
   input:focus,textarea:focus{outline:none;}
   input[type=number]::-webkit-inner-spin-button{opacity:.5;}
@@ -1137,6 +1138,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   boloes, members, guesses, results, notify, notification}) {
 
   const [aba, setAba] = useState("boloes");
+  const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedBid, setSelectedBid] = useState(Object.keys(boloes)[0]||"");
   const [filterGrp, setFilterGrp] = useState("Todos");
 
@@ -1374,8 +1376,90 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
           ].map(t=>(
             <button key={t.id} onClick={()=>setAba(t.id)} style={tabStyle(t.id)}>{t.label}</button>
           ))}
+          {/* Botão Upgrade - destaque especial fora do array */}
+          <button onClick={()=>setShowUpgrade(v=>!v)}
+            style={{
+              background:showUpgrade
+                ? "linear-gradient(135deg,#c8a200,#8b7000)"
+                : "linear-gradient(135deg,rgba(200,162,0,.25),rgba(139,112,0,.25))",
+              color:"#ffdf00",border:"2px solid #c8a200",cursor:"pointer",
+              padding:"9px 14px",fontSize:13,fontWeight:900,fontFamily:"sans-serif",
+              letterSpacing:1,whiteSpace:"nowrap",borderRadius:7,transition:".15s",
+              boxShadow:showUpgrade?"0 0 16px rgba(200,162,0,.5)":"none",
+              animation:"upgradePulse 2s ease-in-out infinite",
+            }}>
+            ⭐ UPGRADE
+          </button>
         </div>
       </div>
+
+      {/* DRAWER UPGRADE */}
+      {showUpgrade&&(
+        <div style={{background:"linear-gradient(135deg,#0d1a0d,#0d0d1a)",
+          borderBottom:"2px solid #c8a200",padding:"20px 16px",
+          animation:"pop .3s ease both"}}>
+          <div style={{maxWidth:700,margin:"0 auto"}}>
+            <div style={{textAlign:"center",marginBottom:16}}>
+              <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",fontFamily:"'Bebas Neue',sans-serif"}}>
+                ⭐ ESCOLHA SEU PLANO
+              </div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginTop:4}}>
+                Plano atual: <strong style={{color:planoInfo.cor}}>{planoInfo.icon} {planoInfo.nome}</strong>
+              </div>
+            </div>
+            <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+              <div style={{background:"rgba(0,156,59,.12)",border:"2px solid rgba(0,156,59,.5)",
+                borderRadius:14,padding:"18px",textAlign:"center",position:"relative",
+                boxShadow:plano==="pro"?"0 0 20px rgba(0,156,59,.3)":"none"}}>
+                {plano==="pro"&&<div style={{position:"absolute",top:10,right:10,background:"#009c3b",
+                  color:"#fff",fontSize:9,fontWeight:900,padding:"3px 8px",borderRadius:100,letterSpacing:1}}>ATUAL</div>}
+                <div style={{fontSize:36,marginBottom:6}}>⚡</div>
+                <div style={{fontSize:18,letterSpacing:3,color:"#009c3b",marginBottom:8}}>BOLÃO PRO</div>
+                <div style={{fontFamily:"sans-serif",fontSize:12,color:"#ccc",lineHeight:2,marginBottom:12}}>
+                  ✅ 1 bolão<br/>
+                  ✅ Até 50 participantes<br/>
+                  ✅ Resultados em tempo real<br/>
+                  ✅ Ranking automático<br/>
+                  ✅ Link exclusivo
+                </div>
+                <a href={`https://wa.me/5511999999999?text=Olá+Prof.+Isaac!+Quero+o+BOLÃO+PRO+-+link:+bolao-do-gestor.vercel.app/${adminSlug}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{display:"block",background:"linear-gradient(135deg,#009c3b,#006622)",
+                    color:"#fff",borderRadius:10,padding:"11px",textDecoration:"none",
+                    fontFamily:"sans-serif",fontSize:13,fontWeight:700,letterSpacing:1}}>
+                  📲 QUERO O PRO
+                </a>
+              </div>
+              <div style={{background:"rgba(200,162,0,.12)",border:"2px solid rgba(200,162,0,.5)",
+                borderRadius:14,padding:"18px",textAlign:"center",position:"relative",
+                boxShadow:plano==="premium"?"0 0 20px rgba(200,162,0,.3)":"none"}}>
+                {plano==="premium"&&<div style={{position:"absolute",top:10,right:10,background:"#c8a200",
+                  color:"#000",fontSize:9,fontWeight:900,padding:"3px 8px",borderRadius:100,letterSpacing:1}}>ATUAL</div>}
+                <div style={{fontSize:36,marginBottom:6}}>👑</div>
+                <div style={{fontSize:18,letterSpacing:3,color:"#c8a200",marginBottom:8}}>BOLÃO PREMIUM</div>
+                <div style={{fontFamily:"sans-serif",fontSize:12,color:"#ccc",lineHeight:2,marginBottom:12}}>
+                  ✅ Até 3 bolões<br/>
+                  ✅ Até 50 participantes cada<br/>
+                  ✅ Resultados em tempo real<br/>
+                  ✅ Ranking automático<br/>
+                  ✅ Links exclusivos por bolão
+                </div>
+                <a href={`https://wa.me/5511999999999?text=Olá+Prof.+Isaac!+Quero+o+BOLÃO+PREMIUM+-+link:+bolao-do-gestor.vercel.app/${adminSlug}`}
+                  target="_blank" rel="noopener noreferrer"
+                  style={{display:"block",background:"linear-gradient(135deg,#c8a200,#8b7000)",
+                    color:"#fff",borderRadius:10,padding:"11px",textDecoration:"none",
+                    fontFamily:"sans-serif",fontSize:13,fontWeight:700,letterSpacing:1}}>
+                  📲 QUERO O PREMIUM
+                </a>
+              </div>
+            </div>
+            <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:11,color:"#666"}}>
+              Entre em contato via WhatsApp com o Prof. Isaac Martins para adquirir seu plano.
+              Após o pagamento você recebe um código de licença para ativar.
+            </div>
+          </div>
+        </div>
+      )}
 
       <main style={{maxWidth:760,margin:"0 auto",padding:"16px 12px"}}>
 
