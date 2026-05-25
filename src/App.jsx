@@ -677,7 +677,6 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     </div>
   );
 }
-}
 
 // ══════════════════════════════════════════════════════════════════════════════
 // LOGIN DO PARTICIPANTE — página exclusiva do admin (bolao.vercel.app/SLUG)
@@ -1097,6 +1096,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                   {planoInfo.nome}
                 </span>
               </div>
+              <a href={'/'+adminSlug} target="_blank" rel="noopener noreferrer"
                 style={{background:"rgba(0,156,59,.3)",color:"#009c3b",border:"1px solid rgba(0,156,59,.4)",
                   borderRadius:6,padding:"6px 12px",fontSize:12,fontFamily:"sans-serif",textDecoration:"none",fontWeight:700}}>
                 🔗 Ver minha página
