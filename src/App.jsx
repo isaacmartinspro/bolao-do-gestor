@@ -18,8 +18,18 @@ const FIREBASE_CONFIG = {
 
 // ─── CONSTANTES ──────────────────────────────────────────────────────────────
 const MASTER_PASS   = "isaacmartins2026";
-const MAX_BOLAOS    = 3;
-const MAX_MEMBROS   = 50;
+
+// ─── PLANOS ──────────────────────────────────────────────────────────────────
+const PLANOS = {
+  gratis:  { nome:"Grátis",      icon:"🆓", maxBoloes:1, maxMembros:5,  cor:"#555",    corBg:"rgba(80,80,80,.15)"  },
+  pro:     { nome:"Bolão Pro",   icon:"⚡", maxBoloes:1, maxMembros:50, cor:"#009c3b", corBg:"rgba(0,156,59,.15)"  },
+  premium: { nome:"Bolão Premium",icon:"👑",maxBoloes:3, maxMembros:50, cor:"#c8a200", corBg:"rgba(200,162,0,.15)" },
+};
+
+function getLimites(admin) {
+  const plano = PLANOS[admin?.plano||"gratis"];
+  return { maxBoloes: plano.maxBoloes, maxMembros: plano.maxMembros, plano: admin?.plano||"gratis" };
+}
 
 const safeKey = s => s?.replace(/[.#$[\]/\s]/g,"_").toLowerCase() || "";
 
@@ -405,32 +415,304 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     setMsgRecuperar(`✅ Olá, ${adminData.nome}! Sua senha é: "${adminData.senha}"\n\nGuarde-a em lugar seguro.`);
   }
 
-  async function handleCadastro() {
+// ══════════════════════════════════════════════════════════════════════════════
+function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify, notification}) {
+  const [tab, setTab]             = useState("entrar"); // entrar | gratis | pago
+  const [slug, setSlug]           = useState("");
+  const [senha, setSenha]         = useState("");
+  const [showSenhaLogin, setShowSenhaLogin] = useState(false);
+  const [licenca, setLicenca]     = useState("");
+  const [nome, setNome]           = useState("");
+  const [whatsapp, setWhatsapp]   = useState("");
+  const [email, setEmail]         = useState("");
+  const [profissao, setProfissao] = useState("");
+  const [novoSlug, setNovoSlug]   = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [showNovaSenha, setShowNovaSenha] = useState(false);
+  const [err, setErr]             = useState("");
+  const [esqueciAdmin, setEsqueciAdmin] = useState(false);
+  const [slugRecuperar, setSlugRecuperar] = useState("");
+  const [msgRecuperar, setMsgRecuperar]   = useState("");
+
+  async function handleLogin() {
+    setErr("");
+    const s = safeKey(slug.trim());
+    if (!s) { setErr("Digite seu link de acesso."); return; }
+    if (!admins[s]) { setErr("Administrador não encontrado."); return; }
+    if (admins[s].senha !== senha) { setErr("Senha incorreta."); return; }
+    setCurrentAdmin({slug:s, ...admins[s]});
+    setTimeout(()=>{ window.location.href = "/"+s; }, 100);
+  }
+
+  function handleRecuperarSenha() {
+    const s = safeKey(slugRecuperar.trim());
+    if (!s || !admins[s]) { setMsgRecuperar("Link não encontrado. Verifique e tente novamente."); return; }
+    setMsgRecuperar(`✅ Olá, ${admins[s].nome}! Sua senha é: "${admins[s].senha}"\n\nGuarde-a em lugar seguro.`);
+  }
+
+  async function handleCadastroGratis() {
     setErr("");
     const s = safeKey(novoSlug.trim());
     if (!s || s.length < 3) { setErr("Link muito curto. Mínimo 3 caracteres."); return; }
-    if (!nome.trim()) { setErr("Digite seu nome."); return; }
+    if (!nome.trim())        { setErr("Digite seu nome completo."); return; }
+    if (!whatsapp.trim())    { setErr("Digite seu WhatsApp com DDD."); return; }
+    if (!email.trim())       { setErr("Digite seu e-mail."); return; }
     if (!novaSenha || novaSenha.length < 6) { setErr("Senha deve ter pelo menos 6 caracteres."); return; }
-    if (!licenca.trim()) { setErr("Digite o código de licença."); return; }
-    if (admins[s]) { setErr("Esse nome já foi usado, por favor crie outro."); return; }
-
-    const lic = Object.entries(licencas).find(([,l])=>l.codigo===licenca.trim().toUpperCase()&&!l.usado);
-    if (!lic) { setErr("Código de licença inválido ou já utilizado."); return; }
-
+    if (admins[s])           { setErr("Esse link já foi usado, por favor crie outro."); return; }
+    if (s === "master")      { setErr("Este link é reservado. Escolha outro."); return; }
     try {
       await set(dbRef(db, `admins/${s}`), {
-        nome: nome.trim(), slug: s, senha: novaSenha,
-        licenca: licenca.trim().toUpperCase(),
-        criadoEm: new Date().toISOString(), ativo: true,
+        nome:nome.trim(), slug:s, senha:novaSenha,
+        whatsapp:whatsapp.trim(), email:email.trim(), profissao:profissao.trim(),
+        plano:"gratis", criadoEm:new Date().toISOString(), ativo:true,
       });
-      await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:new Date().toISOString()});
-      notify("✅ Cadastro realizado! Redirecionando...");
-      setCurrentAdmin({slug:s, nome:nome.trim(), senha:novaSenha, ativo:true});
+      notify("🎉 Bem-vindo ao Bolão do Gestor! Conta gratuita criada!");
+      setCurrentAdmin({slug:s, nome:nome.trim(), senha:novaSenha, plano:"gratis", ativo:true});
       setTimeout(()=>{ window.location.href = "/"+s; }, 1500);
     } catch { setErr("Erro ao cadastrar. Tente novamente."); }
   }
 
+  async function handleCadastroPago() {
+    setErr("");
+    const s = safeKey(novoSlug.trim());
+    if (!s || s.length < 3) { setErr("Link muito curto. Mínimo 3 caracteres."); return; }
+    if (!nome.trim())        { setErr("Digite seu nome."); return; }
+    if (!novaSenha || novaSenha.length < 6) { setErr("Senha deve ter pelo menos 6 caracteres."); return; }
+    if (!licenca.trim())     { setErr("Digite o código de licença."); return; }
+    if (admins[s])           { setErr("Esse nome já foi usado, por favor crie outro."); return; }
+    if (s === "master")      { setErr("Este link é reservado. Escolha outro."); return; }
+    const lic = Object.entries(licencas).find(([,l])=>l.codigo===licenca.trim().toUpperCase()&&!l.usado);
+    if (!lic) { setErr("Código de licença inválido ou já utilizado."); return; }
+    const plano = lic[1].plano || "premium";
+    try {
+      await set(dbRef(db, `admins/${s}`), {
+        nome:nome.trim(), slug:s, senha:novaSenha,
+        licenca:licenca.trim().toUpperCase(),
+        plano, criadoEm:new Date().toISOString(), ativo:true,
+      });
+      await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:new Date().toISOString()});
+      notify("✅ Cadastro realizado! Redirecionando...");
+      setCurrentAdmin({slug:s, nome:nome.trim(), senha:novaSenha, plano, ativo:true});
+      setTimeout(()=>{ window.location.href = "/"+s; }, 1500);
+    } catch { setErr("Erro ao cadastrar. Tente novamente."); }
+  }
+
+  const inp = (placeholder, value, onChange, type="text") => (
+    <input type={type} placeholder={placeholder} value={value} onChange={e=>{onChange(e.target.value);setErr("");}}
+      style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+        borderRadius:8,padding:"11px 14px",fontSize:14,fontFamily:"sans-serif",marginBottom:10}}/>
+  );
+
   return (
+    <div style={{...BASE_BG,display:"flex",flexDirection:"column",minHeight:"100vh"}}>
+      <style>{GLOBAL_CSS}</style>
+      <BrStripe/>
+      <Notif n={notification}/>
+
+      <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",padding:"32px 16px"}}>
+        <div style={{textAlign:"center",marginBottom:32}}>
+          <div style={{fontSize:56,animation:"float 3s ease-in-out infinite",marginBottom:4}}>⚽</div>
+          <div style={{fontSize:44,letterSpacing:8,lineHeight:1,animation:"glow 3s ease-in-out infinite",
+            background:"linear-gradient(135deg,#fff 30%,#ffdf00 70%)",
+            WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>
+            BOLÃO DO GESTOR
+          </div>
+          <div style={{fontFamily:"sans-serif",fontSize:13,color:"#ffdf00",letterSpacing:3,marginTop:6}}>
+            By Prof. Isaac Martins · 🇧🇷 Copa do Mundo 2026
+          </div>
+        </div>
+
+        <div style={{width:"100%",maxWidth:440}}>
+          {/* 3 Tabs */}
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6,marginBottom:16}}>
+            {[
+              ["entrar",  "🔑 Entrar"],
+              ["gratis",  "🆓 Grátis"],
+              ["pago",    "⭐ Com Plano"],
+            ].map(([t,l])=>(
+              <button key={t} onClick={()=>{setTab(t);setErr("");}}
+                style={{background:tab===t?"linear-gradient(135deg,#009c3b,#006622)":"rgba(255,255,255,.06)",
+                  color:"#fff",border:`2px solid ${tab===t?"#009c3b":"#333"}`,
+                  borderRadius:10,padding:"10px 6px",cursor:"pointer",fontSize:13,fontWeight:700,transition:".2s"}}>
+                {l}
+              </button>
+            ))}
+          </div>
+
+          <div style={{background:"rgba(255,255,255,.05)",border:"1px solid rgba(255,223,0,.2)",borderRadius:14,padding:"22px"}}>
+
+            {/* ── TAB ENTRAR ── */}
+            {tab==="entrar"&&(<>
+              <div style={{fontSize:20,letterSpacing:3,color:"#ffdf00",marginBottom:14}}>ACESSAR MEU PAINEL</div>
+              {!esqueciAdmin?(<>
+                {inp("Seu link (ex: joaosilva)", slug, setSlug)}
+                <div style={{position:"relative",marginBottom:10}}>
+                  <input type={showSenhaLogin?"text":"password"} placeholder="Sua senha" value={senha}
+                    onChange={e=>{setSenha(e.target.value);setErr("");}}
+                    onKeyDown={e=>e.key==="Enter"&&handleLogin()}
+                    style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                      borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                  <button onClick={()=>setShowSenhaLogin(s=>!s)}
+                    style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                      background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                    {showSenhaLogin?"🙈":"👁️"}
+                  </button>
+                </div>
+                {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:8}}>{err}</div>}
+                <button onClick={handleLogin}
+                  style={{width:"100%",background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                    border:"none",borderRadius:10,padding:"12px",fontSize:17,letterSpacing:3,cursor:"pointer",marginBottom:10}}>
+                  ENTRAR ▶
+                </button>
+                <div style={{textAlign:"center"}}>
+                  <button onClick={()=>{setEsqueciAdmin(true);setMsgRecuperar("");}}
+                    style={{background:"transparent",border:"none",color:"#888",cursor:"pointer",
+                      fontSize:12,fontFamily:"sans-serif",textDecoration:"underline"}}>
+                    Esqueci minha senha
+                  </button>
+                </div>
+              </>):(
+                <div>
+                  <div style={{fontSize:15,letterSpacing:2,color:"#ffdf00",marginBottom:8}}>🔑 RECUPERAR SENHA</div>
+                  {inp("Seu link (ex: joaosilva)", slugRecuperar, setSlugRecuperar)}
+                  {msgRecuperar&&(
+                    <div style={{background:msgRecuperar.startsWith("✅")?"rgba(0,156,59,.15)":"rgba(120,16,16,.15)",
+                      border:`1px solid ${msgRecuperar.startsWith("✅")?"#009c3b":"#5a1010"}`,
+                      borderRadius:8,padding:"12px",fontFamily:"sans-serif",fontSize:13,
+                      color:"#fff",marginBottom:10,whiteSpace:"pre-wrap",lineHeight:1.8}}>
+                      {msgRecuperar}
+                    </div>
+                  )}
+                  <button onClick={handleRecuperarSenha}
+                    style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                      border:"none",borderRadius:8,padding:"11px",fontSize:15,letterSpacing:2,cursor:"pointer",marginBottom:8}}>
+                    🔑 Recuperar Senha
+                  </button>
+                  <button onClick={()=>{setEsqueciAdmin(false);setMsgRecuperar("");setSlugRecuperar("");}}
+                    style={{width:"100%",background:"transparent",color:"#777",border:"1px solid #333",
+                      borderRadius:8,padding:"9px",cursor:"pointer",fontSize:13,fontFamily:"sans-serif"}}>
+                    ← Voltar
+                  </button>
+                </div>
+              )}
+            </>)}
+
+            {/* ── TAB GRÁTIS ── */}
+            {tab==="gratis"&&(<>
+              {/* Banner do plano grátis */}
+              <div style={{background:"rgba(80,80,80,.2)",border:"1px solid #555",borderRadius:10,
+                padding:"12px 14px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
+                <div style={{fontSize:32}}>🆓</div>
+                <div>
+                  <div style={{fontSize:16,letterSpacing:2,color:"#fff"}}>PLANO GRATUITO</div>
+                  <div style={{fontFamily:"sans-serif",fontSize:12,color:"#aaa"}}>
+                    1 bolão · até 5 participantes · sem custo
+                  </div>
+                </div>
+              </div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:14,lineHeight:1.7}}>
+                Crie sua conta grátis e comece agora! Ideal para testar com família ou amigos.
+              </div>
+              {inp("Nome completo *", nome, setNome)}
+              {inp("WhatsApp com DDD *", whatsapp, setWhatsapp, "tel")}
+              {inp("E-mail *", email, setEmail, "email")}
+              {inp("Profissão (opcional)", profissao, setProfissao)}
+              {inp("Seu link exclusivo * (ex: joaosilva)", novoSlug, v=>setNovoSlug(v.replace(/\s/g,"").toLowerCase()))}
+              {novoSlug&&(
+                <div style={{fontFamily:"sans-serif",fontSize:11,marginTop:-8,marginBottom:8,
+                  color:admins[safeKey(novoSlug)]?"#ff6b6b":"#009c3b"}}>
+                  {admins[safeKey(novoSlug)]?"❌ Link já usado, escolha outro":`✅ bolao-do-gestor.vercel.app/${safeKey(novoSlug)}`}
+                </div>
+              )}
+              <div style={{position:"relative",marginBottom:10}}>
+                <input type={showNovaSenha?"text":"password"} placeholder="Crie uma senha (mín. 6 caracteres) *"
+                  value={novaSenha} onChange={e=>{setNovaSenha(e.target.value);setErr("");}}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                    borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                <button onClick={()=>setShowNovaSenha(s=>!s)}
+                  style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                    background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                  {showNovaSenha?"🙈":"👁️"}
+                </button>
+              </div>
+              {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:8}}>{err}</div>}
+              <button onClick={handleCadastroGratis}
+                style={{width:"100%",background:"linear-gradient(135deg,#555,#333)",color:"#fff",
+                  border:"2px solid #777",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:2,
+                  cursor:"pointer",marginBottom:10}}>
+                🆓 CRIAR CONTA GRÁTIS
+              </button>
+              <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:11,color:"#555"}}>
+                Quer mais recursos?{" "}
+                <button onClick={()=>{setTab("pago");setErr("");}}
+                  style={{background:"none",border:"none",color:"#ffdf00",cursor:"pointer",fontSize:11,textDecoration:"underline"}}>
+                  Ver planos pagos
+                </button>
+              </div>
+            </>)}
+
+            {/* ── TAB PAGO ── */}
+            {tab==="pago"&&(<>
+              {/* Comparativo de planos */}
+              <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:16}}>
+                {[
+                  {plano:"pro",     desc:"1 bolão · 50 pessoas"},
+                  {plano:"premium", desc:"3 bolões · 50 pessoas cada"},
+                ].map(p=>{
+                  const pl = PLANOS[p.plano];
+                  return(
+                    <div key={p.plano} style={{background:pl.corBg,border:`2px solid ${pl.cor}`,
+                      borderRadius:10,padding:"12px",textAlign:"center"}}>
+                      <div style={{fontSize:24}}>{pl.icon}</div>
+                      <div style={{fontSize:14,letterSpacing:2,color:pl.cor,marginTop:4}}>{pl.nome}</div>
+                      <div style={{fontFamily:"sans-serif",fontSize:11,color:"#aaa",marginTop:4}}>{p.desc}</div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:14,lineHeight:1.7}}>
+                Insira seu <strong style={{color:"#ffdf00"}}>código de licença</strong> para ativar o plano Pro ou Premium.
+                Entre em contato com o Prof. Isaac Martins para adquirir.
+              </div>
+              {inp("Código de licença *", licenca, v=>setLicenca(v.toUpperCase()))}
+              {inp("Seu nome *", nome, setNome)}
+              {inp("Seu link exclusivo * (ex: joaosilva)", novoSlug, v=>setNovoSlug(v.replace(/\s/g,"").toLowerCase()))}
+              {novoSlug&&(
+                <div style={{fontFamily:"sans-serif",fontSize:11,marginTop:-8,marginBottom:8,
+                  color:admins[safeKey(novoSlug)]?"#ff6b6b":"#009c3b"}}>
+                  {admins[safeKey(novoSlug)]?"❌ Link já usado, escolha outro":`✅ bolao-do-gestor.vercel.app/${safeKey(novoSlug)}`}
+                </div>
+              )}
+              <div style={{position:"relative",marginBottom:10}}>
+                <input type={showNovaSenha?"text":"password"} placeholder="Crie uma senha (mín. 6 caracteres) *"
+                  value={novaSenha} onChange={e=>{setNovaSenha(e.target.value);setErr("");}}
+                  style={{width:"100%",background:"#050d0a",color:"#fff",border:"1px solid #2a3a2a",
+                    borderRadius:8,padding:"11px 44px 11px 14px",fontSize:14,fontFamily:"sans-serif"}}/>
+                <button onClick={()=>setShowNovaSenha(s=>!s)}
+                  style={{position:"absolute",right:10,top:"50%",transform:"translateY(-50%)",
+                    background:"transparent",border:"none",color:"#888",cursor:"pointer",fontSize:18}}>
+                  {showNovaSenha?"🙈":"👁️"}
+                </button>
+              </div>
+              {err&&<div style={{color:"#ff6b6b",fontSize:12,fontFamily:"sans-serif",marginBottom:8}}>{err}</div>}
+              <button onClick={handleCadastroPago}
+                style={{width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                  border:"none",borderRadius:10,padding:"13px",fontSize:17,letterSpacing:2,
+                  cursor:"pointer",marginBottom:10}}>
+                ⭐ ATIVAR MEU PLANO
+              </button>
+            </>)}
+
+          </div>
+        </div>
+      </div>
+      <BrStripe/>
+      <div style={{textAlign:"center",padding:"10px",fontFamily:"sans-serif",fontSize:11,color:"#2a2a2a"}}>
+        bolao-do-gestor.vercel.app · By Prof. Isaac Martins
+      </div>
+    </div>
+  );
+}
     <div style={{...BASE_BG,display:"flex",flexDirection:"column",minHeight:"100vh"}}>
       <style>{GLOBAL_CSS}</style>
       <BrStripe/>
@@ -887,6 +1169,8 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   },[selectedBid,boloes]);
 
   const numBoloes = Object.keys(boloes).length;
+  const { maxBoloes, maxMembros, plano } = getLimites(adminData);
+  const planoInfo = PLANOS[plano]||PLANOS.gratis;
 
   const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"16 Avos","Oitavas","Quartas","Semifinal","Final"];
 
@@ -905,7 +1189,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
 
   async function criarBolao() {
     if(!newBNome.trim()){notify("Digite o nome","err");return;}
-    if(numBoloes>=MAX_BOLAOS){notify(`Limite de ${MAX_BOLAOS} bolões!`,"err");return;}
+    if(numBoloes>=maxBoloes){notify(`Limite de ${maxBoloes} bolões!`,"err");return;}
     const id=safeKey(newBNome)+"_"+Date.now();
     await set(dbRef(db,`boloes/${id}`),{
       nome:newBNome.trim(),descricao:newBDesc.trim()||"Copa do Mundo 2026",
@@ -920,7 +1204,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   async function addMembro() {
     if(!newNome.trim()||!newApe.trim()){notify("Nome e apelido obrigatórios","err");return;}
     if(!newSenha.trim()){notify("Crie uma senha para o participante","err");return;}
-    if(aprovados.length>=MAX_MEMBROS){notify(`Limite de ${MAX_MEMBROS}!`,"err");return;}
+    if(aprovados.length>=maxMembros){notify(`Limite de ${maxMembros}!`,"err");return;}
     const uid=safeKey(newApe.trim());
     if(members[selectedBid]?.[uid]){notify("Apelido já existe","err");return;}
     await set(dbRef(db,`members/${selectedBid}/${uid}`),{
@@ -1009,8 +1293,15 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
               <div style={{fontSize:26,letterSpacing:5}}>⚽ PAINEL DO ADMINISTRADOR</div>
               <div style={{fontFamily:"sans-serif",fontSize:12,color:"#ffdf00",letterSpacing:2}}>{adminData.nome}</div>
             </div>
-            <div style={{display:"flex",gap:8,alignItems:"center"}}>
-              <a href={"/"+adminSlug} target="_blank"
+            <div style={{display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+              {/* Badge do plano atual */}
+              <div style={{background:planoInfo.corBg,border:`1px solid ${planoInfo.cor}`,
+                borderRadius:20,padding:"4px 12px",display:"flex",alignItems:"center",gap:6}}>
+                <span style={{fontSize:16}}>{planoInfo.icon}</span>
+                <span style={{fontFamily:"sans-serif",fontSize:12,color:planoInfo.cor,fontWeight:700}}>
+                  {planoInfo.nome}
+                </span>
+              </div>
                 style={{background:"rgba(0,156,59,.3)",color:"#009c3b",border:"1px solid rgba(0,156,59,.4)",
                   borderRadius:6,padding:"6px 12px",fontSize:12,fontFamily:"sans-serif",textDecoration:"none",fontWeight:700}}>
                 🔗 Ver minha página
@@ -1040,7 +1331,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
               ⚽ {b.nome}
             </button>
           ))}
-          {numBoloes < MAX_BOLAOS && (
+          {numBoloes < maxBoloes && (
             <button onClick={()=>setAba("boloes")}
               style={{background:"rgba(0,156,59,.2)",border:"1px solid rgba(0,156,59,.4)",
                 color:"#009c3b",borderRadius:8,padding:"6px 14px",cursor:"pointer",
@@ -1070,7 +1361,63 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
         {/* ── BOLÕES ── */}
         {aba==="boloes"&&(
           <div>
-            {numBoloes < MAX_BOLAOS && (
+            {/* Banner de upgrade para plano grátis */}
+            {plano==="gratis"&&(
+              <div style={{background:"linear-gradient(135deg,rgba(200,162,0,.15),rgba(0,156,59,.15))",
+                border:"2px solid #c8a200",borderRadius:14,padding:"16px 18px",marginBottom:16}}>
+                <div style={{fontSize:15,letterSpacing:2,color:"#ffdf00",marginBottom:8}}>
+                  ⭐ FAÇA UPGRADE E TENHA MAIS PODER!
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:10,marginBottom:12}}>
+                  <div style={{background:"rgba(0,156,59,.15)",border:"2px solid #009c3b",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                    <div style={{fontSize:22}}>⚡</div>
+                    <div style={{fontSize:14,letterSpacing:2,color:"#009c3b",marginTop:4}}>BOLÃO PRO</div>
+                    <div style={{fontFamily:"sans-serif",fontSize:11,color:"#aaa",marginTop:4,lineHeight:1.6}}>
+                      1 bolão<br/>até 50 participantes
+                    </div>
+                  </div>
+                  <div style={{background:"rgba(200,162,0,.15)",border:"2px solid #c8a200",borderRadius:10,padding:"12px",textAlign:"center"}}>
+                    <div style={{fontSize:22}}>👑</div>
+                    <div style={{fontSize:14,letterSpacing:2,color:"#c8a200",marginTop:4}}>BOLÃO PREMIUM</div>
+                    <div style={{fontFamily:"sans-serif",fontSize:11,color:"#aaa",marginTop:4,lineHeight:1.6}}>
+                      3 bolões<br/>até 50 pessoas cada
+                    </div>
+                  </div>
+                </div>
+                <a href="https://wa.me/5511999999999?text=Olá+Prof.+Isaac!+Quero+fazer+upgrade+do+meu+Bolão"
+                  target="_blank"
+                  style={{display:"block",width:"100%",background:"linear-gradient(135deg,#c8a200,#8b7000)",
+                    color:"#fff",border:"none",borderRadius:10,padding:"12px",fontSize:15,letterSpacing:2,
+                    cursor:"pointer",textAlign:"center",textDecoration:"none",fontFamily:"'Bebas Neue',sans-serif",
+                    boxSizing:"border-box"}}>
+                  📲 FALAR COM O PROF. ISAAC PARA FAZER UPGRADE
+                </a>
+                <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777",textAlign:"center",marginTop:6}}>
+                  Plano atual: 🆓 Grátis · {numBoloes}/{maxBoloes} bolões · {aprovados.length}/{maxMembros} pessoas no bolão atual
+                </div>
+              </div>
+            )}
+
+            {/* Banner upgrade para Pro → Premium */}
+            {plano==="pro"&&(
+              <div style={{background:"rgba(200,162,0,.1)",border:"1px solid rgba(200,162,0,.4)",
+                borderRadius:12,padding:"14px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+                <div style={{flex:1}}>
+                  <div style={{fontSize:14,letterSpacing:2,color:"#c8a200"}}>👑 UPGRADE PARA PREMIUM</div>
+                  <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginTop:2}}>
+                    Crie até 3 bolões com 50 pessoas cada!
+                  </div>
+                </div>
+                <a href="https://wa.me/5511999999999?text=Olá+Prof.+Isaac!+Quero+upgrade+para+Premium"
+                  target="_blank"
+                  style={{background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",
+                    padding:"8px 16px",borderRadius:8,textDecoration:"none",fontSize:13,
+                    fontFamily:"sans-serif",fontWeight:700}}>
+                  📲 Fazer Upgrade
+                </a>
+              </div>
+            )}
+            {numBoloes < maxBoloes && (
               <Card color="rgba(0,156,59,.3)">
                 <div style={{fontSize:16,letterSpacing:3,color:"#009c3b",marginBottom:12}}>➕ CRIAR NOVO BOLÃO</div>
                 <div style={{display:"grid",gap:8,marginBottom:10}}>
@@ -1180,7 +1527,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
               </div>
             ))}
 
-            {aprovados.length < MAX_MEMBROS && (
+            {aprovados.length < maxMembros && (
               <Card color="rgba(0,156,59,.2)">
                 <div style={{fontSize:14,letterSpacing:3,color:"#009c3b",marginBottom:10}}>➕ ADICIONAR PARTICIPANTE</div>
                 <div style={{marginBottom:8}}>
@@ -2160,7 +2507,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
 
   async function criarBolao() {
     if (!newBolaoNome.trim()) { notify("Digite o nome do bolão","err"); return; }
-    if (numBoloes >= MAX_BOLAOS) { notify(`Limite de ${MAX_BOLAOS} bolões atingido!`,"err"); return; }
+    if (numBoloes >= MAX_BOLAOS) { notify(`Limite de ${maxBoloes} bolões atingido!`,"err"); return; }
     const id = safeKey(newBolaoNome.trim())+"_"+Date.now();
     await set(dbRef(db,`boloes/${id}`),{
       nome:newBolaoNome.trim(), descricao:newBolaoDesc.trim()||"Copa do Mundo 2026",
@@ -2173,7 +2520,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
 
   async function addMembro() {
     if (!newNome.trim()||!newApe.trim()) { notify("Nome e apelido obrigatórios","err"); return; }
-    if (aprovados.length >= MAX_MEMBROS) { notify(`Limite de ${MAX_MEMBROS} participantes atingido!`,"err"); return; }
+    if (aprovados.length >= MAX_MEMBROS) { notify(`Limite de ${maxMembros} participantes atingido!`,"err"); return; }
     const uid = safeKey(newApe.trim());
     if (members[selectedBid]?.[uid]) { notify("Apelido já existe","err"); return; }
     await set(dbRef(db,`members/${selectedBid}/${uid}`),{
@@ -2239,7 +2586,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
       {/* ABA BOLÕES */}
       {abaAdmin==="boloes"&&(
         <div>
-          {numBoloes < MAX_BOLAOS && (
+          {numBoloes < maxBoloes && (
             <div style={{background:"rgba(0,156,59,.08)",border:"1px solid rgba(0,156,59,.3)",borderRadius:12,padding:"16px",marginBottom:16}}>
               <div style={{fontSize:fs(16),letterSpacing:3,color:"#009c3b",marginBottom:10}}>➕ CRIAR NOVO BOLÃO</div>
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
@@ -2375,7 +2722,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
           ))}
 
           {/* Adicionar */}
-          {aprovados.length < MAX_MEMBROS && (
+          {aprovados.length < maxMembros && (
             <div style={{background:"rgba(255,255,255,.03)",border:"1px solid #1a2a1a",borderRadius:10,padding:"14px",marginTop:8}}>
               <div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#888",letterSpacing:1,marginBottom:8}}>➕ ADICIONAR PARTICIPANTE</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:8}}>
@@ -2547,16 +2894,18 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
   const [expandAdmin, setExpandAdmin] = useState(null);
   const [newLicName, setNewLicName] = useState("");
   const [newLicQtd, setNewLicQtd]   = useState(1);
+  const [newLicPlano, setNewLicPlano] = useState("pro");
 
   async function gerarLicencas() {
     for (let i=0; i<newLicQtd; i++) {
       const codigo = "BOLAO-" + Math.random().toString(36).slice(2,8).toUpperCase();
       await push(dbRef(db,"licencas"), {
         codigo, nome:newLicName.trim()||"Sem nome",
+        plano: newLicPlano,
         usado:false, criadoEm:new Date().toISOString()
       });
     }
-    notify(`✅ ${newLicQtd} licença(s) gerada(s)!`);
+    notify(`✅ ${newLicQtd} licença(s) ${PLANOS[newLicPlano].nome} gerada(s)!`);
     setNewLicName(""); setNewLicQtd(1);
   }
 
@@ -2815,9 +3164,14 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                   <div style={{fontSize:16,letterSpacing:3,color:"#c8a200",marginBottom:10}}>🔑 GERAR NOVAS LICENÇAS</div>
                   <div style={{display:"flex",gap:10,flexWrap:"wrap",alignItems:"center"}}>
                     <input placeholder="Nome do cliente (opcional)" value={newLicName} onChange={e=>setNewLicName(e.target.value)}
-                      style={{flex:1,minWidth:180,background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+                      style={{flex:1,minWidth:160,background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:8,padding:"9px 12px",fontSize:14,fontFamily:"sans-serif"}}/>
+                    <select value={newLicPlano} onChange={e=>setNewLicPlano(e.target.value)}
+                      style={{background:"#050d0a",color:"#ffdf00",border:"1px solid #c8a200",borderRadius:8,padding:"9px 12px",fontSize:14,cursor:"pointer"}}>
+                      <option value="pro">⚡ Pro (1 bolão · 50 pessoas)</option>
+                      <option value="premium">👑 Premium (3 bolões · 50 pessoas)</option>
+                    </select>
                     <input type="number" min="1" max="20" value={newLicQtd} onChange={e=>setNewLicQtd(parseInt(e.target.value)||1)}
-                      style={{width:70,background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:8,padding:"9px",fontSize:14,fontFamily:"sans-serif",textAlign:"center"}}/>
+                      style={{width:60,background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:8,padding:"9px",fontSize:14,fontFamily:"sans-serif",textAlign:"center"}}/>
                     <button onClick={gerarLicencas}
                       style={{background:"linear-gradient(135deg,#c8a200,#8b7000)",color:"#fff",border:"none",borderRadius:8,padding:"10px 18px",cursor:"pointer",fontSize:14,fontWeight:700}}>
                       🔑 Gerar
