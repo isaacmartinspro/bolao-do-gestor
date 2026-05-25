@@ -1441,9 +1441,9 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                 </button>
               </Card>
             )}
-            {numBoloes >= MAX_BOLAOS && (
+            {numBoloes >= maxBoloes && (
               <div style={{background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.3)",borderRadius:10,padding:"12px 16px",marginBottom:14,fontFamily:"sans-serif",fontSize:13,color:"#ffdf00"}}>
-                ⚠️ Limite de {MAX_BOLAOS} bolões atingido para sua licença.
+                ⚠️ Limite de {maxBoloes} bolões atingido para sua licença.
               </div>
             )}
             {Object.entries(boloes).map(([bid,b])=>(
@@ -1452,7 +1452,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                   <div>
                     <div style={{fontSize:20,letterSpacing:3,color:selectedBid===bid?"#ffdf00":"#fff"}}>{b.nome}</div>
                     <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginTop:2}}>
-                      {b.descricao} · ✅ {Object.values(members[bid]||{}).filter(m=>m.status==="aprovado").length}/{MAX_MEMBROS} participantes
+                      {b.descricao} · ✅ {Object.values(members[bid]||{}).filter(m=>m.status==="aprovado").length}/{maxMembros} participantes
                     </div>
                     <div style={{fontFamily:"sans-serif",fontSize:11,color:"#009c3b",marginTop:2}}>
                       🔗 Link: <strong>{window.location.origin}/{adminSlug}</strong>
@@ -1478,7 +1478,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
         {aba==="participantes"&&(
           <div>
             <div style={{fontFamily:"sans-serif",fontSize:12,color:"#888",marginBottom:12}}>
-              ✅ {aprovados.length}/{MAX_MEMBROS} participantes no bolão <strong style={{color:"#fff"}}>{bolaoAtual.nome}</strong>
+              ✅ {aprovados.length}/{maxMembros} participantes no bolão <strong style={{color:"#fff"}}>{bolaoAtual.nome}</strong>
             </div>
             {aprovados.map(m=>(
               <div key={m.uid} style={{background:"rgba(0,156,59,.06)",border:"1px solid rgba(0,156,59,.2)",borderRadius:10,padding:"10px 14px",marginBottom:8}}>
@@ -2467,7 +2467,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                 </button>
               </div>
             ):(
-              <AdminBolaoPanel db={db} adminSlug={adminSlug} boloes={boloes} members={members}
+              <AdminBolaoPanel db={db} adminSlug={adminSlug} adminData={adminData} boloes={boloes} members={members}
                 results={results} filteredGames={filteredGames} filterGrp={filterGrp} setFilterGrp={setFilterGrp}
                 FILTER_OPTS={FILTER_OPTS} notify={notify} fs={fs} apiKey={apiKey} setApiKey={setApiKey}
                 liveFetching={liveFetching} setLiveFetching={setLiveFetching}
@@ -2490,7 +2490,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
 // ══════════════════════════════════════════════════════════════════════════════
 // PAINEL ADMIN DO BOLÃO — completo
 // ══════════════════════════════════════════════════════════════════════════════
-function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames,
+function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, results, filteredGames,
   filterGrp, setFilterGrp, FILTER_OPTS, notify, fs, apiKey, setApiKey,
   liveFetching, setLiveFetching, lastUpdate, setLastUpdate, saveResult,
   avatarColors, avatares, MemberAvatar}) {
@@ -2515,10 +2515,11 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
 
   // Verificar limites
   const numBoloes = Object.keys(boloes).length;
+  const { maxBoloes, maxMembros } = getLimites(adminData);
 
   async function criarBolao() {
     if (!newBolaoNome.trim()) { notify("Digite o nome do bolão","err"); return; }
-    if (numBoloes >= MAX_BOLAOS) { notify(`Limite de ${maxBoloes} bolões atingido!`,"err"); return; }
+    if (numBoloes >= maxBoloes) { notify(`Limite de ${maxBoloes} bolões atingido!`,"err"); return; }
     const id = safeKey(newBolaoNome.trim())+"_"+Date.now();
     await set(dbRef(db,`boloes/${id}`),{
       nome:newBolaoNome.trim(), descricao:newBolaoDesc.trim()||"Copa do Mundo 2026",
@@ -2531,7 +2532,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
 
   async function addMembro() {
     if (!newNome.trim()||!newApe.trim()) { notify("Nome e apelido obrigatórios","err"); return; }
-    if (aprovados.length >= MAX_MEMBROS) { notify(`Limite de ${maxMembros} participantes atingido!`,"err"); return; }
+    if (aprovados.length >= maxMembros) { notify(`Limite de ${maxMembros} participantes atingido!`,"err"); return; }
     const uid = safeKey(newApe.trim());
     if (members[selectedBid]?.[uid]) { notify("Apelido já existe","err"); return; }
     await set(dbRef(db,`members/${selectedBid}/${uid}`),{
@@ -2578,7 +2579,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
         <div style={{fontSize:fs(20),letterSpacing:4,color:"#ffdf00"}}>🔐 PAINEL DO ADMINISTRADOR</div>
         <span style={{background:"#009c3b",color:"#fff",fontFamily:"sans-serif",fontSize:fs(11),padding:"2px 10px",borderRadius:20,fontWeight:700}}>✅ Ativo</span>
         <span style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#888"}}>
-          {numBoloes}/{MAX_BOLAOS} bolões · {aprovados.length}/{MAX_MEMBROS} no bolão selecionado
+          {numBoloes}/{maxBoloes} bolões · {aprovados.length}/{maxMembros} no bolão selecionado
         </span>
       </div>
 
@@ -2609,9 +2610,9 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
               </div>
             </div>
           )}
-          {numBoloes >= MAX_BOLAOS && (
+          {numBoloes >= maxBoloes && (
             <div style={{background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.3)",borderRadius:10,padding:"12px 16px",marginBottom:16,fontFamily:"sans-serif",fontSize:fs(13),color:"#ffdf00"}}>
-              ⚠️ Limite de {MAX_BOLAOS} bolões atingido.
+              ⚠️ Limite de {maxBoloes} bolões atingido.
             </div>
           )}
           {Object.entries(boloes).map(([bid,b])=>(
@@ -2647,7 +2648,7 @@ function AdminBolaoPanel({db, adminSlug, boloes, members, results, filteredGames
               style={{background:"#050d0a",color:"#ffdf00",border:"2px solid #009c3b",borderRadius:6,padding:"7px 12px",fontSize:fs(14),cursor:"pointer"}}>
               {Object.entries(boloes).map(([bid,b])=><option key={bid} value={bid}>{b.nome}</option>)}
             </select>
-            <span style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#888"}}>{aprovados.length}/{MAX_MEMBROS} participantes</span>
+            <span style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#888"}}>{aprovados.length}/{maxMembros} participantes</span>
           </div>
 
           {/* Pendentes */}
@@ -3031,6 +3032,7 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                 {Object.entries(admins).map(([slug,a])=>{
                   const seusBolaoes = Object.entries(allBoloes).filter(([,b])=>b.adminSlug===slug);
                   const totalMembros = seusBolaoes.reduce((acc,[bid])=>acc+Object.keys(members[bid]||{}).length,0);
+                  const { maxBoloes } = getLimites(a);
                   const isExpanded = expandAdmin===slug;
                   return(
                     <div key={slug} style={{background:"rgba(255,255,255,.03)",border:`1px solid ${a.ativo===false?"#5a1010":"#1a3a1a"}`,borderRadius:12,marginBottom:12,overflow:"hidden"}}>
@@ -3041,7 +3043,7 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                             🔗 <strong style={{color:"#ffdf00"}}>{window.location.origin}/{slug}</strong>
                           </div>
                           <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777",marginTop:2}}>
-                            ⚽ {seusBolaoes.length}/{MAX_BOLAOS} bolões · 👥 {totalMembros} participantes · 📅 {new Date(a.criadoEm).toLocaleDateString("pt-BR")}
+                            ⚽ {seusBolaoes.length}/{maxBoloes} bolões · 👥 {totalMembros} participantes · 📅 {new Date(a.criadoEm).toLocaleDateString("pt-BR")}
                             {a.ativo===false&&<span style={{color:"#ff6b6b",marginLeft:8}}>🔴 REVOGADO</span>}
                           </div>
                         </div>
