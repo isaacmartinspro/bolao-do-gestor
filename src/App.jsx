@@ -1,9 +1,40 @@
-import { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { initializeApp } from "firebase/app";
 import {
   getDatabase, ref as dbRef, set, get, onValue, off,
   push, update, remove
 } from "firebase/database";
+
+
+// ── ErrorBoundary para capturar crashes e mostrar erro em vez de tela branca ──
+class ErrorBoundary extends React.Component {
+  constructor(props) { super(props); this.state = { error: null }; }
+  static getDerivedStateFromError(e) { return { error: e }; }
+  render() {
+    if (this.state.error) {
+      return (
+        <div style={{minHeight:"100vh",background:"#050d0a",display:"flex",flexDirection:"column",
+          alignItems:"center",justifyContent:"center",padding:32,gap:16}}>
+          <div style={{fontSize:48}}>⚠️</div>
+          <div style={{color:"#ffdf00",fontSize:22,letterSpacing:3,fontFamily:"sans-serif",textAlign:"center"}}>
+            Algo deu errado
+          </div>
+          <div style={{background:"rgba(255,0,0,.1)",border:"1px solid #5a1010",borderRadius:8,
+            padding:"12px 20px",fontFamily:"monospace",fontSize:12,color:"#ff9999",
+            maxWidth:480,wordBreak:"break-all",textAlign:"left",whiteSpace:"pre-wrap"}}>
+            {this.state.error?.message || String(this.state.error)}
+          </div>
+          <button onClick={()=>window.location.href="/"}
+            style={{background:"#009c3b",color:"#fff",border:"none",borderRadius:10,
+              padding:"12px 28px",fontSize:16,cursor:"pointer",fontFamily:"sans-serif"}}>
+            ← Voltar ao início
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 // ─── FIREBASE ────────────────────────────────────────────────────────────────
 const FIREBASE_CONFIG = {
@@ -268,7 +299,7 @@ const BrStripe = () => (
 // ══════════════════════════════════════════════════════════════════════════════
 // APP PRINCIPAL
 // ══════════════════════════════════════════════════════════════════════════════
-export default function App() {
+function AppInner() {
   const [db, setDb] = useState(null);
 
   // Detecta o slug da URL: bolao-do-gestor.vercel.app/SLUG
@@ -408,6 +439,14 @@ export default function App() {
     db={db} admins={admins} licencas={licencas}
     currentAdmin={currentAdmin} setCurrentAdmin={setCurrentAdmin}
     notify={notify} notification={notification}/>;
+}
+
+export default function App() {
+  return (
+    <ErrorBoundary>
+      <AppInner />
+    </ErrorBoundary>
+  );
 }
 
 // ══════════════════════════════════════════════════════════════════════════════
