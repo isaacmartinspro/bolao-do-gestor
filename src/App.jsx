@@ -500,12 +500,17 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     if (s === "master")      { setErr("Este link é reservado. Escolha outro."); return; }
     if (!nomeBolao.trim()) { setErr("Digite o nome do seu bolão."); return; }
     try {
+      const agora = new Date().toISOString();
       await set(dbRef(db, `admins/${s}`), {
         nome:nome.trim(), slug:s, senha:novaSenha,
         whatsapp:whatsapp.trim(), email:email.trim(), profissao:profissao.trim(),
-        plano:"gratis", criadoEm:new Date().toISOString(), ativo:true,
+        plano:"gratis", criadoEm:agora, ativo:true,
       });
-      // Criar o primeiro bolão automaticamente
+      await set(dbRef(db, `master/leads/${s}`), {
+        nome:nome.trim(), whatsapp:whatsapp.trim(), email:email.trim(),
+        profissao:profissao.trim(), nomeBolao:nomeBolao.trim(),
+        slug:s, plano:"gratis", criadoEm:agora, origem:"cadastro_gratis",
+      });
       const bolaoId = safeKey(nomeBolao.trim())+"_"+Date.now();
       await set(dbRef(db, `boloes/${bolaoId}`), {
         nome:nomeBolao.trim(), descricao:"Copa do Mundo 2026",
@@ -533,12 +538,18 @@ function HomeScreen({db, admins, licencas, currentAdmin, setCurrentAdmin, notify
     if (!lic) { setErr("Código de licença inválido ou já utilizado."); return; }
     const plano = lic[1].plano || "premium";
     try {
+      const agora2 = new Date().toISOString();
       await set(dbRef(db, `admins/${s}`), {
         nome:nome.trim(), slug:s, senha:novaSenha,
         licenca:licenca.trim().toUpperCase(),
-        plano, criadoEm:new Date().toISOString(), ativo:true,
+        plano, criadoEm:agora2, ativo:true,
       });
-      await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:new Date().toISOString()});
+      await update(dbRef(db, `licencas/${lic[0]}`), {usado:true, adminSlug:s, usadoEm:agora2});
+      await set(dbRef(db, `master/leads/${s}`), {
+        nome:nome.trim(), slug:s, plano,
+        licenca:licenca.trim().toUpperCase(),
+        criadoEm:agora2, origem:"cadastro_pago",
+      });
       const adminObj2 = {slug:s, nome:nome.trim(), senha:novaSenha, plano, ativo:true};
       setCurrentAdmin(adminObj2);
       localStorage.setItem("bg26_admin", JSON.stringify(adminObj2));
@@ -3018,11 +3029,19 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
   const [esqueci, setEsqueci]   = useState(false);
   const [abaM, setAbaM]         = useState("admins");
   const [expandAdmin, setExpandAdmin] = useState(null);
+  const [leads, setLeads] = useState({});
   const [newLicName, setNewLicName] = useState("");
   const [newLicQtd, setNewLicQtd]   = useState(1);
   const [newLicPlano, setNewLicPlano] = useState("pro");
 
-  async function gerarLicencas() {
+  useEffect(()=>{
+    if(!db) return;
+    const r = dbRef(db,"master/leads");
+    onValue(r, s=>setLeads(s.val()||{}));
+    return ()=>off(r);
+  },[db]);
+
+    async function gerarLicencas() {
     for (let i=0; i<newLicQtd; i++) {
       const codigo = "BOLAO-" + Math.random().toString(36).slice(2,8).toUpperCase();
       await push(dbRef(db,"licencas"), {
@@ -3135,6 +3154,7 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                 {id:"admins",     label:"👤 Administradores"},
                 {id:"participantes", label:"👥 Participantes"},
                 {id:"licencas",   label:"🔑 Licenças"},
+                {id:"leads",      label:"📋 Leads"},
               ].map(t=>(
                 <button key={t.id} onClick={()=>setAbaM(t.id)} style={tabS(t.id)}>{t.label}</button>
               ))}
@@ -3281,6 +3301,97 @@ function MasterPanel({db, admins, licencas, allBoloes, members, results, notify,
                     </div>
                   );
                 })}
+              </div>
+            )}
+
+            {/* ABA LEADS */}
+            {abaM==="leads"&&(
+              <div>
+                <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",
+                  flexWrap:"wrap",gap:12,marginBottom:16}}>
+                  <div>
+                    <div style={{fontSize:18,letterSpacing:3,color:"#ffdf00"}}>📋 BASE DE LEADS</div>
+                    <div style={{fontFamily:"sans-serif",fontSize:12,color:"#666",marginTop:4}}>
+                      {Object.keys(leads).length} cadastros realizados
+                    </div>
+                  </div>
+                  <button onClick={()=>{
+                    const rows = [["Nome","WhatsApp","Email","Profissão","Nome do Bolão","Link","Plano","Origem","Data"]];
+                    Object.values(leads).forEach(l=>{
+                      rows.push([l.nome||"",l.whatsapp||"",l.email||"",l.profissao||"",
+                        l.nomeBolao||"",l.slug||"",l.plano||"",l.origem||"",
+                        l.criadoEm?new Date(l.criadoEm).toLocaleString("pt-BR"):"",
+                      ]);
+                    });
+                    const sep = ",";
+                    const nl = String.fromCharCode(10);
+                    const q = (c) => '"' + String(c).replace(/"/g, '""') + '"';
+                    const csv = rows.map(r=>r.map(q).join(sep)).join(nl);
+                    const blob = new Blob(["﻿"+csv],{type:"text/csv;charset=utf-8"});
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href=url;
+                    a.download="leads_bolao_"+new Date().toISOString().slice(0,10)+".csv";
+                    a.click(); URL.revokeObjectURL(url);
+                  }} style={{background:"linear-gradient(135deg,#009c3b,#006622)",color:"#fff",
+                    border:"none",borderRadius:10,padding:"10px 20px",cursor:"pointer",
+                    fontFamily:"sans-serif",fontSize:13,fontWeight:700,letterSpacing:1}}>
+                    ⬇️ Exportar CSV
+                  </button>
+                </div>
+                {Object.keys(leads).length===0?(
+                  <div style={{textAlign:"center",padding:"40px",fontFamily:"sans-serif",color:"#555"}}>
+                    Nenhum lead ainda. Os cadastros aparecerão aqui automaticamente.
+                  </div>
+                ):(
+                  <div style={{overflowX:"auto"}}>
+                    <table style={{width:"100%",borderCollapse:"collapse",fontFamily:"sans-serif",fontSize:12}}>
+                      <thead>
+                        <tr style={{borderBottom:"2px solid #1a3a1a",background:"rgba(0,156,59,.08)"}}>
+                          {["Nome","WhatsApp","Email","Profissão","Bolão","Link","Plano","Data"].map(h=>(
+                            <th key={h} style={{textAlign:"left",padding:"10px 12px",color:"#ffdf00",
+                              fontWeight:700,whiteSpace:"nowrap",fontSize:11,letterSpacing:1}}>{h}</th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {Object.entries(leads).sort((a,b)=>(b[1].criadoEm||"").localeCompare(a[1].criadoEm||"")).map(([slug,l])=>(
+                          <tr key={slug} style={{borderBottom:"1px solid #0d1a0d"}}>
+                            <td style={{padding:"10px 12px",color:"#fff",fontWeight:600}}>{l.nome||"—"}</td>
+                            <td style={{padding:"10px 12px"}}>
+                              <a href={"https://wa.me/"+(l.whatsapp||"").replace(/[^0-9]/g,"")}
+                                target="_blank" rel="noopener noreferrer"
+                                style={{color:"#25d366",textDecoration:"none",fontWeight:600}}>
+                                {l.whatsapp||"—"}
+                              </a>
+                            </td>
+                            <td style={{padding:"10px 12px",color:"#aaa"}}>{l.email||"—"}</td>
+                            <td style={{padding:"10px 12px",color:"#888"}}>{l.profissao||"—"}</td>
+                            <td style={{padding:"10px 12px",color:"#ffdf00"}}>{l.nomeBolao||"—"}</td>
+                            <td style={{padding:"10px 12px"}}>
+                              <a href={"/"+slug} target="_blank" rel="noopener noreferrer"
+                                style={{color:"#009c3b",textDecoration:"none",fontSize:11}}>
+                                /{slug}
+                              </a>
+                            </td>
+                            <td style={{padding:"10px 12px"}}>
+                              <span style={{background:l.plano==="gratis"?"rgba(80,80,80,.3)":
+                                l.plano==="pro"?"rgba(0,156,59,.3)":"rgba(200,162,0,.3)",
+                                color:l.plano==="gratis"?"#888":l.plano==="pro"?"#009c3b":"#c8a200",
+                                border:"1px solid "+(l.plano==="gratis"?"#333":l.plano==="pro"?"#009c3b":"#c8a200"),
+                                borderRadius:100,padding:"2px 10px",fontSize:11,fontWeight:700}}>
+                                {l.plano==="gratis"?"🆓 Grátis":l.plano==="pro"?"⚡ Pro":"👑 Premium"}
+                              </span>
+                            </td>
+                            <td style={{padding:"10px 12px",color:"#555",fontSize:11,whiteSpace:"nowrap"}}>
+                              {l.criadoEm?new Date(l.criadoEm).toLocaleString("pt-BR",{day:"2-digit",month:"2-digit",year:"2-digit",hour:"2-digit",minute:"2-digit"}):"—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
               </div>
             )}
 
