@@ -1153,6 +1153,11 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   const [selectedBid, setSelectedBid] = useState(Object.keys(boloes)[0]||"");
   const [filterGrp, setFilterGrp] = useState("Todos");
 
+  async function adminSaveGuess(uid, gameId, side, val) {
+    const key = `${safeKey(adminSlug)}_${safeKey(selectedBid)}_${safeKey(uid)}`;
+    await set(dbRef(db,`guesses/${key}/${gameId}/${side}`), val);
+  }
+
   // Bolão atual
   const bolaoAtual = boloes[selectedBid]||{};
   const membrosDosBolao = Object.entries(members[selectedBid]||{}).map(([uid,m])=>({uid,...m}));
@@ -1164,6 +1169,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
 
   // Estados participantes
   const [editM, setEditM]       = useState(null);
+  const [editGuessUid, setEditGuessUid] = useState(null);
   const [newNome, setNewNome]   = useState("");
   const [newApe, setNewApe]     = useState("");
   const [newWa, setNewWa]       = useState("");
@@ -1563,6 +1569,8 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                       <div style={{fontFamily:"sans-serif",fontSize:11,color:"#777"}}>👤 {m.nome}{m.whatsapp&&<> · 📱 {m.whatsapp}</>}</div>
                     </div>
                     <div style={{display:"flex",gap:6}}>
+                      <button onClick={()=>setEditGuessUid(editGuessUid===m.uid?null:m.uid)}
+                        style={{background:editGuessUid===m.uid?"rgba(0,156,59,.4)":"rgba(0,156,59,.15)",color:"#00ff7f",border:"1px solid rgba(0,156,59,.4)",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>🎯</button>
                       <button onClick={()=>setEditM({...m})}
                         style={{background:"rgba(255,223,0,.15)",color:"#ffdf00",border:"1px solid rgba(255,223,0,.3)",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:12,fontFamily:"sans-serif",fontWeight:700}}>✏️</button>
                       <button onClick={()=>{if(window.confirm(`Remover ${m.apelido}?`)) remove(dbRef(db,`members/${selectedBid}/${m.uid}`)).then(()=>notify("Removido."));}}
@@ -1575,7 +1583,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                 {editGuessUid===m.uid&&(
                   <div style={{marginTop:10,background:"#050d0a",border:"1px solid rgba(0,156,59,.3)",
                     borderRadius:8,padding:"12px",maxHeight:380,overflowY:"auto"}}>
-                    <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#00ff7f",
+                    <div style={{fontFamily:"sans-serif",fontSize:12,color:"#00ff7f",
                       letterSpacing:1,marginBottom:10}}>
                       🎯 PALPITES DE {m.apelido?.toUpperCase()}
                     </div>
@@ -1586,27 +1594,27 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                       return (
                         <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,
                           padding:"6px 0",borderBottom:"1px solid #1a2a1a",flexWrap:"wrap"}}>
-                          <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:fs(11),
+                          <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:11,
                             color:jaComecou?"#666":"#ccc"}}>
                             {g.home} <span style={{color:"#444"}}>x</span> {g.away}
-                            <div style={{fontSize:fs(9),color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
+                            <div style={{fontSize:9,color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
                           </div>
                           <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.home??""}
                             onBlur={e=>adminSaveGuess(m.uid,g.id,"home",e.target.value)}
                             style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
-                              borderRadius:5,padding:"4px",fontSize:fs(13),textAlign:"center"}}/>
+                              borderRadius:5,padding:"4px",fontSize:13,textAlign:"center"}}/>
                           <span style={{color:"#555"}}>x</span>
                           <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.away??""}
                             onBlur={e=>adminSaveGuess(m.uid,g.id,"away",e.target.value)}
                             style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
-                              borderRadius:5,padding:"4px",fontSize:fs(13),textAlign:"center"}}/>
+                              borderRadius:5,padding:"4px",fontSize:13,textAlign:"center"}}/>
                         </div>
                       );
                     })}
                     <button onClick={()=>setEditGuessUid(null)}
                       style={{width:"100%",marginTop:10,background:"#1a3a1a",color:"#00ff7f",
                         border:"1px solid #009c3b",borderRadius:6,padding:"8px",cursor:"pointer",
-                        fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700}}>
+                        fontFamily:"sans-serif",fontSize:12,fontWeight:700}}>
                       ✅ Concluir edição
                     </button>
                   </div>
@@ -2900,6 +2908,47 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
                     <button onClick={()=>setEditMember({...m})} style={{background:"rgba(255,223,0,.15)",color:"#ffdf00",border:"1px solid rgba(255,223,0,.3)",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:fs(12),fontFamily:"sans-serif",fontWeight:700}}>✏️</button>
                     <button onClick={()=>removeMembro(m.uid)} style={{background:"rgba(120,16,16,.3)",color:"#ffaaaa",border:"1px solid #5a1010",borderRadius:6,padding:"5px 10px",cursor:"pointer",fontSize:fs(12),fontFamily:"sans-serif"}}>🗑️</button>
                   </div>
+                </div>
+              )}
+
+              {/* PAINEL DE PALPITES MANUAIS (admin) */}
+              {editGuessUid===m.uid&&(
+                <div style={{marginTop:10,background:"#050d0a",border:"1px solid rgba(0,156,59,.3)",
+                  borderRadius:8,padding:"12px",maxHeight:380,overflowY:"auto"}}>
+                  <div style={{fontFamily:"sans-serif",fontSize:fs(12),color:"#00ff7f",
+                    letterSpacing:1,marginBottom:10}}>
+                    🎯 PALPITES DE {m.apelido?.toUpperCase()}
+                  </div>
+                  {SCHEDULE.map(g=>{
+                    const key = `${safeKey(adminSlug)}_${safeKey(selectedBid)}_${safeKey(m.uid)}`;
+                    const palpiteAtual = (guesses[key]||{})[g.id] || {};
+                    const jaComecou = isPast(g.date);
+                    return (
+                      <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,
+                        padding:"6px 0",borderBottom:"1px solid #1a2a1a",flexWrap:"wrap"}}>
+                        <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:fs(11),
+                          color:jaComecou?"#666":"#ccc"}}>
+                          {g.home} <span style={{color:"#444"}}>x</span> {g.away}
+                          <div style={{fontSize:fs(9),color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
+                        </div>
+                        <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.home??""}
+                          onBlur={e=>adminSaveGuess(m.uid,g.id,"home",e.target.value)}
+                          style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
+                            borderRadius:5,padding:"4px",fontSize:fs(13),textAlign:"center"}}/>
+                        <span style={{color:"#555"}}>x</span>
+                        <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.away??""}
+                          onBlur={e=>adminSaveGuess(m.uid,g.id,"away",e.target.value)}
+                          style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
+                            borderRadius:5,padding:"4px",fontSize:fs(13),textAlign:"center"}}/>
+                      </div>
+                    );
+                  })}
+                  <button onClick={()=>setEditGuessUid(null)}
+                    style={{width:"100%",marginTop:10,background:"#1a3a1a",color:"#00ff7f",
+                      border:"1px solid #009c3b",borderRadius:6,padding:"8px",cursor:"pointer",
+                      fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700}}>
+                    ✅ Concluir edição
+                  </button>
                 </div>
               )}
             </div>
