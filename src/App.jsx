@@ -218,7 +218,7 @@ const SCHEDULE = [
   {id:79, home:"México",away:"Equador",group:"16avos",date:"2026-06-30T22:00",city:"Cidade do México",knockout:true},
   {id:80, home:"Inglaterra",away:"RD Congo",group:"16avos",date:"2026-07-01T13:00",city:"Atlanta",knockout:true},
   {id:81, home:"Bélgica",away:"Senegal",group:"16avos",date:"2026-07-01T17:00",city:"Seattle",knockout:true},
-  {id:82, home:"Estados Unidos",away:"Bósnia",group:"16avos",date:"2026-07-01T21:00",city:"Santa Clara",knockout:true},
+  {id:82, home:"EUA",away:"Bósnia-Herzegovina",group:"16avos",date:"2026-07-01T21:00",city:"Santa Clara",knockout:true},
   {id:83, home:"Espanha",away:"Áustria",group:"16avos",date:"2026-07-02T16:00",city:"Los Angeles",knockout:true},
   {id:84, home:"Portugal",away:"Croácia",group:"16avos",date:"2026-07-02T20:00",city:"Toronto",knockout:true},
   {id:85, home:"Suíça",away:"Argélia",group:"16avos",date:"2026-07-03T00:00",city:"Vancouver",knockout:true},
@@ -2149,8 +2149,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
     const past=isPast(g.date), today=isToday(g.date);
     const hasR=r&&r.home!==undefined&&r.home!=="";
     const locked=past&&!adminUnlocked;
-    const border=pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#5a1010":today?"#ffdf00":hasR?"#009c3b":"#1a2e1a";
-    const bg=pts===3?"rgba(0,156,59,.1)":pts===1?"rgba(200,162,0,.08)":pts===0&&hasR?"rgba(90,16,16,.1)":today?"rgba(255,223,0,.06)":"rgba(255,255,255,.02)";
+    const border=pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":pts===0&&hasR?"#5a1010":today?"#ffdf00":hasR?"#009c3b":"#1a2e1a";
+    const bg=pts>=6?"rgba(0,156,59,.1)":pts>=3?"rgba(200,162,0,.08)":pts>0?"rgba(26,110,138,.08)":pts===0&&hasR?"rgba(90,16,16,.1)":today?"rgba(255,223,0,.06)":"rgba(255,255,255,.02)";
 
     return(
       <div style={{background:bg,border:`2px solid ${border}`,borderRadius:14,overflow:"hidden",marginBottom:12}}>
@@ -2293,9 +2293,10 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
 
               {/* Badge pontos */}
               {mode==="meus"&&hasR&&gu&&(
-                <div style={{background:pts===3?"#009c3b":pts===1?"#c8a200":"#5a1010",
+                <div style={{background:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":"#5a1010",
                   color:"#fff",borderRadius:20,padding:"4px 14px",fontFamily:"sans-serif",fontSize:fs(13),fontWeight:700}}>
-                  {pts===3?"🎯 3 pontos!":pts===1?"✅ 1 ponto":"❌ 0 ponto"}
+                  {pts===7?"🎯 7 pontos!":pts===6?"🎯 6 pontos!":pts===4?"✅ 4 pontos":
+                   pts===3?"✅ 3 pontos":pts===1?"✅ 1 ponto":"❌ 0 ponto"}
                 </div>
               )}
               {mode==="meus"&&locked&&!hasR&&<span style={{fontSize:fs(12),color:"#444",fontFamily:"sans-serif"}}>🔒</span>}
@@ -2597,8 +2598,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                         return(
                           <div key={m.uid} style={{
                             display:"flex",alignItems:"center",gap:10,
-                            background:pts===3?"rgba(0,156,59,.15)":pts===1?"rgba(200,162,0,.12)":pts===0&&hasR?"rgba(90,16,16,.15)":isMe?"rgba(255,223,0,.06)":"rgba(255,255,255,.04)",
-                            border:`1px solid ${pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#5a1010":isMe?"rgba(255,223,0,.3)":"#1a1a1a"}`,
+                            background:pts>=6?"rgba(0,156,59,.15)":pts>=3?"rgba(200,162,0,.12)":pts>0?"rgba(26,110,138,.12)":pts===0&&hasR?"rgba(90,16,16,.15)":isMe?"rgba(255,223,0,.06)":"rgba(255,255,255,.04)",
+                            border:`1px solid ${pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":pts===0&&hasR?"#5a1010":isMe?"rgba(255,223,0,.3)":"#1a1a1a"}`,
                             borderRadius:10,padding:"10px 14px"
                           }}>
                             <MemberAvatar member={m} size={fs(36)}/>
@@ -2610,16 +2611,16 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
                               <Flag team={g.home} size={fs(20)}/>
                               <span style={{fontSize:fs(22),fontFamily:"monospace",fontWeight:900,
-                                color:pts===3?"#009c3b":pts===1?"#c8a200":pts===0&&hasR?"#ff6b6b":"#fff",letterSpacing:2}}>
+                                color:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a9edb":pts===0&&hasR?"#ff6b6b":"#fff",letterSpacing:2}}>
                                 {gu.home}×{gu.away}
                               </span>
                               <Flag team={g.away} size={fs(20)}/>
                             </div>
                             {pts!==null&&(
-                              <div style={{background:pts===3?"#009c3b":pts===1?"#c8a200":"#5a1010",
+                              <div style={{background:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":"#5a1010",
                                 color:"#fff",borderRadius:20,padding:"3px 10px",
                                 fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700,flexShrink:0}}>
-                                {pts===3?"🎯 3pts":pts===1?"✅ 1pt":"❌ 0"}
+                                {pts===7?"🎯 7pts":pts===6?"🎯 6pts":pts===4?"✅ 4pts":pts===3?"✅ 3pts":pts===1?"✅ 1pt":"❌ 0"}
                               </div>
                             )}
                           </div>
