@@ -209,22 +209,22 @@ const SCHEDULE = [
   {id:67, home:"Panamá",            away:"Inglaterra",         group:"L", date:"2026-06-27T18:00", city:"Nova York"},
   {id:68, home:"Croácia",           away:"Gana",               group:"L", date:"2026-06-27T18:00", city:"Filadélfia"},
   // ELIMINATÓRIAS
-  {id:73, home:"2A",away:"2B",group:"16avos",date:"2026-06-28T16:00",city:"Los Angeles",knockout:true},
-  {id:74, home:"1E",away:"3ABC",group:"16avos",date:"2026-06-29T14:00",city:"Boston",knockout:true},
-  {id:75, home:"1F",away:"2C",group:"16avos",date:"2026-06-29T17:30",city:"Monterrey",knockout:true},
-  {id:76, home:"1C",away:"2F",group:"16avos",date:"2026-06-29T22:00",city:"Houston",knockout:true},
-  {id:77, home:"1I",away:"3DEF",group:"16avos",date:"2026-06-30T14:00",city:"Nova York",knockout:true},
-  {id:78, home:"2E",away:"2I",group:"16avos",date:"2026-06-30T18:00",city:"Dallas",knockout:true},
-  {id:79, home:"1A",away:"3GHI",group:"16avos",date:"2026-06-30T22:00",city:"Cidade do México",knockout:true},
-  {id:80, home:"1L",away:"3JKL",group:"16avos",date:"2026-07-01T13:00",city:"Atlanta",knockout:true},
-  {id:81, home:"1D",away:"3BEF",group:"16avos",date:"2026-07-01T17:00",city:"São Francisco",knockout:true},
-  {id:82, home:"1G",away:"3AHI",group:"16avos",date:"2026-07-01T21:00",city:"Seattle",knockout:true},
-  {id:83, home:"2K",away:"2L",group:"16avos",date:"2026-07-02T00:00",city:"Toronto",knockout:true},
-  {id:84, home:"1H",away:"2J",group:"16avos",date:"2026-07-02T16:00",city:"Los Angeles",knockout:true},
-  {id:85, home:"1B",away:"3EFG",group:"16avos",date:"2026-07-02T20:00",city:"Vancouver",knockout:true},
-  {id:86, home:"1J",away:"2H",group:"16avos",date:"2026-07-03T15:00",city:"Atlanta",knockout:true},
-  {id:87, home:"1K",away:"3DIJ",group:"16avos",date:"2026-07-03T17:00",city:"Kansas City",knockout:true},
-  {id:88, home:"2D",away:"2G",group:"16avos",date:"2026-07-03T22:30",city:"Dallas",knockout:true},
+  {id:73, home:"África do Sul",away:"Canadá",group:"16avos",date:"2026-06-28T16:00",city:"Los Angeles",knockout:true},
+  {id:74, home:"Brasil",away:"Japão",group:"16avos",date:"2026-06-29T14:00",city:"Houston",knockout:true},
+  {id:75, home:"Alemanha",away:"Paraguai",group:"16avos",date:"2026-06-29T17:30",city:"Boston",knockout:true},
+  {id:76, home:"Holanda",away:"Marrocos",group:"16avos",date:"2026-06-29T22:00",city:"Monterrey",knockout:true},
+  {id:77, home:"Costa do Marfim",away:"Noruega",group:"16avos",date:"2026-06-30T14:00",city:"Dallas",knockout:true},
+  {id:78, home:"França",away:"Suécia",group:"16avos",date:"2026-06-30T18:00",city:"Nova Jersey",knockout:true},
+  {id:79, home:"México",away:"Equador",group:"16avos",date:"2026-06-30T22:00",city:"Cidade do México",knockout:true},
+  {id:80, home:"Inglaterra",away:"3º colocado E/H/I/J/K",group:"16avos",date:"2026-07-01T13:00",city:"Atlanta",knockout:true},
+  {id:81, home:"Bélgica",away:"3º colocado A/E/H/I/J",group:"16avos",date:"2026-07-01T17:00",city:"São Francisco",knockout:true},
+  {id:82, home:"Estados Unidos",away:"Bósnia",group:"16avos",date:"2026-07-01T21:00",city:"Santa Clara",knockout:true},
+  {id:83, home:"Espanha",away:"2º colocado Grupo J",group:"16avos",date:"2026-07-02T16:00",city:"São Francisco",knockout:true},
+  {id:84, home:"2º colocado Grupo K",away:"Croácia",group:"16avos",date:"2026-07-02T20:00",city:"Los Angeles",knockout:true},
+  {id:85, home:"Suíça",away:"3º colocado E/F/G/I/J",group:"16avos",date:"2026-07-03T00:00",city:"Vancouver",knockout:true},
+  {id:86, home:"Austrália",away:"Egito",group:"16avos",date:"2026-07-03T15:00",city:"Atlanta",knockout:true},
+  {id:87, home:"Argentina",away:"Cabo Verde",group:"16avos",date:"2026-07-03T19:00",city:"Kansas City",knockout:true},
+  {id:88, home:"1º colocado Grupo K",away:"3º colocado D/E/I/J/L",group:"16avos",date:"2026-07-03T22:30",city:"Dallas",knockout:true},
   {id:89, home:"W74",away:"W77",group:"Oitavas",date:"2026-07-04T14:00",city:"Filadélfia",knockout:true},
   {id:90, home:"W73",away:"W75",group:"Oitavas",date:"2026-07-04T18:00",city:"Houston",knockout:true},
   {id:91, home:"W76",away:"W78",group:"Oitavas",date:"2026-07-05T17:00",city:"Nova York",knockout:true},
@@ -250,10 +250,38 @@ const fmtTime = iso => new Date(iso+":00-03:00").toLocaleTimeString("pt-BR",{hou
 const isPast  = iso => new Date(iso+":00-03:00") < new Date();
 const isToday = iso => new Date(iso+":00-03:00").toDateString()===new Date().toDateString();
 
-function calcPoints(g, r) {
+function calcPoints(g, r, fase) {
   if (!g||!r) return null;
   const gh=parseInt(g.home),ga=parseInt(g.away),rh=parseInt(r.home),ra=parseInt(r.away);
   if (isNaN(gh)||isNaN(ga)||isNaN(rh)||isNaN(ra)) return null;
+
+  // Fase mata-mata (16avos, Oitavas, Quartas, Semifinal, 3Lugar, Final): pontuação dobrada + quem passa
+  const isKnockout = fase && fase!=="Todos" && !/^[A-L]$/.test(fase);
+
+  if (isKnockout) {
+    const placarExato = gh===rh && ga===ra;
+    const empatePalpite = gh===ga;       // palpite foi empate
+    const empateReal    = rh===ra;       // resultado real empatou (foi para pênaltis/prorrogação)
+
+    if (placarExato) {
+      // Se o placar empatou, soma 1 ponto extra se acertou quem passa
+      if (empatePalpite && empateReal) {
+        return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 7 : 6;
+      }
+      return 6; // placar exato cravado (não-empate)
+    }
+    // Não acertou o placar exato
+    const acertouVencedor = (gh>ga?"H":gh<ga?"A":"D")===(rh>ra?"H":rh<ra?"A":"D");
+    if (acertouVencedor) {
+      if (empatePalpite && empateReal) {
+        return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 4 : 3;
+      }
+      return 3;
+    }
+    return 0;
+  }
+
+  // Fase de grupos: pontuação clássica
   if (gh===rh&&ga===ra) return 3;
   return (gh>ga?"H":gh<ga?"A":"D")===(rh>ra?"H":rh<ra?"A":"D")?1:0;
 }
@@ -1301,11 +1329,11 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   function getRanking() {
     return aprovados.map(m=>{
       let pts=0,exact=0,win=0;
-      SCHEDULE.filter(g=>!g.knockout).forEach(g=>{
+      SCHEDULE.forEach(g=>{
         const r=results[g.id];
         const key=`${safeKey(adminSlug)}_${safeKey(selectedBid)}_${safeKey(m.uid)}`;
         const gu=guesses[key]?.[g.id];
-        if(r&&gu){const pt=calcPoints(gu,r);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
+        if(r&&gu){const pt=calcPoints(gu,r,g.group);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
       });
       return{...m,pts,exact,win};
     }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.win-a.win);
@@ -2024,9 +2052,9 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
     return membrosAprovados.map(m=>{
       let pts=0,exact=0,win=0;
       const pe = m.pontosExtras||0;
-      SCHEDULE.filter(g=>!g.knockout).forEach(g=>{
+      SCHEDULE.forEach(g=>{
         const r=getResult(g.id), gu=getGuessOf(m.uid,g.id);
-        if(r&&gu){const pt=calcPoints(gu,r);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
+        if(r&&gu){const pt=calcPoints(gu,r,g.group);if(pt!=null){pts+=pt;if(pt===3)exact++;if(pt===1)win++;}}
       });
       return {...m,pts:pts+pe,exact,win,pe};
     }).sort((a,b)=>b.pts-a.pts||b.exact-a.exact||b.win-a.win);
@@ -2117,7 +2145,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   // Card de jogo
   const GameRow = ({g, mode="agenda"}) => {
     const r=getResult(g.id), gu=myGuesses[g.id];
-    const pts=r&&gu?calcPoints(gu,r):null;
+    const pts=r&&gu?calcPoints(gu,r,g.group):null;
     const past=isPast(g.date), today=isToday(g.date);
     const hasR=r&&r.home!==undefined&&r.home!=="";
     const locked=past&&!adminUnlocked;
@@ -2180,16 +2208,72 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                       🔒 Encerrado às {fmtTime(g.date)} — jogo iniciado
                     </div>
                   )}
+                  {/* Seletor "Quem passa?" - só em mata-mata quando o palpite empata */}
+                  {!locked && g.knockout && gu?.home!==undefined && gu?.home!=="" &&
+                    gu?.away!==undefined && gu?.away!=="" && Number(gu.home)===Number(gu.away) && (
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                      marginTop:4,background:"rgba(255,223,0,.06)",border:"1px solid rgba(255,223,0,.25)",
+                      borderRadius:10,padding:"6px 10px"}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#ffdf00",letterSpacing:1}}>
+                        🤔 Empate! Quem passa?
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={()=>saveGuess(g.id,"quemPassa","home")}
+                          style={{background:gu?.quemPassa==="home"?"#009c3b":"rgba(255,255,255,.08)",
+                            color:"#fff",border:`1px solid ${gu?.quemPassa==="home"?"#00ff7f":"#333"}`,
+                            borderRadius:7,padding:"4px 10px",cursor:"pointer",
+                            fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
+                          {g.home}
+                        </button>
+                        <button onClick={()=>saveGuess(g.id,"quemPassa","away")}
+                          style={{background:gu?.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
+                            color:"#fff",border:`1px solid ${gu?.quemPassa==="away"?"#00ff7f":"#333"}`,
+                            borderRadius:7,padding:"4px 10px",cursor:"pointer",
+                            fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
+                          {g.away}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : mode==="admin" ? (
-                <div style={{display:"flex",alignItems:"center",gap:6}}>
-                  <input type="number" min="0" max="20" value={r?.home??""} onChange={e=>saveResult(g.id,"home",e.target.value)} placeholder="–"
-                    style={{width:fs(52),height:fs(52),textAlign:"center",background:"#060f06",color:"#ffdf00",
-                      border:"3px solid #ffdf00",borderRadius:8,fontSize:fs(24),fontFamily:"monospace"}}/>
-                  <span style={{color:"#fff",fontSize:fs(22),fontWeight:900}}>×</span>
-                  <input type="number" min="0" max="20" value={r?.away??""} onChange={e=>saveResult(g.id,"away",e.target.value)} placeholder="–"
-                    style={{width:fs(52),height:fs(52),textAlign:"center",background:"#060f06",color:"#ffdf00",
-                      border:"3px solid #ffdf00",borderRadius:8,fontSize:fs(24),fontFamily:"monospace"}}/>
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                  <div style={{display:"flex",alignItems:"center",gap:6}}>
+                    <input type="number" min="0" max="20" value={r?.home??""} onChange={e=>saveResult(g.id,"home",e.target.value)} placeholder="–"
+                      style={{width:fs(52),height:fs(52),textAlign:"center",background:"#060f06",color:"#ffdf00",
+                        border:"3px solid #ffdf00",borderRadius:8,fontSize:fs(24),fontFamily:"monospace"}}/>
+                    <span style={{color:"#fff",fontSize:fs(22),fontWeight:900}}>×</span>
+                    <input type="number" min="0" max="20" value={r?.away??""} onChange={e=>saveResult(g.id,"away",e.target.value)} placeholder="–"
+                      style={{width:fs(52),height:fs(52),textAlign:"center",background:"#060f06",color:"#ffdf00",
+                        border:"3px solid #ffdf00",borderRadius:8,fontSize:fs(24),fontFamily:"monospace"}}/>
+                  </div>
+                  {/* Admin define quem passou no empate (pênaltis/prorrogação) */}
+                  {g.knockout && r?.home!==undefined && r?.home!=="" &&
+                    r?.away!==undefined && r?.away!=="" && Number(r.home)===Number(r.away) && (
+                    <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,
+                      background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.3)",
+                      borderRadius:10,padding:"6px 10px"}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:fs(10),color:"#ffdf00",letterSpacing:1}}>
+                        ⚖️ Empate — quem passou?
+                      </div>
+                      <div style={{display:"flex",gap:6}}>
+                        <button onClick={()=>saveResult(g.id,"quemPassa","home")}
+                          style={{background:r?.quemPassa==="home"?"#009c3b":"rgba(255,255,255,.08)",
+                            color:"#fff",border:`1px solid ${r?.quemPassa==="home"?"#00ff7f":"#333"}`,
+                            borderRadius:7,padding:"4px 10px",cursor:"pointer",
+                            fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
+                          {g.home}
+                        </button>
+                        <button onClick={()=>saveResult(g.id,"quemPassa","away")}
+                          style={{background:r?.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
+                            color:"#fff",border:`1px solid ${r?.quemPassa==="away"?"#00ff7f":"#333"}`,
+                            borderRadius:7,padding:"4px 10px",cursor:"pointer",
+                            fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
+                          {g.away}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : hasR ? (
                 <div style={{textAlign:"center"}}>
@@ -2469,7 +2553,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const today = isToday(g.date);
               const palpites = membrosAprovados.map(m=>{
                 const gu=getGuessOf(m.uid,g.id);
-                const pts=hasR&&gu?calcPoints(gu,r):null;
+                const pts=hasR&&gu?calcPoints(gu,r,g.group):null;
                 return {m,gu,pts};
               }).filter(p=>p.gu?.home!==undefined);
 
