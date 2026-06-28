@@ -1708,12 +1708,25 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
               {lastUp&&<div style={{fontFamily:"sans-serif",fontSize:11,color:"#666"}}>🕐 {lastUp}</div>}
             </Card>
 
-            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap"}}>
+            <div style={{display:"flex",gap:8,marginBottom:12,flexWrap:"wrap",alignItems:"center"}}>
+              <button onClick={()=>setFilterGrp(filterGrp==="Hoje"?"Todos":"Hoje")}
+                style={{background:filterGrp==="Hoje"?"#cc0000":"rgba(204,0,0,.15)",
+                  color:"#fff",border:"1px solid #cc0000",borderRadius:20,padding:"7px 14px",
+                  fontSize:13,fontWeight:700,fontFamily:"sans-serif",cursor:"pointer",
+                  display:"flex",alignItems:"center",gap:6}}>
+                🔴 Jogos de Hoje
+              </button>
               <select value={filterGrp} onChange={e=>setFilterGrp(e.target.value)}
                 style={{background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:6,padding:"7px 10px",fontSize:13,fontFamily:"sans-serif",cursor:"pointer"}}>
                 {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
               </select>
             </div>
+
+            {filteredGames().length===0&&filterGrp==="Hoje"&&(
+              <div style={{textAlign:"center",padding:"24px",fontFamily:"sans-serif",color:"#666",fontSize:13}}>
+                📅 Nenhum jogo hoje. Clique no botão novamente para ver todos.
+              </div>
+            )}
 
             {filteredGames().map(g=>{
               const r=results[g.id]||{};
@@ -3061,11 +3074,23 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
       {abaAdmin==="resultados"&&(
         <div>
           <div style={{display:"flex",gap:10,alignItems:"center",marginBottom:12,flexWrap:"wrap"}}>
+            <button onClick={()=>setFilterGrp(filterGrp==="Hoje"?"Todos":"Hoje")}
+              style={{background:filterGrp==="Hoje"?"#cc0000":"rgba(204,0,0,.15)",
+                color:"#fff",border:"1px solid #cc0000",borderRadius:20,padding:"7px 14px",
+                fontSize:fs(13),fontWeight:700,fontFamily:"sans-serif",cursor:"pointer",
+                display:"flex",alignItems:"center",gap:6}}>
+              🔴 Jogos de Hoje
+            </button>
             <select value={filterGrp} onChange={e=>setFilterGrp(e.target.value)}
               style={{background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:6,padding:"7px 10px",fontSize:fs(12),fontFamily:"sans-serif",cursor:"pointer"}}>
               {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
             </select>
           </div>
+          {filteredGames().length===0&&filterGrp==="Hoje"&&(
+            <div style={{textAlign:"center",padding:"24px",fontFamily:"sans-serif",color:"#666",fontSize:fs(13)}}>
+              📅 Nenhum jogo hoje. Clique no botão novamente para ver todos.
+            </div>
+          )}
           {filteredGames().map(g=>{
             const r=results[g.id]||{};
             const hasR=r.home!==undefined&&r.home!=="";
