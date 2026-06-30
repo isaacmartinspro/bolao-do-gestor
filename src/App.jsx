@@ -3180,7 +3180,7 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
                         padding:"6px 0",borderBottom:"1px solid #1a2a1a",flexWrap:"wrap"}}>
                         <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:fs(11),
                           color:jaComecou?"#666":"#ccc"}}>
-                          {gHome} <span style={{color:"#444"}}>x</span> {gAway}
+                          {g.home} <span style={{color:"#444"}}>x</span> {g.away}
                           <div style={{fontSize:fs(9),color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
                         </div>
                         <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.home??""}
