@@ -2719,6 +2719,9 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const r = getResult(g.id);
               const hasR = r&&r.home!==undefined&&r.home!=="";
               const today = isToday(g.date);
+              const ovr = scheduleOverrides[g.id]||{};
+              const gHome = ovr.home || g.home;
+              const gAway = ovr.away || g.away;
               const palpites = membrosAprovados.map(m=>{
                 const gu=getGuessOf(m.uid,g.id);
                 const pts=hasR&&gu?calcPoints(gu,r,g.group):null;
@@ -2894,7 +2897,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               </div>
             ):(
               <AdminBolaoPanel db={db} adminSlug={adminSlug} adminData={adminData} boloes={boloes} members={members}
-                guesses={guesses} results={results} filteredGames={filteredGames} filterGrp={filterGrp} setFilterGrp={setFilterGrp}
+                guesses={guesses} results={results} scheduleOverrides={scheduleOverrides} filteredGames={filteredGames} filterGrp={filterGrp} setFilterGrp={setFilterGrp}
                 FILTER_OPTS={FILTER_OPTS} notify={notify} fs={fs} apiKey={apiKey} setApiKey={setApiKey}
                 liveFetching={liveFetching} setLiveFetching={setLiveFetching}
                 lastUpdate={lastUpdate} setLastUpdate={setLastUpdate} saveResult={saveResult}
@@ -2916,7 +2919,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
 // ══════════════════════════════════════════════════════════════════════════════
 // PAINEL ADMIN DO BOLÃO — completo
 // ══════════════════════════════════════════════════════════════════════════════
-function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, results, filteredGames,
+function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, results, scheduleOverrides, filteredGames,
   filterGrp, setFilterGrp, FILTER_OPTS, notify, fs, apiKey, setApiKey,
   liveFetching, setLiveFetching, lastUpdate, setLastUpdate, saveResult,
   avatarColors, avatares, MemberAvatar}) {
@@ -3248,6 +3251,9 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
           {filteredGames().map(g=>{
             const r=results[g.id]||{};
             const hasR=r.home!==undefined&&r.home!=="";
+            const ovr=scheduleOverrides[g.id]||{};
+            const gHome=ovr.home||g.home;
+            const gAway=ovr.away||g.away;
             return(
               <div key={g.id} style={{background:hasR?"rgba(0,156,59,.07)":"rgba(255,255,255,.02)",border:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,borderRadius:12,overflow:"hidden",marginBottom:8}}>
                 <div style={{background:"rgba(255,255,255,.05)",borderBottom:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,padding:"7px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
