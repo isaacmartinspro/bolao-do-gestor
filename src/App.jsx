@@ -286,6 +286,25 @@ function calcPoints(g, r, fase) {
   return (gh>ga?"H":gh<ga?"A":"D")===(rh>ra?"H":rh<ra?"A":"D")?1:0;
 }
 
+const BRACKET = {
+  73:{winSlot:{id:90,side:"home"},loseSlot:null},74:{winSlot:{id:89,side:"home"},loseSlot:null},
+  75:{winSlot:{id:90,side:"away"},loseSlot:null},76:{winSlot:{id:91,side:"home"},loseSlot:null},
+  77:{winSlot:{id:89,side:"away"},loseSlot:null},78:{winSlot:{id:91,side:"away"},loseSlot:null},
+  79:{winSlot:{id:92,side:"home"},loseSlot:null},80:{winSlot:{id:92,side:"away"},loseSlot:null},
+  81:{winSlot:{id:94,side:"away"},loseSlot:null},82:{winSlot:{id:94,side:"home"},loseSlot:null},
+  83:{winSlot:{id:93,side:"home"},loseSlot:null},84:{winSlot:{id:93,side:"away"},loseSlot:null},
+  85:{winSlot:{id:96,side:"home"},loseSlot:null},86:{winSlot:{id:95,side:"home"},loseSlot:null},
+  87:{winSlot:{id:96,side:"away"},loseSlot:null},88:{winSlot:{id:95,side:"away"},loseSlot:null},
+  89:{winSlot:{id:97,side:"home"},loseSlot:null},90:{winSlot:{id:97,side:"away"},loseSlot:null},
+  91:{winSlot:{id:99,side:"home"},loseSlot:null},92:{winSlot:{id:99,side:"away"},loseSlot:null},
+  93:{winSlot:{id:98,side:"home"},loseSlot:null},94:{winSlot:{id:98,side:"away"},loseSlot:null},
+  95:{winSlot:{id:100,side:"home"},loseSlot:null},96:{winSlot:{id:100,side:"away"},loseSlot:null},
+  97:{winSlot:{id:101,side:"home"},loseSlot:null},98:{winSlot:{id:101,side:"away"},loseSlot:null},
+  99:{winSlot:{id:102,side:"home"},loseSlot:null},100:{winSlot:{id:102,side:"away"},loseSlot:null},
+  101:{winSlot:{id:104,side:"home"},loseSlot:{id:103,side:"home"}},
+  102:{winSlot:{id:104,side:"away"},loseSlot:{id:103,side:"away"}},
+};
+
 // ─── ESTILOS BASE ─────────────────────────────────────────────────────────────
 const BASE_BG = {
   minHeight:"100vh",
@@ -1239,18 +1258,19 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   const { maxBoloes, maxMembros, plano } = getLimites(adminData);
   const planoInfo = PLANOS[plano]||PLANOS.gratis;
 
-  const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"16 Avos","Oitavas","Quartas","Semifinal","Final"];
+  const FILTER_OPTS = ["Todos","Hoje","16 Avos","Oitavas","Quartas","Semifinal","3º Lugar","Final"];
 
   function filteredGames() {
     return SCHEDULE.filter(g=>{
-      if(filterGrp==="Todos") return true;
-      if(filterGrp==="Hoje") return isToday(g.date);
+      if(filterGrp==="Todos") return g.knockout===true; // só mata-mata
+      if(filterGrp==="Hoje") return isToday(g.date) && g.knockout===true;
       if(filterGrp==="16 Avos") return g.group==="16avos";
       if(filterGrp==="Oitavas") return g.group==="Oitavas";
       if(filterGrp==="Quartas") return g.group==="Quartas";
       if(filterGrp==="Semifinal") return g.group==="Semifinal";
+      if(filterGrp==="3º Lugar") return g.group==="3Lugar";
       if(filterGrp==="Final") return g.group==="Final";
-      return "Grupo "+g.group===filterGrp;
+      return false;
     }).sort((a,b)=>a.date.localeCompare(b.date));
   }
 
@@ -2010,12 +2030,21 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
   const [adminUnlocked, setAdminUnlocked] = useState(false);
+  const [scheduleOverrides, setScheduleOverrides] = useState({});
   const [liveFetching, setLiveFetching] = useState(false);
   const [apiKey, setApiKey] = useState(localStorage.getItem("bg26_apikey")||"");
   const [lastUpdate, setLastUpdate] = useState(null);
 
   const fs = b => Math.round(b * fontSize / 16);
   const changeFs = d => { const n=Math.min(24,Math.max(13,fontSize+d)); setFontSize(n); localStorage.setItem("bg26_fs",String(n)); };
+
+  // Listener: overrides de times nas próximas fases (propagação automática do chaveamento)
+  useEffect(()=>{
+    if(!db) return;
+    const r = dbRef(db,"schedule_overrides");
+    onValue(r, s=>setScheduleOverrides(s.val()||{}));
+    return ()=>off(r);
+  },[db]);
   const toggleDark = () => { const n=!darkMode; setDarkMode(n); localStorage.setItem("bg26_dark",String(n)); };
 
   // Tema claro/escuro
@@ -2057,8 +2086,53 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
     const key = `${safeKey(adminSlug)}_${safeKey(currentMember.bolaoId)}_${safeKey(currentMember.uid)}`;
     await set(dbRef(db,`guesses/${key}/${gameId}/${side}`), val);
   }
+  
+
   async function saveResult(gameId, side, val) {
     await set(dbRef(db,`results/${gameId}/${side}`), val);
+
+    const g = SCHEDULE.find(x=>x.id===gameId);
+    if(!g?.knockout) return;
+    const bracket = BRACKET[gameId];
+    if(!bracket) return;
+
+    // Ler resultado completo do Firebase para decidir vencedor
+    const r = await new Promise(res=>{
+      const ref = dbRef(db,`results/${gameId}`);
+      onValue(ref, s=>{ off(ref); res(s.val()||{}); }, {onlyOnce:true});
+    });
+
+    const home = r.home, away = r.away;
+    const hN = parseInt(home), aN = parseInt(away);
+
+    let winner = null, loser = null;
+
+    if(!isNaN(hN) && !isNaN(aN) && home!=="" && away!=="") {
+      if(hN > aN) {
+        // Home ganhou direto
+        winner = home; loser = away;
+      } else if(aN > hN) {
+        // Away ganhou direto
+        winner = away; loser = home;
+      } else {
+        // Empate no tempo normal — esperar quemPassa
+        if(side === "quemPassa") {
+          winner = r.quemPassa==="home" ? home : r.quemPassa==="away" ? away : null;
+          loser  = r.quemPassa==="home" ? away : r.quemPassa==="away" ? home : null;
+        } else {
+          return; // empate mas quemPassa ainda não foi definido, aguardar
+        }
+      }
+    }
+
+    if(!winner) return;
+
+    if(bracket.winSlot) {
+      await set(dbRef(db,`schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner);
+    }
+    if(bracket.loseSlot && loser) {
+      await set(dbRef(db,`schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser);
+    }
   }
 
   function getRanking() {
@@ -2157,6 +2231,10 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
 
   // Card de jogo
   const GameRow = ({g, mode="agenda"}) => {
+    // Aplicar overrides de nome de time (ex: vencedor do jogo anterior)
+    const ovr = scheduleOverrides[g.id]||{};
+    const gHome = ovr.home || g.home;
+    const gAway = ovr.away || g.away;
     const r=getResult(g.id), gu=myGuesses[g.id];
     const pts=r&&gu?calcPoints(gu,r,g.group):null;
     const past=isPast(g.date), today=isToday(g.date);
@@ -2189,8 +2267,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
           <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8}}>
             {/* Casa */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-              <Flag team={g.home} size={fs(40)}/>
-              <span style={{fontSize:fs(13),fontWeight:700,textAlign:"center",fontFamily:"sans-serif"}}>{g.home}</span>
+              <Flag team={gHome} size={fs(40)}/>
+              <span style={{fontSize:fs(13),fontWeight:700,textAlign:"center",fontFamily:"sans-serif"}}>{gHome}</span>
             </div>
 
             {/* Placar central */}
@@ -2236,14 +2314,14 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                             color:"#fff",border:`1px solid ${gu?.quemPassa==="home"?"#00ff7f":"#333"}`,
                             borderRadius:7,padding:"4px 10px",cursor:"pointer",
                             fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
-                          {g.home}
+                          {gHome}
                         </button>
                         <button onClick={()=>saveGuess(g.id,"quemPassa","away")}
                           style={{background:gu?.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
                             color:"#fff",border:`1px solid ${gu?.quemPassa==="away"?"#00ff7f":"#333"}`,
                             borderRadius:7,padding:"4px 10px",cursor:"pointer",
                             fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
-                          {g.away}
+                          {gAway}
                         </button>
                       </div>
                     </div>
@@ -2275,14 +2353,14 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                             color:"#fff",border:`1px solid ${r?.quemPassa==="home"?"#00ff7f":"#333"}`,
                             borderRadius:7,padding:"4px 10px",cursor:"pointer",
                             fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
-                          {g.home}
+                          {gHome}
                         </button>
                         <button onClick={()=>saveResult(g.id,"quemPassa","away")}
                           style={{background:r?.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
                             color:"#fff",border:`1px solid ${r?.quemPassa==="away"?"#00ff7f":"#333"}`,
                             borderRadius:7,padding:"4px 10px",cursor:"pointer",
                             fontFamily:"sans-serif",fontSize:fs(11),fontWeight:700}}>
-                          {g.away}
+                          {gAway}
                         </button>
                       </div>
                     </div>
@@ -2317,8 +2395,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
 
             {/* Visitante */}
             <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:5}}>
-              <Flag team={g.away} size={fs(40)}/>
-              <span style={{fontSize:fs(13),fontWeight:700,textAlign:"center",fontFamily:"sans-serif"}}>{g.away}</span>
+              <Flag team={gAway} size={fs(40)}/>
+              <span style={{fontSize:fs(13),fontWeight:700,textAlign:"center",fontFamily:"sans-serif"}}>{gAway}</span>
             </div>
           </div>
         </div>
@@ -2582,11 +2660,11 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                     borderBottom:`1px solid ${hasR?"#009c3b":today?"#ffdf00":"#1a2e1a"}`,
                     padding:"10px 16px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
                     <div style={{display:"flex",alignItems:"center",gap:8}}>
-                      <Flag team={g.home} size={fs(28)}/>
-                      <span style={{fontSize:fs(16),fontWeight:700}}>{g.home}</span>
+                      <Flag team={gHome} size={fs(28)}/>
+                      <span style={{fontSize:fs(16),fontWeight:700}}>{gHome}</span>
                       <span style={{color:"#555"}}>×</span>
-                      <span style={{fontSize:fs(16),fontWeight:700}}>{g.away}</span>
-                      <Flag team={g.away} size={fs(28)}/>
+                      <span style={{fontSize:fs(16),fontWeight:700}}>{gAway}</span>
+                      <Flag team={gAway} size={fs(28)}/>
                     </div>
                     <div style={{textAlign:"right"}}>
                       {hasR?(
@@ -2622,12 +2700,12 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                               </span>
                             </div>
                             <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                              <Flag team={g.home} size={fs(20)}/>
+                              <Flag team={gHome} size={fs(20)}/>
                               <span style={{fontSize:fs(22),fontFamily:"monospace",fontWeight:900,
                                 color:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a9edb":pts===0&&hasR?"#ff6b6b":"#fff",letterSpacing:2}}>
                                 {gu.home}×{gu.away}
                               </span>
-                              <Flag team={g.away} size={fs(20)}/>
+                              <Flag team={gAway} size={fs(20)}/>
                             </div>
                             {pts!==null&&(
                               <div style={{background:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":"#5a1010",
@@ -3026,7 +3104,7 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
                         padding:"6px 0",borderBottom:"1px solid #1a2a1a",flexWrap:"wrap"}}>
                         <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:fs(11),
                           color:jaComecou?"#666":"#ccc"}}>
-                          {g.home} <span style={{color:"#444"}}>x</span> {g.away}
+                          {gHome} <span style={{color:"#444"}}>x</span> {gAway}
                           <div style={{fontSize:fs(9),color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
                         </div>
                         <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.home??""}
@@ -3107,7 +3185,7 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
                   </span>
                 </div>
                 <div style={{padding:"10px 14px",display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8}}>
-                  <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:fs(14),fontWeight:700}}>{g.home}</div>
+                  <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:fs(14),fontWeight:700}}>{gHome}</div>
                   <div style={{display:"flex",alignItems:"center",gap:6}}>
                     <input type="number" min="0" max="20" value={r.home??""} onChange={e=>saveResult(g.id,"home",e.target.value)} placeholder="–"
                       style={{width:fs(50),height:fs(50),textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,fontSize:fs(22),fontFamily:"monospace"}}/>
@@ -3115,7 +3193,7 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
                     <input type="number" min="0" max="20" value={r.away??""} onChange={e=>saveResult(g.id,"away",e.target.value)} placeholder="–"
                       style={{width:fs(50),height:fs(50),textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,fontSize:fs(22),fontFamily:"monospace"}}/>
                   </div>
-                  <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:fs(14),fontWeight:700}}>{g.away}</div>
+                  <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:fs(14),fontWeight:700}}>{gAway}</div>
                 </div>
               </div>
             );
