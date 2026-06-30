@@ -1199,10 +1199,55 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   const [showUpgrade, setShowUpgrade] = useState(false);
   const [selectedBid, setSelectedBid] = useState(Object.keys(boloes)[0]||"");
   const [filterGrp, setFilterGrp] = useState("Todos");
+  const [scheduleOverrides, setScheduleOverrides] = useState({});
+
+  useEffect(()=>{
+    if(!db) return;
+    const r = dbRef(db,"schedule_overrides");
+    onValue(r, s=>setScheduleOverrides(s.val()||{}));
+    return ()=>off(r);
+  },[db]);
 
   async function adminSaveGuess(uid, gameId, side, val) {
     const key = `${safeKey(adminSlug)}_${safeKey(selectedBid)}_${safeKey(uid)}`;
     await set(dbRef(db,`guesses/${key}/${gameId}/${side}`), val);
+  }
+
+  async function saveResultLocal(gameId, side, val) {
+    await set(dbRef(db,`results/${gameId}/${side}`), val);
+
+    const g = SCHEDULE.find(x=>x.id===gameId);
+    if(!g?.knockout) return;
+    const bracket = BRACKET[gameId];
+    if(!bracket) return;
+
+    const r = await new Promise(res=>{
+      const ref = dbRef(db,`results/${gameId}`);
+      onValue(ref, s=>{ off(ref); res(s.val()||{}); }, {onlyOnce:true});
+    });
+
+    const home = r.home, away = r.away;
+    const hN = parseInt(home), aN = parseInt(away);
+    let winner = null, loser = null;
+
+    if(!isNaN(hN) && !isNaN(aN) && home!=="" && away!=="") {
+      if(hN > aN) { winner = home; loser = away; }
+      else if(aN > hN) { winner = away; loser = home; }
+      else {
+        if(side === "quemPassa") {
+          winner = r.quemPassa==="home" ? home : r.quemPassa==="away" ? away : null;
+          loser  = r.quemPassa==="home" ? away : r.quemPassa==="away" ? home : null;
+        } else return;
+      }
+    }
+    if(!winner) return;
+
+    if(bracket.winSlot) {
+      await set(dbRef(db,`schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner);
+    }
+    if(bracket.loseSlot && loser) {
+      await set(dbRef(db,`schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser);
+    }
   }
 
   // Bolão atual
@@ -1751,6 +1796,9 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
             {filteredGames().map(g=>{
               const r=results[g.id]||{};
               const hasR=r.home!==undefined&&r.home!=="";
+              const ovr = scheduleOverrides[g.id]||{};
+              const gHome = ovr.home || g.home;
+              const gAway = ovr.away || g.away;
               return(
                 <div key={g.id} style={{background:hasR?"rgba(0,156,59,.07)":"rgba(255,255,255,.02)",
                   border:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,borderRadius:12,overflow:"hidden",marginBottom:8}}>
@@ -1766,18 +1814,46 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                     </span>
                   </div>
                   <div style={{padding:"10px 14px",display:"grid",gridTemplateColumns:"1fr auto 1fr",alignItems:"center",gap:8}}>
-                    <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:14,fontWeight:700}}>{g.home}</div>
+                    <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:14,fontWeight:700}}>{gHome}</div>
                     <div style={{display:"flex",alignItems:"center",gap:6}}>
                       <input type="number" min="0" max="20" value={r.home??""} placeholder="–"
-                        onChange={e=>set(dbRef(db,`results/${g.id}/home`),e.target.value)}
+                        onChange={e=>saveResultLocal(g.id,"home",e.target.value)}
                         style={{width:48,height:48,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,fontSize:22,fontFamily:"monospace"}}/>
                       <span style={{color:"#fff",fontSize:20,fontWeight:900}}>×</span>
                       <input type="number" min="0" max="20" value={r.away??""} placeholder="–"
-                        onChange={e=>set(dbRef(db,`results/${g.id}/away`),e.target.value)}
+                        onChange={e=>saveResultLocal(g.id,"away",e.target.value)}
                         style={{width:48,height:48,textAlign:"center",background:"#060f06",color:"#ffdf00",border:"2px solid #ffdf00",borderRadius:8,fontSize:22,fontFamily:"monospace"}}/>
                     </div>
-                    <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:14,fontWeight:700}}>{g.away}</div>
+                    <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:14,fontWeight:700}}>{gAway}</div>
                   </div>
+                  {/* Empate em jogo mata-mata: admin define quem passou (pênaltis/prorrogação) */}
+                  {g.knockout && r?.home!==undefined && r?.home!=="" &&
+                    r?.away!==undefined && r?.away!=="" && Number(r.home)===Number(r.away) && (
+                    <div style={{padding:"0 14px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                      <div style={{background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.3)",
+                        borderRadius:10,padding:"8px 14px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,width:"100%"}}>
+                        <div style={{fontFamily:"sans-serif",fontSize:11,color:"#ffdf00",letterSpacing:1}}>
+                          ⚖️ Empate — quem passou (pênaltis/prorrogação)?
+                        </div>
+                        <div style={{display:"flex",gap:8}}>
+                          <button onClick={()=>saveResultLocal(g.id,"quemPassa","home")}
+                            style={{background:r?.quemPassa==="home"?"#009c3b":"rgba(255,255,255,.08)",
+                              color:"#fff",border:`1px solid ${r?.quemPassa==="home"?"#00ff7f":"#333"}`,
+                              borderRadius:8,padding:"6px 14px",cursor:"pointer",
+                              fontFamily:"sans-serif",fontSize:12,fontWeight:700}}>
+                            {gHome}
+                          </button>
+                          <button onClick={()=>saveResultLocal(g.id,"quemPassa","away")}
+                            style={{background:r?.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
+                              color:"#fff",border:`1px solid ${r?.quemPassa==="away"?"#00ff7f":"#333"}`,
+                              borderRadius:8,padding:"6px 14px",cursor:"pointer",
+                              fontFamily:"sans-serif",fontSize:12,fontWeight:700}}>
+                            {gAway}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               );
             })}
