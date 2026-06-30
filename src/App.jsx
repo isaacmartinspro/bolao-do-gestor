@@ -3195,6 +3195,34 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
                   </div>
                   <div style={{textAlign:"center",fontFamily:"sans-serif",fontSize:fs(14),fontWeight:700}}>{gAway}</div>
                 </div>
+                {/* Empate em jogo mata-mata: admin define quem passou (pênaltis/prorrogação) */}
+                {g.knockout && r?.home!==undefined && r?.home!=="" &&
+                  r?.away!==undefined && r?.away!=="" && Number(r.home)===Number(r.away) && (
+                  <div style={{padding:"0 14px 12px",display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                    <div style={{background:"rgba(255,223,0,.08)",border:"1px solid rgba(255,223,0,.3)",
+                      borderRadius:10,padding:"8px 14px",display:"flex",flexDirection:"column",alignItems:"center",gap:6,width:"100%"}}>
+                      <div style={{fontFamily:"sans-serif",fontSize:fs(11),color:"#ffdf00",letterSpacing:1}}>
+                        ⚖️ Empate — quem passou (pênaltis/prorrogação)?
+                      </div>
+                      <div style={{display:"flex",gap:8}}>
+                        <button onClick={()=>saveResult(g.id,"quemPassa","home")}
+                          style={{background:r?.quemPassa==="home"?"#009c3b":"rgba(255,255,255,.08)",
+                            color:"#fff",border:`1px solid ${r?.quemPassa==="home"?"#00ff7f":"#333"}`,
+                            borderRadius:8,padding:"6px 14px",cursor:"pointer",
+                            fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700}}>
+                          {gHome}
+                        </button>
+                        <button onClick={()=>saveResult(g.id,"quemPassa","away")}
+                          style={{background:r?.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
+                            color:"#fff",border:`1px solid ${r?.quemPassa==="away"?"#00ff7f":"#333"}`,
+                            borderRadius:8,padding:"6px 14px",cursor:"pointer",
+                            fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700}}>
+                          {gAway}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
