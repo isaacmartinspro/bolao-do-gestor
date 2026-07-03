@@ -261,18 +261,31 @@ function calcPoints(g, r, fase) {
   if (isKnockout) {
     const placarExato = gh===rh && ga===ra;
     const empatePalpite = gh===ga;       // palpite foi empate
-    const empateReal    = rh===ra;       // resultado real empatou (foi para pênaltis/prorrogação)
+    const empateReal    = rh===ra;       // resultado real empatou (pênaltis/prorrogação)
+
+    // Vencedor real: home se rh>ra, away se ra>rh, ou r.quemPassa se empatou no tempo normal
+    const vencedorReal = rh>ra ? "home" : ra>rh ? "away" : r.quemPassa || null;
+
+    // Vencedor apostado: se palpite não empatou, é quem ganhou no palpite.
+    // Se palpite empatou, é quem o participante escolheu no quemPassa.
+    const vencedorPalpite = gh>ga ? "home" : ga>gh ? "away" : g.quemPassa || null;
 
     if (placarExato) {
-      // Se o placar empatou, soma 1 ponto extra se acertou quem passa
+      // Placar exato empatado: soma 1 ponto extra se acertou quem passa nos pênaltis
       if (empatePalpite && empateReal) {
         return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 7 : 6;
       }
-      return 6; // placar exato cravado (não-empate)
+      return 6; // placar exato não-empate
     }
-    // Não acertou o placar exato
-    const acertouVencedor = (gh>ga?"H":gh<ga?"A":"D")===(rh>ra?"H":rh<ra?"A":"D");
+
+    // Não acertou o placar — checar se acertou o vencedor
+    // Acertou o vencedor se: o time que apostou ganhar é o mesmo que ganhou de verdade
+    const acertouVencedor = vencedorPalpite && vencedorReal && vencedorPalpite===vencedorReal;
+
     if (acertouVencedor) {
+      // Caso especial: apostou empate + quemPassa, e o time ganhou no tempo normal (não foi a pênaltis)
+      // Recebe 3 pontos (acertou o vencedor)
+      // Caso normal: empate real + acertou quem passa nos pênaltis = 4 pontos (bônus extra)
       if (empatePalpite && empateReal) {
         return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 4 : 3;
       }
