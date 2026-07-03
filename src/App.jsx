@@ -287,8 +287,8 @@ function calcPoints(g, r, fase) {
     if (empatePalpite) {
       // Apostou empate
       if (empateReal) {
-        // Houve empate real — acertou o empate (3pts) + bônus pênaltis (mais 3 = 6 total)
-        return acertouPenaltis ? 6 : 3;
+        // Houve empate real — acertou o empate (3pts) + bônus pênaltis (+1 = 4 total)
+        return acertouPenaltis ? 4 : 3;
       } else {
         // Apostou empate mas não empatou — verifica se acertou vencedor via quemPassa (1pt)
         const vencedorReal = rh>ra ? "home" : "away";
