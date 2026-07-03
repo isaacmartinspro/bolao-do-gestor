@@ -1711,23 +1711,47 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                       const key = `${safeKey(adminSlug)}_${safeKey(selectedBid)}_${safeKey(m.uid)}`;
                       const palpiteAtual = (guesses[key]||{})[g.id] || {};
                       const jaComecou = isPast(g.date);
+                      const mostrarQuemPassa = g.knockout &&
+                        !isNaN(parseInt(palpiteAtual.home)) && !isNaN(parseInt(palpiteAtual.away)) &&
+                        palpiteAtual.home!=="" && palpiteAtual.away!=="" &&
+                        parseInt(palpiteAtual.home)===parseInt(palpiteAtual.away);
                       return (
-                        <div key={g.id} style={{display:"flex",alignItems:"center",gap:8,
-                          padding:"6px 0",borderBottom:"1px solid #1a2a1a",flexWrap:"wrap"}}>
-                          <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:11,
-                            color:jaComecou?"#666":"#ccc"}}>
-                            {g.home} <span style={{color:"#444"}}>x</span> {g.away}
-                            <div style={{fontSize:9,color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
+                        <div key={g.id} style={{borderBottom:"1px solid #1a2a1a",paddingBottom:4,marginBottom:4}}>
+                          <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap",padding:"6px 0"}}>
+                            <div style={{flex:1,minWidth:140,fontFamily:"sans-serif",fontSize:11,
+                              color:jaComecou?"#666":"#ccc"}}>
+                              {g.home} <span style={{color:"#444"}}>x</span> {g.away}
+                              <div style={{fontSize:9,color:"#555"}}>{fmtDate(g.date)} {fmtTime(g.date)}</div>
+                            </div>
+                            <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.home??""}
+                              onBlur={e=>adminSaveGuess(m.uid,g.id,"home",e.target.value)}
+                              style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
+                                borderRadius:5,padding:"4px",fontSize:13,textAlign:"center"}}/>
+                            <span style={{color:"#555"}}>x</span>
+                            <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.away??""}
+                              onBlur={e=>adminSaveGuess(m.uid,g.id,"away",e.target.value)}
+                              style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
+                                borderRadius:5,padding:"4px",fontSize:13,textAlign:"center"}}/>
                           </div>
-                          <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.home??""}
-                            onBlur={e=>adminSaveGuess(m.uid,g.id,"home",e.target.value)}
-                            style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
-                              borderRadius:5,padding:"4px",fontSize:13,textAlign:"center"}}/>
-                          <span style={{color:"#555"}}>x</span>
-                          <input type="number" min="0" placeholder="–" defaultValue={palpiteAtual.away??""}
-                            onBlur={e=>adminSaveGuess(m.uid,g.id,"away",e.target.value)}
-                            style={{width:38,background:"#0a1a0a",color:"#fff",border:"1px solid #2a3a2a",
-                              borderRadius:5,padding:"4px",fontSize:13,textAlign:"center"}}/>
+                          {mostrarQuemPassa && (
+                            <div style={{display:"flex",alignItems:"center",gap:6,paddingLeft:4,flexWrap:"wrap",marginBottom:4}}>
+                              <span style={{fontFamily:"sans-serif",fontSize:10,color:"#ffdf00"}}>🤔 Quem passa?</span>
+                              <button onClick={()=>adminSaveGuess(m.uid,g.id,"quemPassa","home")}
+                                style={{background:palpiteAtual.quemPassa==="home"?"#009c3b":"rgba(255,255,255,.08)",
+                                  color:"#fff",border:`1px solid ${palpiteAtual.quemPassa==="home"?"#00ff7f":"#333"}`,
+                                  borderRadius:6,padding:"3px 8px",cursor:"pointer",
+                                  fontFamily:"sans-serif",fontSize:10,fontWeight:700}}>
+                                {g.home}
+                              </button>
+                              <button onClick={()=>adminSaveGuess(m.uid,g.id,"quemPassa","away")}
+                                style={{background:palpiteAtual.quemPassa==="away"?"#009c3b":"rgba(255,255,255,.08)",
+                                  color:"#fff",border:`1px solid ${palpiteAtual.quemPassa==="away"?"#00ff7f":"#333"}`,
+                                  borderRadius:6,padding:"3px 8px",cursor:"pointer",
+                                  fontFamily:"sans-serif",fontSize:10,fontWeight:700}}>
+                                {g.away}
+                              </button>
+                            </div>
+                          )}
                         </div>
                       );
                     })}
