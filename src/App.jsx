@@ -1256,13 +1256,13 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
         } else return;
       }
     }
-    if(!winner) return;
+    if(!winner || !winner.trim()) return;
 
     if(bracket.winSlot) {
-      await set(dbRef(db,`schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner);
+      await set(dbRef(db,`schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner.trim());
     }
-    if(bracket.loseSlot && loser) {
-      await set(dbRef(db,`schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser);
+    if(bracket.loseSlot && loser && loser.trim()) {
+      await set(dbRef(db,`schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser.trim());
     }
   }
 
@@ -1813,8 +1813,8 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
               const r=results[g.id]||{};
               const hasR=r.home!==undefined&&r.home!=="";
               const ovr = scheduleOverrides[g.id]||{};
-              const gHome = ovr.home || g.home;
-              const gAway = ovr.away || g.away;
+              const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
+              const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               return(
                 <div key={g.id} style={{background:hasR?"rgba(0,156,59,.07)":"rgba(255,255,255,.02)",
                   border:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,borderRadius:12,overflow:"hidden",marginBottom:8}}>
@@ -2217,13 +2217,13 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
       }
     }
 
-    if(!winner) return;
+    if(!winner || !winner.trim()) return;
 
     if(bracket.winSlot) {
-      await set(dbRef(db,`schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner);
+      await set(dbRef(db,`schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner.trim());
     }
-    if(bracket.loseSlot && loser) {
-      await set(dbRef(db,`schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser);
+    if(bracket.loseSlot && loser && loser.trim()) {
+      await set(dbRef(db,`schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser.trim());
     }
   }
 
@@ -2325,8 +2325,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   const GameRow = ({g, mode="agenda"}) => {
     // Aplicar overrides de nome de time (ex: vencedor do jogo anterior)
     const ovr = scheduleOverrides[g.id]||{};
-    const gHome = ovr.home || g.home;
-    const gAway = ovr.away || g.away;
+    const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
+    const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
     const r=getResult(g.id), gu=myGuesses[g.id];
     const pts=r&&gu?calcPoints(gu,r,g.group):null;
     const past=isPast(g.date), today=isToday(g.date);
@@ -2736,8 +2736,8 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const hasR = r&&r.home!==undefined&&r.home!=="";
               const today = isToday(g.date);
               const ovr = scheduleOverrides[g.id]||{};
-              const gHome = ovr.home || g.home;
-              const gAway = ovr.away || g.away;
+              const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
+              const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               const palpites = membrosAprovados.map(m=>{
                 const gu=getGuessOf(m.uid,g.id);
                 const pts=hasR&&gu?calcPoints(gu,r,g.group):null;
@@ -3268,8 +3268,8 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
             const r=results[g.id]||{};
             const hasR=r.home!==undefined&&r.home!=="";
             const ovr=scheduleOverrides[g.id]||{};
-            const gHome=ovr.home||g.home;
-            const gAway=ovr.away||g.away;
+            const gHome=(ovr.home&&ovr.home.trim())?ovr.home:g.home;
+            const gAway=(ovr.away&&ovr.away.trim())?ovr.away:g.away;
             return(
               <div key={g.id} style={{background:hasR?"rgba(0,156,59,.07)":"rgba(255,255,255,.02)",border:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,borderRadius:12,overflow:"hidden",marginBottom:8}}>
                 <div style={{background:"rgba(255,255,255,.05)",borderBottom:`1px solid ${hasR?"#009c3b":"#1a2a1a"}`,padding:"7px 14px",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:6}}>
