@@ -289,10 +289,15 @@ function calcPoints(g, r, fase) {
       }
       if (empatePalpite && !empateReal) {
         // Apostou empate mas o jogo não empatou — acertou o vencedor via quemPassa (2ª chance)
-        // Vale apenas 1 ponto (não pode valer igual a quem apostou direto no vencedor)
+        // Vale apenas 1 ponto
         return 1;
       }
-      return 3; // apostou certo (não-empate) e acertou o vencedor
+      if (!empatePalpite && empateReal) {
+        // Apostou vencedor direto (ex: 2x1) mas o jogo empatou e foi para pênaltis
+        // O time apostado ganhou nos pênaltis — vale 1 ponto (acertou o vencedor mas de forma diferente)
+        return 1;
+      }
+      return 3; // apostou vencedor (não-empate) e o jogo também não empatou — acertou o vencedor
     }
     return 0;
   }
