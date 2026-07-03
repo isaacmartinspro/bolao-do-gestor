@@ -255,51 +255,57 @@ function calcPoints(g, r, fase) {
   const gh=parseInt(g.home),ga=parseInt(g.away),rh=parseInt(r.home),ra=parseInt(r.away);
   if (isNaN(gh)||isNaN(ga)||isNaN(rh)||isNaN(ra)) return null;
 
-  // Fase mata-mata (16avos, Oitavas, Quartas, Semifinal, 3Lugar, Final): pontuação dobrada + quem passa
   const isKnockout = fase && fase!=="Todos" && !/^[A-L]$/.test(fase);
 
   if (isKnockout) {
-    const placarExato = gh===rh && ga===ra;
-    const empatePalpite = gh===ga;       // palpite foi empate
-    const empateReal    = rh===ra;       // resultado real empatou (pênaltis/prorrogação)
+    // ══ TABELA DE PONTUAÇÃO DO MATA-MATA ══════════════════════════════════
+    // Placar exato (não-empate, ex: 2x1 = 2x1)          → 6 pts
+    // Placar exato empatado (1x1=1x1) + acertou pênaltis → 7 pts (6+1)
+    // Placar exato empatado (1x1=1x1) sem pênaltis        → 6 pts
+    // Apostou empate + acertou pênaltis (placar diferente) → 6 pts (3+3 bônus)
+    // Apostou só empate (sem pênaltis ou errou pênaltis)   → 3 pts
+    // Apostou vencedor direto, jogo foi a pênaltis, time ganhou → 1 pt
+    // Apostou vencedor direto e acertou (jogo não empatou) → 3 pts
+    // Errou                                                → 0 pts
+    // ══════════════════════════════════════════════════════════════════════
 
-    // Vencedor real: home se rh>ra, away se ra>rh, ou r.quemPassa se empatou no tempo normal
-    const vencedorReal = rh>ra ? "home" : ra>rh ? "away" : r.quemPassa || null;
+    const placarExato   = gh===rh && ga===ra;
+    const empatePalpite = gh===ga;
+    const empateReal    = rh===ra;
+    const acertouPenaltis = g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa;
 
-    // Vencedor apostado: se palpite não empatou, é quem ganhou no palpite.
-    // Se palpite empatou, é quem o participante escolheu no quemPassa.
-    const vencedorPalpite = gh>ga ? "home" : ga>gh ? "away" : g.quemPassa || null;
-
+    // 1. Placar exato
     if (placarExato) {
-      // Placar exato empatado: soma 1 ponto extra se acertou quem passa nos pênaltis
       if (empatePalpite && empateReal) {
-        return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 7 : 6;
+        // Empate exato: +1 se acertou pênaltis
+        return acertouPenaltis ? 7 : 6;
       }
       return 6; // placar exato não-empate
     }
 
-    // Não acertou o placar — checar se acertou o vencedor
-    // Acertou o vencedor se: o time que apostou ganhar é o mesmo que ganhou de verdade
-    const acertouVencedor = vencedorPalpite && vencedorReal && vencedorPalpite===vencedorReal;
-
-    if (acertouVencedor) {
-      if (empatePalpite && empateReal) {
-        // Apostou empate + quemPassa, e houve empate real — bonus de 1pt se acertou quem foi nos pênaltis
-        return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 4 : 3;
+    // 2. Não acertou o placar exato
+    if (empatePalpite) {
+      // Apostou empate
+      if (empateReal) {
+        // Houve empate real — acertou o empate (3pts) + bônus pênaltis (mais 3 = 6 total)
+        return acertouPenaltis ? 6 : 3;
+      } else {
+        // Apostou empate mas não empatou — verifica se acertou vencedor via quemPassa (1pt)
+        const vencedorReal = rh>ra ? "home" : "away";
+        return (g.quemPassa && g.quemPassa===vencedorReal) ? 1 : 0;
       }
-      if (empatePalpite && !empateReal) {
-        // Apostou empate mas o jogo não empatou — acertou o vencedor via quemPassa (2ª chance)
-        // Vale apenas 1 ponto
-        return 1;
+    } else {
+      // Apostou vencedor direto (não-empate)
+      const vencedorPalpite = gh>ga ? "home" : "away";
+      if (empateReal) {
+        // Jogo empatou e foi a pênaltis — 1pt se o time apostado ganhou nos pênaltis
+        return (r.quemPassa && r.quemPassa===vencedorPalpite) ? 1 : 0;
+      } else {
+        // Jogo não empatou — 3pts se acertou o vencedor
+        const vencedorReal = rh>ra ? "home" : "away";
+        return vencedorPalpite===vencedorReal ? 3 : 0;
       }
-      if (!empatePalpite && empateReal) {
-        // Apostou vencedor direto (ex: 2x1) mas o jogo empatou e foi para pênaltis
-        // O time apostado ganhou nos pênaltis — vale 1 ponto (acertou o vencedor mas de forma diferente)
-        return 1;
-      }
-      return 3; // apostou vencedor (não-empate) e o jogo também não empatou — acertou o vencedor
     }
-    return 0;
   }
 
   // Fase de grupos: pontuação clássica
