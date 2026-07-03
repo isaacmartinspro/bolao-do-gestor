@@ -283,13 +283,16 @@ function calcPoints(g, r, fase) {
     const acertouVencedor = vencedorPalpite && vencedorReal && vencedorPalpite===vencedorReal;
 
     if (acertouVencedor) {
-      // Caso especial: apostou empate + quemPassa, e o time ganhou no tempo normal (não foi a pênaltis)
-      // Recebe 3 pontos (acertou o vencedor)
-      // Caso normal: empate real + acertou quem passa nos pênaltis = 4 pontos (bônus extra)
       if (empatePalpite && empateReal) {
+        // Apostou empate + quemPassa, e houve empate real — bonus de 1pt se acertou quem foi nos pênaltis
         return g.quemPassa && r.quemPassa && g.quemPassa===r.quemPassa ? 4 : 3;
       }
-      return 3;
+      if (empatePalpite && !empateReal) {
+        // Apostou empate mas o jogo não empatou — acertou o vencedor via quemPassa (2ª chance)
+        // Vale apenas 1 ponto (não pode valer igual a quem apostou direto no vencedor)
+        return 1;
+      }
+      return 3; // apostou certo (não-empate) e acertou o vencedor
     }
     return 0;
   }
