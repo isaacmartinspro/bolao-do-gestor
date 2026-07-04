@@ -2198,7 +2198,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   boloes, members, guesses, results, notify, notification}) {
 
   const [subScreen, setSubScreen] = useState("menu");
-  const [filterGrp, setFilterGrp] = useState("Todos");
+  const [filterGrp, setFilterGrp] = useState("Oitavas");
   const [fontSize,  setFontSize]  = useState(()=>parseInt(localStorage.getItem("bg26_fs")||"16"));
   const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
