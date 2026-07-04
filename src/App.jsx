@@ -225,22 +225,22 @@ const SCHEDULE = [
   {id:86, home:"Austrália",away:"Egito",group:"16avos",date:"2026-07-03T15:00",city:"Atlanta",knockout:true},
   {id:87, home:"Argentina",away:"Cabo Verde",group:"16avos",date:"2026-07-03T19:00",city:"Kansas City",knockout:true},
   {id:88, home:"Colômbia",away:"Gana",group:"16avos",date:"2026-07-03T22:30",city:"Kansas City",knockout:true},
-  {id:89, home:"Canadá",away:"Marrocos",group:"Oitavas",date:"2026-07-04T14:00",city:"Filadélfia",knockout:true},
-  {id:90, home:"Paraguai",away:"França",group:"Oitavas",date:"2026-07-04T18:00",city:"Houston",knockout:true},
-  {id:91, home:"Brasil",away:"Noruega",group:"Oitavas",date:"2026-07-05T17:00",city:"Nova York",knockout:true},
+  {id:89, home:"Canadá",away:"Marrocos",group:"Oitavas",date:"2026-07-04T13:00",city:"Houston",knockout:true},
+  {id:90, home:"França",away:"Paraguai",group:"Oitavas",date:"2026-07-04T18:00",city:"Filadélfia",knockout:true},
+  {id:91, home:"Brasil",away:"Noruega",group:"Oitavas",date:"2026-07-05T17:00",city:"Nova Jersey",knockout:true},
   {id:92, home:"México",away:"Inglaterra",group:"Oitavas",date:"2026-07-05T21:00",city:"Cidade do México",knockout:true},
-  {id:93, home:"Portugal",away:"Espanha",group:"Oitavas",date:"2026-07-06T16:00",city:"Dallas",knockout:true},
-  {id:94, home:"EUA",away:"Bélgica",group:"Oitavas",date:"2026-07-06T21:00",city:"Seattle",knockout:true},
-  {id:95, home:"Austrália",away:"Argentina",group:"Oitavas",date:"2026-07-07T13:00",city:"Atlanta",knockout:true},
+  {id:93, home:"Espanha",away:"Portugal",group:"Oitavas",date:"2026-07-06T17:00",city:"Dallas",knockout:true},
+  {id:94, home:"Bélgica",away:"EUA",group:"Oitavas",date:"2026-07-06T21:00",city:"Seattle",knockout:true},
+  {id:95, home:"Argentina",away:"Egito",group:"Oitavas",date:"2026-07-07T13:00",city:"Atlanta",knockout:true},
   {id:96, home:"Suíça",away:"Colômbia",group:"Oitavas",date:"2026-07-07T17:00",city:"Vancouver",knockout:true},
-  {id:97, home:"W89",away:"W90",group:"Quartas",date:"2026-07-09T17:00",city:"Boston",knockout:true},
-  {id:98, home:"W93",away:"W94",group:"Quartas",date:"2026-07-10T16:00",city:"Los Angeles",knockout:true},
+  {id:97, home:"W89",away:"W90",group:"Quartas",date:"2026-07-09T17:00",city:"Nova Jersey",knockout:true},
+  {id:98, home:"W93",away:"W94",group:"Quartas",date:"2026-07-10T16:00",city:"Dallas",knockout:true},
   {id:99, home:"W91",away:"W92",group:"Quartas",date:"2026-07-11T18:00",city:"Miami",knockout:true},
-  {id:100,home:"W95",away:"W96",group:"Quartas",date:"2026-07-11T21:00",city:"Kansas City",knockout:true},
+  {id:100,home:"W95",away:"W96",group:"Quartas",date:"2026-07-11T22:00",city:"Seattle",knockout:true},
   {id:101,home:"W97",away:"W98",group:"Semifinal",date:"2026-07-14T16:00",city:"Dallas",knockout:true},
-  {id:102,home:"W99",away:"W100",group:"Semifinal",date:"2026-07-15T16:00",city:"Dallas",knockout:true},
-  {id:103,home:"L101",away:"L102",group:"3Lugar",date:"2026-07-18T18:00",city:"Miami",knockout:true},
-  {id:104,home:"W101",away:"W102",group:"Final",date:"2026-07-19T16:00",city:"Nova York",knockout:true},
+  {id:102,home:"W99",away:"W100",group:"Semifinal",date:"2026-07-15T16:00",city:"Atlanta",knockout:true},
+  {id:103,home:"L101",away:"L102",group:"3Lugar",date:"2026-07-18T17:00",city:"Miami",knockout:true},
+  {id:104,home:"W101",away:"W102",group:"Final",date:"2026-07-19T16:00",city:"Nova Jersey",knockout:true},
 ];
 
 const GROUPS = [...new Set(SCHEDULE.filter(g=>!g.knockout).map(g=>g.group))].sort();
@@ -1243,22 +1243,22 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
   async function reprocessarChaveamento() {
     // Vencedores confirmados dos 16avos - atualizar conforme jogos terminam
     const vencedores16avos = {
-      73: {home:"África do Sul", away:"Canadá",   winner:"away"}, // Canadá
-      74: {home:"Brasil",        away:"Japão",     winner:"home"}, // Brasil
-      75: {home:"Alemanha",      away:"Paraguai",  winner:"away"}, // Paraguai (pênaltis)
-      76: {home:"Holanda",       away:"Marrocos",  winner:"away"}, // Marrocos (pênaltis)
-      77: {home:"Costa do Marfim",away:"Noruega",  winner:"away"}, // Noruega
-      78: {home:"França",        away:"Suécia",    winner:"home"}, // França
-      79: {home:"México",        away:"Equador",   winner:"home"}, // México
-      80: {home:"Inglaterra",    away:"RD Congo",  winner:"home"}, // Inglaterra
-      81: {home:"Bélgica",       away:"Senegal",   winner:"home"}, // Bélgica
+      73: {home:"África do Sul", away:"Canadá",            winner:"away"}, // Canadá
+      74: {home:"Brasil",        away:"Japão",              winner:"home"}, // Brasil
+      75: {home:"Alemanha",      away:"Paraguai",           winner:"away"}, // Paraguai (pênaltis)
+      76: {home:"Holanda",       away:"Marrocos",           winner:"away"}, // Marrocos (pênaltis)
+      77: {home:"Costa do Marfim",away:"Noruega",           winner:"away"}, // Noruega
+      78: {home:"França",        away:"Suécia",             winner:"home"}, // França
+      79: {home:"México",        away:"Equador",            winner:"home"}, // México
+      80: {home:"Inglaterra",    away:"RD Congo",           winner:"home"}, // Inglaterra
+      81: {home:"Bélgica",       away:"Senegal",            winner:"home"}, // Bélgica
       82: {home:"EUA",           away:"Bósnia-Herzegovina", winner:"home"}, // EUA
-      83: {home:"Espanha",       away:"Áustria",   winner:"home"}, // Espanha
-      84: {home:"Portugal",      away:"Croácia",   winner:"home"}, // Portugal
-      85: {home:"Suíça",         away:"Argélia",   winner:"home"}, // Suíça
-      86: {home:"Austrália",     away:"Egito",     winner:"away"}, // Egito (pênaltis)
-      87: {home:"Argentina",     away:"Cabo Verde", winner:"home"}, // Argentina
-      88: {home:"Colômbia",      away:"Gana",      winner:"home"}, // Colômbia
+      83: {home:"Espanha",       away:"Áustria",            winner:"home"}, // Espanha
+      84: {home:"Portugal",      away:"Croácia",            winner:"home"}, // Portugal
+      85: {home:"Suíça",         away:"Argélia",            winner:"home"}, // Suíça
+      86: {home:"Austrália",     away:"Egito",              winner:"away"}, // Egito (pênaltis)
+      87: {home:"Argentina",     away:"Cabo Verde",         winner:"home"}, // Argentina
+      88: {home:"Colômbia",      away:"Gana",               winner:"home"}, // Colômbia
     };
 
     let count = 0;
