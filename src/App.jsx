@@ -1240,6 +1240,46 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
     await set(dbRef(db,`guesses/${key}/${gameId}/${side}`), val);
   }
 
+  async function reprocessarChaveamento() {
+    // Vencedores confirmados dos 16avos - atualizar conforme jogos terminam
+    const vencedores16avos = {
+      73: {home:"África do Sul", away:"Canadá",   winner:"away"}, // Canadá
+      74: {home:"Brasil",        away:"Japão",     winner:"home"}, // Brasil
+      75: {home:"Alemanha",      away:"Paraguai",  winner:"away"}, // Paraguai (pênaltis)
+      76: {home:"Holanda",       away:"Marrocos",  winner:"away"}, // Marrocos (pênaltis)
+      77: {home:"Costa do Marfim",away:"Noruega",  winner:"away"}, // Noruega
+      78: {home:"França",        away:"Suécia",    winner:"home"}, // França
+      79: {home:"México",        away:"Equador",   winner:"home"}, // México
+      80: {home:"Inglaterra",    away:"RD Congo",  winner:"home"}, // Inglaterra
+      81: {home:"Bélgica",       away:"Senegal",   winner:"home"}, // Bélgica
+      82: {home:"EUA",           away:"Bósnia-Herzegovina", winner:"home"}, // EUA
+      83: {home:"Espanha",       away:"Áustria",   winner:"home"}, // Espanha
+      84: {home:"Portugal",      away:"Croácia",   winner:"home"}, // Portugal
+      85: {home:"Suíça",         away:"Argélia",   winner:"home"}, // Suíça
+      86: {home:"Austrália",     away:"Egito",     winner:"away"}, // Egito (pênaltis)
+      87: {home:"Argentina",     away:"Cabo Verde", winner:"home"}, // Argentina
+      88: {home:"Colômbia",      away:"Gana",      winner:"home"}, // Colômbia
+    };
+
+    let count = 0;
+    for (const [gameIdStr, info] of Object.entries(vencedores16avos)) {
+      const gameId = parseInt(gameIdStr);
+      const bracket = BRACKET[gameId];
+      if (!bracket) continue;
+      const winner = info.winner === "home" ? info.home : info.away;
+      const loser  = info.winner === "home" ? info.away : info.home;
+      if (bracket.winSlot) {
+        await set(dbRef(db, `schedule_overrides/${bracket.winSlot.id}/${bracket.winSlot.side}`), winner);
+        count++;
+      }
+      if (bracket.loseSlot && loser) {
+        await set(dbRef(db, `schedule_overrides/${bracket.loseSlot.id}/${bracket.loseSlot.side}`), loser);
+        count++;
+      }
+    }
+    notify(`✅ Chaveamento reprocessado! ${count} slots atualizados.`);
+  }
+
   async function saveResultLocal(gameId, side, val) {
     await set(dbRef(db,`results/${gameId}/${side}`), val);
 
@@ -1836,6 +1876,12 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
                 style={{background:"#050d0a",color:"#fff",border:"1px solid #333",borderRadius:6,padding:"7px 10px",fontSize:13,fontFamily:"sans-serif",cursor:"pointer"}}>
                 {FILTER_OPTS.map(o=><option key={o}>{o}</option>)}
               </select>
+              <button onClick={reprocessarChaveamento}
+                style={{background:"rgba(100,0,200,.25)",color:"#cc88ff",border:"1px solid #8844cc",
+                  borderRadius:20,padding:"7px 14px",fontSize:13,fontWeight:700,
+                  fontFamily:"sans-serif",cursor:"pointer"}}>
+                🔄 Corrigir Bandeiras
+              </button>
             </div>
 
             {filteredGames().length===0&&filterGrp==="Hoje"&&(
