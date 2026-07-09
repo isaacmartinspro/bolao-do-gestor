@@ -233,10 +233,10 @@ const SCHEDULE = [
   {id:94, home:"Bélgica",away:"EUA",group:"Oitavas",date:"2026-07-06T21:00",city:"Seattle",knockout:true},
   {id:95, home:"Argentina",away:"Egito",group:"Oitavas",date:"2026-07-07T13:00",city:"Atlanta",knockout:true},
   {id:96, home:"Suíça",away:"Colômbia",group:"Oitavas",date:"2026-07-07T17:00",city:"Vancouver",knockout:true},
-  {id:97, home:"W89",away:"W90",group:"Quartas",date:"2026-07-09T17:00",city:"Nova Jersey",knockout:true},
-  {id:98, home:"W93",away:"W94",group:"Quartas",date:"2026-07-10T16:00",city:"Dallas",knockout:true},
-  {id:99, home:"W91",away:"W92",group:"Quartas",date:"2026-07-11T18:00",city:"Miami",knockout:true},
-  {id:100,home:"W95",away:"W96",group:"Quartas",date:"2026-07-11T22:00",city:"Seattle",knockout:true},
+  {id:97, home:"França",away:"Marrocos",group:"Quartas",date:"2026-07-09T17:00",city:"Boston",knockout:true},
+  {id:98, home:"Espanha",away:"Bélgica",group:"Quartas",date:"2026-07-10T16:00",city:"Los Angeles",knockout:true},
+  {id:99, home:"Noruega",away:"Inglaterra",group:"Quartas",date:"2026-07-11T18:00",city:"Miami",knockout:true},
+  {id:100,home:"Argentina",away:"Suíça",group:"Quartas",date:"2026-07-11T22:00",city:"Kansas City",knockout:true},
   {id:101,home:"W97",away:"W98",group:"Semifinal",date:"2026-07-14T16:00",city:"Dallas",knockout:true},
   {id:102,home:"W99",away:"W100",group:"Semifinal",date:"2026-07-15T16:00",city:"Atlanta",knockout:true},
   {id:103,home:"L101",away:"L102",group:"3Lugar",date:"2026-07-18T17:00",city:"Miami",knockout:true},
@@ -2207,7 +2207,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   boloes, members, guesses, results, notify, notification}) {
 
   const [subScreen, setSubScreen] = useState("menu");
-  const [filterGrp, setFilterGrp] = useState("Oitavas");
+  const [filterGrp, setFilterGrp] = useState("Quartas");
   const [fontSize,  setFontSize]  = useState(()=>parseInt(localStorage.getItem("bg26_fs")||"16"));
   const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
