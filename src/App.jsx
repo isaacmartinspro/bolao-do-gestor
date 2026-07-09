@@ -2822,7 +2822,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const r = getResult(g.id);
               const hasR = r&&r.home!==undefined&&r.home!=="";
               const today = isToday(g.date);
-              const ovr = scheduleOverrides[g.id]||{};
+              const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
               const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
               const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               const palpites = membrosAprovados.map(m=>{
