@@ -237,8 +237,8 @@ const SCHEDULE = [
   {id:98, home:"Espanha",away:"Bélgica",group:"Quartas",date:"2026-07-10T16:00",city:"Los Angeles",knockout:true},
   {id:99, home:"Noruega",away:"Inglaterra",group:"Quartas",date:"2026-07-11T18:00",city:"Miami",knockout:true},
   {id:100,home:"Argentina",away:"Suíça",group:"Quartas",date:"2026-07-11T22:00",city:"Kansas City",knockout:true},
-  {id:101,home:"W97",away:"W98",group:"Semifinal",date:"2026-07-14T16:00",city:"Dallas",knockout:true},
-  {id:102,home:"W99",away:"W100",group:"Semifinal",date:"2026-07-15T16:00",city:"Atlanta",knockout:true},
+  {id:101,home:"França",away:"Espanha",group:"Semifinal",date:"2026-07-14T16:00",city:"Dallas",knockout:true},
+  {id:102,home:"Inglaterra",away:"Argentina",group:"Semifinal",date:"2026-07-15T16:00",city:"Atlanta",knockout:true},
   {id:103,home:"L101",away:"L102",group:"3Lugar",date:"2026-07-18T17:00",city:"Miami",knockout:true},
   {id:104,home:"W101",away:"W102",group:"Final",date:"2026-07-19T16:00",city:"Nova Jersey",knockout:true},
 ];
@@ -256,6 +256,10 @@ function calcPoints(g, r, fase) {
   if (isNaN(gh)||isNaN(ga)||isNaN(rh)||isNaN(ra)) return null;
 
   const isKnockout = fase && fase!=="Todos" && !/^[A-L]$/.test(fase);
+
+  // Multiplicador por fase: Semifinal e Final = dobro
+  const isSemiFinal = fase==="Semifinal" || fase==="3Lugar" || fase==="Final";
+  const mult = isSemiFinal ? 2 : 1;
 
   if (isKnockout) {
     // ══ TABELA DE PONTUAÇÃO DO MATA-MATA ══════════════════════════════════
@@ -277,33 +281,33 @@ function calcPoints(g, r, fase) {
     // 1. Placar exato
     if (placarExato) {
       if (empatePalpite && empateReal) {
-        // Empate exato: +1 se acertou pênaltis
-        return acertouPenaltis ? 7 : 6;
+        // Empate exato: bônus pênaltis = +mult
+        return acertouPenaltis ? 6*mult+mult : 6*mult;
       }
-      return 6; // placar exato não-empate
+      return 6*mult; // placar exato não-empate
     }
 
     // 2. Não acertou o placar exato
     if (empatePalpite) {
       // Apostou empate
       if (empateReal) {
-        // Houve empate real — acertou o empate (3pts) + bônus pênaltis (+1 = 4 total)
-        return acertouPenaltis ? 4 : 3;
+        // Acertou empate (3*mult) + bônus pênaltis (+mult = 4*mult total)
+        return acertouPenaltis ? 4*mult : 3*mult;
       } else {
-        // Apostou empate mas não empatou — verifica se acertou vencedor via quemPassa (1pt)
+        // Apostou empate mas não empatou — 1*mult se acertou vencedor via quemPassa
         const vencedorReal = rh>ra ? "home" : "away";
-        return (g.quemPassa && g.quemPassa===vencedorReal) ? 1 : 0;
+        return (g.quemPassa && g.quemPassa===vencedorReal) ? 1*mult : 0;
       }
     } else {
       // Apostou vencedor direto (não-empate)
       const vencedorPalpite = gh>ga ? "home" : "away";
       if (empateReal) {
-        // Jogo empatou e foi a pênaltis — 1pt se o time apostado ganhou nos pênaltis
-        return (r.quemPassa && r.quemPassa===vencedorPalpite) ? 1 : 0;
+        // Jogo foi a pênaltis — 1*mult se o time apostado ganhou nos pênaltis
+        return (r.quemPassa && r.quemPassa===vencedorPalpite) ? 1*mult : 0;
       } else {
-        // Jogo não empatou — 3pts se acertou o vencedor
+        // Jogo não empatou — 3*mult se acertou o vencedor
         const vencedorReal = rh>ra ? "home" : "away";
-        return vencedorPalpite===vencedorReal ? 3 : 0;
+        return vencedorPalpite===vencedorReal ? 3*mult : 0;
       }
     }
   }
@@ -2204,7 +2208,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   boloes, members, guesses, results, notify, notification}) {
 
   const [subScreen, setSubScreen] = useState("menu");
-  const [filterGrp, setFilterGrp] = useState("Quartas");
+  const [filterGrp, setFilterGrp] = useState("Semifinal");
   const [fontSize,  setFontSize]  = useState(()=>parseInt(localStorage.getItem("bg26_fs")||"16"));
   const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
@@ -2828,8 +2832,11 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const palpites = membrosAprovados.map(m=>{
                 const gu=getGuessOf(m.uid,g.id);
                 const pts=hasR&&gu?calcPoints(gu,r,g.group):null;
-                return {m,gu,pts};
-              }).filter(p=>p.gu?.home!==undefined);
+                const isMine = m.uid===currentMember?.uid;
+                // Ocultar palpites de outros até o jogo começar (jogo mata-mata)
+                const guVisivel = (isMine || isPast(g.date) || hasR) ? gu : null;
+                return {m, gu:guVisivel, palpiteReal:gu, pts, isMine};
+              }).filter(p=>p.palpiteReal?.home!==undefined);
 
               if(palpites.length===0) return null;
 
@@ -2885,7 +2892,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                               <Flag team={gHome} size={fs(20)}/>
                               <span style={{fontSize:fs(22),fontFamily:"monospace",fontWeight:900,
                                 color:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a9edb":pts===0&&hasR?"#ff6b6b":"#fff",letterSpacing:2}}>
-                                {gu.home}×{gu.away}
+                                {gu ? `${gu.home}×${gu.away}` : "🔒"}
                               </span>
                               <Flag team={gAway} size={fs(20)}/>
                             </div>
@@ -2893,7 +2900,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                               <div style={{background:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":"#5a1010",
                                 color:"#fff",borderRadius:20,padding:"3px 10px",
                                 fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700,flexShrink:0}}>
-                                {pts===7?"🎯 7pts":pts===6?"🎯 6pts":pts===4?"✅ 4pts":pts===3?"✅ 3pts":pts===1?"✅ 1pt":"❌ 0"}
+                                {pts>=12?"🎯 "+pts+"pts":pts>=6?"🎯 "+pts+"pts":pts>=3?"✅ "+pts+"pts":pts>0?"✅ "+pts+"pt":"❌ 0"}
                               </div>
                             )}
                           </div>
