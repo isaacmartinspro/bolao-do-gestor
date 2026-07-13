@@ -1266,7 +1266,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
     };
 
     // Limpar overrides das oitavas (89-96) e quartas (97-100) - têm nomes definitivos
-    for (let id = 89; id <= 103; id++) {
+    for (let id = 89; id <= 100; id++) {
       await set(dbRef(db, `schedule_overrides/${id}`), null);
     }
 
@@ -1903,7 +1903,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
             {filteredGames().map(g=>{
               const r=results[g.id]||{};
               const hasR=r.home!==undefined&&r.home!=="";
-              const ovr = g.id>=104 ? (scheduleOverrides[g.id]||{}) : {};
+              const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
               const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
               const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               return(
@@ -2415,7 +2415,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   // Card de jogo
   const GameRow = ({g, mode="agenda"}) => {
     // Aplicar overrides de nome de time (ex: vencedor do jogo anterior)
-    const ovr = g.id>=104 ? (scheduleOverrides[g.id]||{}) : {};
+    const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
     const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
     const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
     const r=getResult(g.id), gu=myGuesses[g.id];
@@ -2826,16 +2826,17 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const r = getResult(g.id);
               const hasR = r&&r.home!==undefined&&r.home!=="";
               const today = isToday(g.date);
-              const ovr = g.id>=104 ? (scheduleOverrides[g.id]||{}) : {};
+              const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
               const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
               const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               const palpites = membrosAprovados.map(m=>{
                 const gu=getGuessOf(m.uid,g.id);
                 const pts=hasR&&gu?calcPoints(gu,r,g.group):null;
                 const isMine = m.uid===currentMember?.uid;
-                // Ocultar palpites de outros até o jogo começar (jogo mata-mata)
-                const guVisivel = (isMine || isPast(g.date) || hasR) ? gu : null;
-                return {m, gu:guVisivel, palpiteReal:gu, pts, isMine};
+                // Ocultar palpite de TODOS até o jogo começar — só revelar após início
+                const jogoComecou = isPast(g.date) || hasR;
+                const guVisivel = jogoComecou ? gu : null; // oculto para todos antes do início
+                return {m, gu:guVisivel, palpiteReal:gu, pts, isMine, jogoComecou};
               }).filter(p=>p.palpiteReal?.home!==undefined);
 
               if(palpites.length===0) return null;
@@ -2873,13 +2874,13 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                       PALPITES ({palpites.length}/{membrosAprovados.length}):
                     </div>
                     <div style={{display:"grid",gap:8}}>
-                      {palpites.map(({m,gu,pts})=>{
+                      {palpites.map(({m,gu,pts,isMine,jogoComecou})=>{
                         const isMe=m.uid===currentMember.uid;
                         return(
                           <div key={m.uid} style={{
                             display:"flex",alignItems:"center",gap:10,
-                            background:pts>=6?"rgba(0,156,59,.15)":pts>=3?"rgba(200,162,0,.12)":pts>0?"rgba(26,110,138,.12)":pts===0&&hasR?"rgba(90,16,16,.15)":isMe?"rgba(255,223,0,.06)":"rgba(255,255,255,.04)",
-                            border:`1px solid ${pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":pts===0&&hasR?"#5a1010":isMe?"rgba(255,223,0,.3)":"#1a1a1a"}`,
+                            background:jogoComecou?(pts>=6?"rgba(0,156,59,.15)":pts>=3?"rgba(200,162,0,.12)":pts>0?"rgba(26,110,138,.12)":pts===0&&hasR?"rgba(90,16,16,.15)":"rgba(255,255,255,.04)"):isMe?"rgba(255,223,0,.06)":"rgba(255,255,255,.04)",
+                            border:`1px solid ${jogoComecou?(pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":pts===0&&hasR?"#5a1010":"#1a1a1a"):isMe?"rgba(255,223,0,.3)":"#1a1a1a"}`,
                             borderRadius:10,padding:"10px 14px"
                           }}>
                             <MemberAvatar member={m} size={fs(36)}/>
@@ -2887,16 +2888,25 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
                               <span style={{fontSize:fs(15),letterSpacing:1,color:isMe?"#ffdf00":"#fff",fontWeight:isMe?700:400}}>
                                 {m.apelido}{isMe&&<span style={{fontSize:fs(11),marginLeft:6,fontFamily:"sans-serif"}}>← você</span>}
                               </span>
+                              {!jogoComecou&&(
+                                <div style={{fontSize:fs(10),color:"#555",fontFamily:"sans-serif",fontStyle:"italic"}}>
+                                  🔒 palpite oculto até o início
+                                </div>
+                              )}
                             </div>
-                            <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
-                              <Flag team={gHome} size={fs(20)}/>
-                              <span style={{fontSize:fs(22),fontFamily:"monospace",fontWeight:900,
-                                color:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a9edb":pts===0&&hasR?"#ff6b6b":"#fff",letterSpacing:2}}>
-                                {gu ? `${gu.home}×${gu.away}` : "🔒"}
-                              </span>
-                              <Flag team={gAway} size={fs(20)}/>
-                            </div>
-                            {pts!==null&&(
+                            {jogoComecou?(
+                              <div style={{display:"flex",alignItems:"center",gap:6,flexShrink:0}}>
+                                <Flag team={gHome} size={fs(20)}/>
+                                <span style={{fontSize:fs(22),fontFamily:"monospace",fontWeight:900,
+                                  color:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a9edb":pts===0&&hasR?"#ff6b6b":"#fff",letterSpacing:2}}>
+                                  {gu?`${gu.home}×${gu.away}`:"—"}
+                                </span>
+                                <Flag team={gAway} size={fs(20)}/>
+                              </div>
+                            ):(
+                              <div style={{fontSize:fs(18),flexShrink:0,opacity:.3}}>🔒</div>
+                            )}
+                            {jogoComecou&&pts!==null&&(
                               <div style={{background:pts>=6?"#009c3b":pts>=3?"#c8a200":pts>0?"#1a6e8a":"#5a1010",
                                 color:"#fff",borderRadius:20,padding:"3px 10px",
                                 fontFamily:"sans-serif",fontSize:fs(12),fontWeight:700,flexShrink:0}}>
@@ -3361,7 +3371,7 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
           {filteredGames().map(g=>{
             const r=results[g.id]||{};
             const hasR=r.home!==undefined&&r.home!=="";
-            const ovr=g.id>=104?(scheduleOverrides[g.id]||{}):{};
+            const ovr=g.id>=101?(scheduleOverrides[g.id]||{}):{};
             const gHome=(ovr.home&&ovr.home.trim())?ovr.home:g.home;
             const gAway=(ovr.away&&ovr.away.trim())?ovr.away:g.away;
             return(
