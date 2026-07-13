@@ -1266,7 +1266,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
     };
 
     // Limpar overrides das oitavas (89-96) e quartas (97-100) - têm nomes definitivos
-    for (let id = 89; id <= 100; id++) {
+    for (let id = 89; id <= 103; id++) {
       await set(dbRef(db, `schedule_overrides/${id}`), null);
     }
 
@@ -1903,7 +1903,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
             {filteredGames().map(g=>{
               const r=results[g.id]||{};
               const hasR=r.home!==undefined&&r.home!=="";
-              const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
+              const ovr = g.id>=104 ? (scheduleOverrides[g.id]||{}) : {};
               const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
               const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               return(
@@ -2415,7 +2415,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   // Card de jogo
   const GameRow = ({g, mode="agenda"}) => {
     // Aplicar overrides de nome de time (ex: vencedor do jogo anterior)
-    const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
+    const ovr = g.id>=104 ? (scheduleOverrides[g.id]||{}) : {};
     const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
     const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
     const r=getResult(g.id), gu=myGuesses[g.id];
@@ -2826,7 +2826,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
               const r = getResult(g.id);
               const hasR = r&&r.home!==undefined&&r.home!=="";
               const today = isToday(g.date);
-              const ovr = g.id>=101 ? (scheduleOverrides[g.id]||{}) : {};
+              const ovr = g.id>=104 ? (scheduleOverrides[g.id]||{}) : {};
               const gHome = (ovr.home && ovr.home.trim()) ? ovr.home : g.home;
               const gAway = (ovr.away && ovr.away.trim()) ? ovr.away : g.away;
               const palpites = membrosAprovados.map(m=>{
@@ -3361,7 +3361,7 @@ function AdminBolaoPanel({db, adminSlug, adminData, boloes, members, guesses, re
           {filteredGames().map(g=>{
             const r=results[g.id]||{};
             const hasR=r.home!==undefined&&r.home!=="";
-            const ovr=g.id>=101?(scheduleOverrides[g.id]||{}):{};
+            const ovr=g.id>=104?(scheduleOverrides[g.id]||{}):{};
             const gHome=(ovr.home&&ovr.home.trim())?ovr.home:g.home;
             const gAway=(ovr.away&&ovr.away.trim())?ovr.away:g.away;
             return(
