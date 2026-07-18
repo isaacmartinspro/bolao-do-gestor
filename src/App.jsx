@@ -239,8 +239,8 @@ const SCHEDULE = [
   {id:100,home:"Argentina",away:"Suíça",group:"Quartas",date:"2026-07-11T22:00",city:"Kansas City",knockout:true},
   {id:101,home:"França",away:"Espanha",group:"Semifinal",date:"2026-07-14T16:00",city:"Dallas",knockout:true},
   {id:102,home:"Inglaterra",away:"Argentina",group:"Semifinal",date:"2026-07-15T16:00",city:"Atlanta",knockout:true},
-  {id:103,home:"L101",away:"L102",group:"3Lugar",date:"2026-07-18T17:00",city:"Miami",knockout:true},
-  {id:104,home:"W101",away:"W102",group:"Final",date:"2026-07-19T16:00",city:"Nova Jersey",knockout:true},
+  {id:103,home:"França",away:"Inglaterra",group:"3Lugar",date:"2026-07-18T18:00",city:"Miami",knockout:true},
+  {id:104,home:"Espanha",away:"Argentina",group:"Final",date:"2026-07-19T16:00",city:"Nova Jersey",knockout:true},
 ];
 
 const GROUPS = [...new Set(SCHEDULE.filter(g=>!g.knockout).map(g=>g.group))].sort();
@@ -2208,7 +2208,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   boloes, members, guesses, results, notify, notification}) {
 
   const [subScreen, setSubScreen] = useState("menu");
-  const [filterGrp, setFilterGrp] = useState("Semifinal");
+  const [filterGrp, setFilterGrp] = useState("Final");
   const [fontSize,  setFontSize]  = useState(()=>parseInt(localStorage.getItem("bg26_fs")||"16"));
   const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
