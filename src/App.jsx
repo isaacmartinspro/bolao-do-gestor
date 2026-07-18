@@ -1391,7 +1391,7 @@ function AdminPainelScreen({db, adminData, adminSlug, setCurrentAdmin,
       if(filterGrp==="Quartas") return g.group==="Quartas";
       if(filterGrp==="Semifinal") return g.group==="Semifinal";
       if(filterGrp==="3º Lugar") return g.group==="3Lugar";
-      if(filterGrp==="Final") return g.group==="Final";
+      if(filterGrp==="Final") return g.group==="Final" || g.group==="3Lugar";
       return false;
     }).sort((a,b)=>a.date.localeCompare(b.date));
   }
@@ -2208,7 +2208,7 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   boloes, members, guesses, results, notify, notification}) {
 
   const [subScreen, setSubScreen] = useState("menu");
-  const [filterGrp, setFilterGrp] = useState("Final");
+  const [filterGrp, setFilterGrp] = useState("Todos");
   const [fontSize,  setFontSize]  = useState(()=>parseInt(localStorage.getItem("bg26_fs")||"16"));
   const [darkMode,  setDarkMode]  = useState(()=>localStorage.getItem("bg26_dark")!=="false");
   const [adminPass, setAdminPass] = useState("");
