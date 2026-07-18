@@ -2400,15 +2400,15 @@ function BolaoScreen({db, adminData, adminSlug, currentMember, setCurrentMember,
   const FILTER_OPTS = ["Todos","Hoje",...GROUPS.map(g=>"Grupo "+g),"16 Avos","Oitavas","Quartas","Semifinal","3 Lugar","Final"];
   function filteredGames() {
     return SCHEDULE.filter(g=>{
-      if(filterGrp==="Todos") return true;
-      if(filterGrp==="Hoje") return isToday(g.date);
+      if(filterGrp==="Todos") return g.knockout===true;
+      if(filterGrp==="Hoje") return isToday(g.date) && g.knockout===true;
       if(filterGrp==="16 Avos") return g.group==="16avos";
       if(filterGrp==="Oitavas") return g.group==="Oitavas";
       if(filterGrp==="Quartas") return g.group==="Quartas";
       if(filterGrp==="Semifinal") return g.group==="Semifinal";
-      if(filterGrp==="3 Lugar") return g.group==="3Lugar";
-      if(filterGrp==="Final") return g.group==="Final";
-      return "Grupo "+g.group===filterGrp;
+      if(filterGrp==="3º Lugar") return g.group==="3Lugar";
+      if(filterGrp==="Final") return g.group==="Final" || g.group==="3Lugar";
+      return false;
     }).sort((a,b)=>a.date.localeCompare(b.date));
   }
 
